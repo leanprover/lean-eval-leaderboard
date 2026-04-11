@@ -16,6 +16,81 @@ Successes are **sticky**: once a problem is marked solved for a given user,
 that record is never modified or removed, even if a later submission from the
 same user no longer proves it.
 
+## How to submit
+
+Submissions are made by opening an issue on the benchmark repository. No pull
+requests, no local build, no CLI. Three steps:
+
+### 1. Put your proof somewhere the lean-eval CI can fetch it
+
+Accepted sources are any URL of these shapes:
+
+- a GitHub repository:
+  `https://github.com/<owner>/<repo>`
+- a GitHub repository pinned to a branch, tag, or commit:
+  `https://github.com/<owner>/<repo>/tree/<ref>` or
+  `https://github.com/<owner>/<repo>/commit/<sha>`
+- a public gist:
+  `https://gist.github.com/<user>/<gist-id>` (optionally with a revision)
+
+**Private GitHub repositories are supported**, but you must install the
+`lean-eval-bot` GitHub App on the repository first so the CI can clone it.
+The install link lives in the
+[kim-em/lean-eval README](https://github.com/kim-em/lean-eval).
+
+**Secret (unlisted) gists are not supported** in v1. Make your gist public,
+or host the proof in a repository.
+
+### 2. Lay the proof out so the CI can find it
+
+The CI walks whatever you submit and tries every directory containing a
+`lakefile.toml` whose `name` field matches a benchmark problem id **and**
+has a `Submission.lean` next to it. Any layout that satisfies this works:
+
+- a clone of a single generated workspace from
+  [`kim-em/lean-eval/generated/`](https://github.com/kim-em/lean-eval/tree/main/generated)
+- a fork of `kim-em/lean-eval` itself with your proofs in the relevant
+  `generated/<problem_id>/` directories
+- a custom repository that contains several workspaces side by side
+- a gist that contains a two-file minimum: a `lakefile.toml` with
+  `name = "<problem_id>"` and a `Submission.lean`
+
+For each matched directory, the CI overlays **only** your `Submission.lean`
+and any files under `Submission/**/*.lean` onto a pristine copy of the
+benchmark's workspace for that problem. Every other file in your submission
+(including any `Solution.lean`, `Challenge.lean`, or modified `lakefile.toml`)
+is ignored. The CI then runs
+[comparator](https://github.com/leanprover/comparator) to check the proof.
+
+### 3. Open a submission issue
+
+Click **[Submit benchmark solution](https://github.com/kim-em/lean-eval/issues/new?template=submit.yml)**
+to open a pre-filled issue. The form asks for two things:
+
+- **Submission URL** — a URL in one of the shapes above
+- **Model** — a free-form identifier for the model or system that produced
+  the proof (shown on the public leaderboard)
+
+Submit. The lean-eval CI takes it from there: a workflow clones your
+content, scans for workspaces, runs comparator on each match, and records
+any newly-solved problems here. The CI comments on your issue with a
+per-problem pass/fail summary and closes it when done. If any problem
+passes, it is added to your `results/<your-github-login>.json` in this
+repository.
+
+Submissions are cumulative: every success is sticky and there is no limit
+on how many times you can submit. Resubmit whenever you have a new proof.
+
+### What becomes public
+
+Only the information you enter on the submission form, plus the list of
+problems your submission solved, becomes public. Your proof is never copied
+out of the ephemeral workflow runner into any public artifact; the
+leaderboard only stores identifiers and timestamps. If your submission
+source was a public repository or a public gist, the leaderboard site may
+link to it so others can inspect your solution; if it was private, no link
+is published.
+
 ## File layout
 
 ```
