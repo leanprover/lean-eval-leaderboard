@@ -22,6 +22,17 @@ jobs:
       - name: Checkout leaderboard repo
         uses: actions/checkout@v4
 
+      - name: Checkout benchmark repo
+        uses: actions/checkout@v4
+        with:
+          repository: kim-em/lean-eval
+          path: benchmark
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Set up elan
         shell: bash
         run: |
@@ -34,8 +45,10 @@ jobs:
       - name: Fetch Lake dependencies
         run: lake update
 
-      - name: Build site
-        run: lake exe lean-eval-leaderboard --output _site
+      - name: Generate site data
+        env:
+          LEAN_EVAL_BENCHMARK_REPO: ${{ github.workspace }}/benchmark
+        run: lake script run generate
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

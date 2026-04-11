@@ -123,6 +123,56 @@ nav.top .home {
   margin-bottom: 14px;
 }
 
+.page-copy .prose {
+  max-width: 980px;
+}
+
+.page-copy .prose > h1 {
+  margin-bottom: 18px;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.05;
+  color: #f1f5f7;
+}
+
+.page-copy .prose > h2 {
+  margin-top: 38px;
+  margin-bottom: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(126, 227, 217, 0.1);
+  color: #f1f5f7;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1.8rem;
+}
+
+.page-copy .prose > p + h2 {
+  margin-top: 30px;
+}
+
+.page-copy .prose code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.92em;
+  color: #dce8ed;
+}
+
+.page-copy .hl.lean.block {
+  margin: 16px 0 28px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(13, 18, 23, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  overflow-x: auto;
+}
+
+.page-copy .hl.lean.block code {
+  color: inherit;
+}
+
+.page-copy .hl.lean.block + h2 {
+  margin-top: 34px;
+}
+
 .leaderboard-root {
   width: min(1120px, calc(100vw - 48px));
   margin: 28px auto 0;

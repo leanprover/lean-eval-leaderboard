@@ -40,25 +40,6 @@ function renderProblemItem(problemMap, solved) {
   `;
 }
 
-function renderCatalogItem(problem) {
-  return `
-    <article class="catalog-item">
-      <div class="catalog-item-head">
-        <div>
-          <div class="catalog-kicker">${problem.test ? "Test problem" : "Main problem"}</div>
-          <h3>${escapeHtml(problem.title)}</h3>
-        </div>
-        <code>${escapeHtml(problem.id)}</code>
-      </div>
-      <p class="catalog-notes">${escapeHtml(problem.notes ?? "No notes available.")}</p>
-      <div class="theorem-card theorem-card-static">
-        <div class="theorem-card-label">Lean theorem statement</div>
-        <pre>${escapeHtml(problem.statement || "Theorem statement unavailable.")}</pre>
-      </div>
-    </article>
-  `;
-}
-
 function renderEntry(problemMap, entry) {
   const notable = (entry.notable_problem_ids ?? [])
     .map((id) => entry.solved_problems.find((item) => item.problem_id === id))
@@ -174,37 +155,6 @@ function renderHome(root, problems, leaderboard) {
   `;
 }
 
-function renderProblemsPage(root, problems) {
-  const catalog = problems.problems ?? [];
-  const mainProblems = catalog.filter((problem) => !problem.test);
-  const testProblems = catalog.filter((problem) => problem.test);
-  root.innerHTML = `
-    <section class="leaderboard-panel catalog-panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-kicker">Problem catalog</div>
-          <h2>${catalog.length} benchmark problems</h2>
-        </div>
-        <div class="panel-note">Problem metadata and theorem statements are generated from the benchmark repository.</div>
-      </div>
-      <div class="catalog-columns">
-        <section>
-          <div class="section-label">Main benchmark problems</div>
-          <div class="catalog-grid">
-            ${mainProblems.map(renderCatalogItem).join("")}
-          </div>
-        </section>
-        <section>
-          <div class="section-label">Starter problems</div>
-          <div class="catalog-grid">
-            ${testProblems.map(renderCatalogItem).join("")}
-          </div>
-        </section>
-      </div>
-    </section>
-  `;
-}
-
 async function main() {
   const root = document.getElementById("app-root");
   if (!root) return;
@@ -228,11 +178,6 @@ async function main() {
       }
       const leaderboard = await leaderboardResponse.json();
       renderHome(root, problems, leaderboard);
-      return;
-    }
-
-    if (page === "Problems") {
-      renderProblemsPage(root, problems);
       return;
     }
 

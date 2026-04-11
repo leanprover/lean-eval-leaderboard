@@ -12,6 +12,13 @@ def theme (name : String) (siteName : String) : Theme := {
     let path := (← read).path
     let isHome := path.isEmpty
     let pageClass := if isHome then "home-page" else "inner-page"
+    let appRoot ←
+      if isHome then
+        pure {{
+          <div id="app-root" class="leaderboard-root" data-page={{title}}></div>
+        }}
+      else
+        pure Html.empty
     let pageCopy ←
       if isHome then
         pure Html.empty
@@ -44,7 +51,7 @@ def theme (name : String) (siteName : String) : Theme := {
             </header>
             <main class="page" role="main">
               {{pageCopy}}
-              <div id="app-root" class="leaderboard-root" data-page={{title}}></div>
+              {{appRoot}}
             </main>
             <footer class="footer">
               <div class="wrap footer-inner">
