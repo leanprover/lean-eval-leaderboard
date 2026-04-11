@@ -18,19 +18,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      LEAN_EVAL_BENCHMARK_REPO: ${{ github.workspace }}/lean-evals
     steps:
       - name: Checkout leaderboard repo
         uses: actions/checkout@v4
-
-      - name: Checkout benchmark repo
-        run: git clone --depth 1 https://github.com/kim-em/lean-eval.git lean-evals
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
 
       - name: Set up elan
         shell: bash
@@ -45,7 +35,7 @@ jobs:
         run: lake update
 
       - name: Build site
-        run: lake script run generate
+        run: lake exe lean-eval-leaderboard --output _site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
