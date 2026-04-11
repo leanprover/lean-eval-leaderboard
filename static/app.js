@@ -19,33 +19,134 @@ function scoreLine(entry) {
   return `${entry.score?.display ?? entry.score?.solved_total ?? 0} total • ${main} main • ${test} test`;
 }
 
-function renderProblemItem(problemMap, solved) {
+function problemPageHref(problemId) {
+  return `problems/#${encodeURIComponent(problemId)}`;
+}
+
+function readProblemSections(root) {
+  const prose = root.querySelector(".page-copy .prose");
+  if (!prose) return [];
+
+  const children = Array.from(prose.children);
+  const sections = [];
+  for (let index = 0; index < children.length; index += 1) {
+    const heading = children[index];
+    if (heading.tagName !== "H3") continue;
+
+    let problemId = null;
+    let codeBlock = null;
+    for (let offset = index + 1; offset < children.length; offset += 1) {
+      const node = children[offset];
+      if (node.tagName === "H2" || node.tagName === "H3") break;
+      if (!problemId && node.tagName === "P") {
+        const code = node.querySelector("code");
+        if (code) {
+          problemId = code.textContent.trim();
+        }
+      }
+      if (!codeBlock && node.matches(".hl.lean.block")) {
+        codeBlock = node;
+      }
+    }
+
+    if (problemId) {
+      sections.push({
+        heading,
+        problemId,
+        title: heading.textContent.trim(),
+        renderedHtml: codeBlock?.outerHTML ?? null,
+      });
+    }
+  }
+  return sections;
+}
+
+function enhanceProblemsPage() {
+  const sections = readProblemSections(document);
+  for (const section of sections) {
+    section.heading.id = section.problemId;
+  }
+
+  const fragment = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+  if (!fragment) return;
+  const target = document.getElementById(fragment);
+  if (!target) return;
+  requestAnimationFrame(() => {
+    target.scrollIntoView({ block: "start" });
+  });
+}
+
+async function loadRenderedProblemMap() {
+  const response = await fetch(new URL("problems/", document.baseURI));
+  if (!response.ok) {
+    throw new Error("Could not load rendered problems page");
+  }
+
+  const html = await response.text();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const sections = readProblemSections(doc);
+  return new Map(sections.map((section) => [section.problemId, section]));
+}
+
+function theoremCardMarkup(problemId, problem, renderedMap) {
+  const rendered = renderedMap.get(problemId);
+  if (rendered?.renderedHtml) {
+    return `
+      <div class="theorem-card theorem-card-rendered">
+        <div class="theorem-card-label">Verso theorem preview</div>
+        ${rendered.renderedHtml}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="theorem-card theorem-card-static">
+      <div class="theorem-card-label">Lean theorem statement</div>
+      <pre>${escapeHtml(problem?.statement ?? "Theorem statement unavailable.")}</pre>
+    </div>
+  `;
+}
+
+function renderProblemItem(problemMap, renderedMap, solved) {
   const problem = problemMap.get(solved.problem_id);
   const title = problem?.title ?? solved.problem_id;
-  const statement = problem?.statement ?? "Theorem statement unavailable.";
   const source = solved.public_solution?.available ? solved.public_solution.url : null;
-  const linkOpen = source ? `<a class="problem-link" href="${escapeHtml(source)}">` : `<span class="problem-link disabled">`;
-  const linkClose = source ? "</a>" : "</span>";
+  const problemHref = problemPageHref(solved.problem_id);
   return `
     <div class="problem-item">
-      ${linkOpen}
-        <span class="problem-title">${escapeHtml(title)}</span>
+      <a class="problem-title-link" href="${escapeHtml(problemHref)}">${escapeHtml(title)}</a>
+      <div class="problem-meta-row">
+        <span class="problem-id-wrap">
+          <span class="problem-id-trigger" tabindex="0">${escapeHtml(solved.problem_id)}</span>
+          ${theoremCardMarkup(solved.problem_id, problem, renderedMap)}
+        </span>
         <span class="problem-meta">#${solved.rarity_rank}</span>
-      ${linkClose}
-      <div class="theorem-card">
-        <div class="theorem-card-label">Lean theorem statement</div>
-        <pre>${escapeHtml(statement)}</pre>
+        ${source ? `<a class="problem-proof-link" href="${escapeHtml(source)}">proof</a>` : ""}
       </div>
     </div>
   `;
 }
 
-function renderEntry(problemMap, entry) {
+function renderCatalogPreviewProblem(problem, renderedMap) {
+  return `
+    <div class="empty-problem">
+      <a class="problem-title-link" href="${escapeHtml(problemPageHref(problem.id))}">${escapeHtml(problem.title)}</a>
+      <div class="problem-meta-row">
+        <span class="problem-id-wrap">
+          <span class="problem-id-trigger" tabindex="0">${escapeHtml(problem.id)}</span>
+          ${theoremCardMarkup(problem.id, problem, renderedMap)}
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function renderEntry(problemMap, renderedMap, entry) {
   const notable = (entry.notable_problem_ids ?? [])
     .map((id) => entry.solved_problems.find((item) => item.problem_id === id))
     .filter(Boolean);
   const solvedMarkup = notable.length
-    ? notable.map((item) => renderProblemItem(problemMap, item)).join("")
+    ? notable.map((item) => renderProblemItem(problemMap, renderedMap, item)).join("")
     : `<p class="empty-state">No public solves recorded for this row yet.</p>`;
   const submitters = (entry.submitters ?? [])
     .map((item) => `<span class="submitter-chip">${escapeHtml(item.user)} <span>${item.solved_total}</span></span>`)
@@ -85,7 +186,7 @@ function renderEntry(problemMap, entry) {
   `;
 }
 
-function renderHome(root, problems, leaderboard) {
+function renderHome(root, problems, leaderboard, renderedMap) {
   const problemMap = new Map((problems.problems ?? []).map((problem) => [problem.id, problem]));
   const entries = leaderboard.entries ?? [];
   const summary = leaderboard.summary ?? {};
@@ -101,11 +202,7 @@ function renderHome(root, problems, leaderboard) {
         </p>
       </div>
       <div class="empty-problem-list">
-        ${preview.map((problem) => `
-          <div class="empty-problem">
-            <div class="empty-problem-title">${escapeHtml(problem.title)}</div>
-            <code>${escapeHtml(problem.id)}</code>
-          </div>`).join("")}
+        ${preview.map((problem) => renderCatalogPreviewProblem(problem, renderedMap)).join("")}
       </div>
     </div>
   `;
@@ -149,7 +246,7 @@ function renderHome(root, problems, leaderboard) {
         <div class="panel-note">Ranked by solved problems, with main benchmark problems prioritized.</div>
       </div>
       <div class="entry-list">
-        ${entries.length ? entries.map((entry) => renderEntry(problemMap, entry)).join("") : emptyMarkup}
+        ${entries.length ? entries.map((entry) => renderEntry(problemMap, renderedMap, entry)).join("") : emptyMarkup}
       </div>
     </section>
   `;
@@ -172,15 +269,17 @@ async function main() {
     const problems = await problemsResponse.json();
 
     if (page === "Lean AI formalization leaderboard") {
+      const renderedMap = await loadRenderedProblemMap();
       const leaderboardResponse = await fetch(leaderboardUrl);
       if (!leaderboardResponse.ok) {
         throw new Error("Could not load leaderboard data");
       }
       const leaderboard = await leaderboardResponse.json();
-      renderHome(root, problems, leaderboard);
+      renderHome(root, problems, leaderboard, renderedMap);
       return;
     }
 
+    enhanceProblemsPage();
     root.innerHTML = "";
   } catch (error) {
     console.error(error);

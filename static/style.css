@@ -123,6 +123,17 @@ nav.top .home {
   margin-bottom: 14px;
 }
 
+.prose ul,
+.prose ol {
+  max-width: 72ch;
+  margin: 0 0 18px;
+  padding-left: 1.35rem;
+}
+
+.prose li {
+  margin-bottom: 10px;
+}
+
 .page-copy .prose {
   max-width: 980px;
 }
@@ -390,22 +401,14 @@ nav.top .home {
 }
 
 .empty-problem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  display: grid;
+  gap: 10px;
   padding: 14px 16px;
   border-radius: 14px;
   background: rgba(10, 14, 18, 0.66);
   border: 1px solid rgba(126, 227, 217, 0.08);
 }
 
-.empty-problem-title {
-  font-size: 0.94rem;
-  color: #dbe2e5;
-}
-
-.empty-problem code,
 .catalog-item code {
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
   font-size: 0.76rem;
@@ -479,34 +482,65 @@ nav.top .home {
 
 .problem-item {
   position: relative;
+  display: grid;
+  gap: 10px;
   border: 1px solid rgba(126, 227, 217, 0.1);
   border-radius: 14px;
   background: rgba(10, 14, 18, 0.66);
+  padding: 14px 16px;
 }
 
-.problem-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 14px 16px;
+.problem-title-link {
+  color: #dbe2e5;
+  font-size: 0.94rem;
+  font-weight: 500;
   text-decoration: none;
 }
 
-.problem-link.disabled {
-  cursor: default;
+.problem-title-link:hover {
+  color: #f2f6f8;
 }
 
-.problem-title {
-  font-size: 0.94rem;
-  font-weight: 500;
+.problem-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .problem-meta {
-  color: #7fe3d9;
+  color: #8fa0a6;
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
+}
+
+.problem-id-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.problem-id-trigger,
+.problem-proof-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(15, 20, 25, 0.92);
+  color: #86ece0;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.76rem;
+  text-decoration: none;
+}
+
+.problem-id-trigger {
+  cursor: default;
+}
+
+.problem-proof-link:hover {
+  color: #f2f6f8;
+  border-color: rgba(126, 227, 217, 0.22);
 }
 
 .theorem-card {
@@ -514,17 +548,18 @@ nav.top .home {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  right: 0;
+  width: min(760px, calc(100vw - 120px));
   padding: 14px;
   border-radius: 14px;
   border: 1px solid rgba(126, 227, 217, 0.16);
   background: rgba(7, 10, 14, 0.97);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
   z-index: 8;
+  pointer-events: none;
 }
 
-.problem-item:hover .theorem-card,
-.problem-item:focus-within .theorem-card {
+.problem-id-wrap:hover .theorem-card,
+.problem-id-wrap:focus-within .theorem-card {
   display: block;
 }
 
@@ -535,6 +570,13 @@ nav.top .home {
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
   font-size: 0.8rem;
   color: #d7e2e6;
+}
+
+.theorem-card-rendered .hl.lean.block {
+  margin: 8px 0 0;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .theorem-card-static {
@@ -671,6 +713,11 @@ nav.top .home {
     text-align: left;
   }
 
+  .prose ul,
+  .prose ol {
+    padding-left: 1.15rem;
+  }
+
   .entry summary {
     grid-template-columns: 44px minmax(0, 1fr);
   }
@@ -695,6 +742,10 @@ nav.top .home {
 
   nav.top ol {
     gap: 12px;
+  }
+
+  .theorem-card {
+    width: min(520px, calc(100vw - 64px));
   }
 
   .wordmark-text {
