@@ -6,6 +6,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import tomllib
 from collections import defaultdict
@@ -18,6 +19,8 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 RESULTS_ROOT = REPO_ROOT / "results"
 SITE_DATA_ROOT = REPO_ROOT / "site-data"
 PROBLEMS_PAGE_PATH = REPO_ROOT / "LeaderboardSite" / "Pages" / "Problems.lean"
+BENCHMARK_SNAPSHOT_ROOT = REPO_ROOT / "benchmark-snapshot"
+BENCHMARK_SNAPSHOT_TEMPLATE_ROOT = REPO_ROOT / "templates" / "benchmark-snapshot"
 DEFAULT_BENCHMARK_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-evals"))
 )
@@ -128,7 +131,8 @@ def lean_string(value: str) -> str:
 
 
 def benchmark_project_option_path(benchmark_repo: pathlib.Path) -> str:
-    return os.path.relpath(benchmark_repo, REPO_ROOT)
+    _ = benchmark_repo
+    return BENCHMARK_SNAPSHOT_ROOT.name
 
 
 def verso_text(value: str | None) -> str:
@@ -150,22 +154,85 @@ def module_source_path(benchmark_repo: pathlib.Path, module_name: str) -> pathli
     return benchmark_repo / pathlib.Path(*module_name.split(".")).with_suffix(".lean")
 
 
-def anchor_source(problem: Problem, benchmark_repo: pathlib.Path) -> str:
-    path = module_source_path(benchmark_repo, problem.module)
-    text = path.read_text(encoding="utf-8")
+def camel_case(value: str) -> str:
+    pieces = re.split(r"[^A-Za-z0-9]+", value)
+    out = "".join(piece[:1].upper() + piece[1:] for piece in pieces if piece)
+    return out or "Problem"
+
+
+def snapshot_module_name(problem: Problem) -> str:
+    return f"BenchmarkProblems.{camel_case(problem.id)}"
+
+
+def generated_problem_root(benchmark_repo: pathlib.Path, problem: Problem) -> pathlib.Path:
+    return benchmark_repo / problem.challenge_path
+
+
+def strip_imports(text: str) -> tuple[list[str], list[str]]:
+    imports: list[str] = []
+    body: list[str] = []
+    in_imports = True
+    for line in text.splitlines():
+        if in_imports and line.startswith("import "):
+            imports.append(line)
+            continue
+        in_imports = False
+        body.append(line)
+    return imports, body
+
+
+def inject_anchor(problem: Problem, theorem_text: str) -> tuple[str, str]:
+    theorem_name = problem.theorem.rsplit(".", maxsplit=1)[-1]
     pattern = re.compile(
-        rf"-- ANCHOR: {re.escape(problem.id)}\n(?P<body>.*?)\n-- ANCHOR_END: {re.escape(problem.id)}",
-        re.DOTALL,
+        rf"(?ms)^theorem\s+{re.escape(theorem_name)}\b.*?^\s*sorry\s*$"
     )
-    match = pattern.search(text)
+    match = pattern.search(theorem_text)
     if not match:
-        raise SystemExit(f"Missing anchor for problem {problem.id} in {path}")
-    return match.group("body").rstrip()
+        raise SystemExit(f"Could not find theorem block for {problem.id}")
+    anchored = (
+        theorem_text[:match.start()]
+        + f"-- ANCHOR: {problem.id}\n"
+        + match.group(0)
+        + f"\n-- ANCHOR_END: {problem.id}"
+        + theorem_text[match.end():]
+    )
+    return anchored, match.group(0).rstrip()
+
+
+def build_snapshot_module(problem: Problem, benchmark_repo: pathlib.Path) -> tuple[str, str]:
+    root = generated_problem_root(benchmark_repo, problem)
+    challenge_path = root / "Challenge.lean"
+    deps_path = root / "ChallengeDeps.lean"
+
+    challenge_imports, challenge_body = strip_imports(challenge_path.read_text(encoding="utf-8"))
+    imports = [line for line in challenge_imports if line.strip() != "import ChallengeDeps"]
+    body_parts: list[str] = []
+
+    if deps_path.is_file():
+        deps_imports, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
+        for line in deps_imports:
+            if line not in imports:
+                imports.append(line)
+        body_parts.append("\n".join(deps_body).strip())
+
+    anchored_theorem, anchor_block = inject_anchor(problem, "\n".join(challenge_body).strip())
+    body_parts.append(anchored_theorem.strip())
+
+    module_lines = imports + [""]
+    for part in body_parts:
+        if part:
+            module_lines.append(part)
+            module_lines.append("")
+    return "\n".join(module_lines).rstrip() + "\n", anchor_block
 
 
 def build_problem_page(benchmark_repo: pathlib.Path, problems: list[Problem]) -> str:
     main_problems = [problem for problem in problems if not problem.test]
     test_problems = [problem for problem in problems if problem.test]
+    snapshot_blocks = {
+        problem.id: build_snapshot_module(problem, benchmark_repo)[1]
+        for problem in problems
+    }
 
     lines = [
         "/-",
@@ -180,9 +247,9 @@ def build_problem_page(benchmark_repo: pathlib.Path, problems: list[Problem]) ->
         f"set_option verso.exampleProject {lean_string(benchmark_project_option_path(benchmark_repo))}",
         "",
         "#doc (Page) \"Problems\" =>",
-        "The benchmark catalog is rendered from anchored regions in the benchmark's authored Lean",
-        "modules. These code blocks are processed by Verso against the real Lean project, so hover",
-        "information and symbol metadata come from Lean rather than from pre-rendered HTML.",
+        "The benchmark catalog is rendered from generated Lean snapshot modules derived from the",
+        "benchmark source. These code blocks are processed by Verso against a real Lean project, so",
+        "hover information and symbol metadata come from Lean rather than from pre-rendered HTML.",
         "",
     ]
 
@@ -201,8 +268,8 @@ def build_problem_page(benchmark_repo: pathlib.Path, problems: list[Problem]) ->
                 "",
                 f"Informal solution: {verso_text(problem.informal_solution)}",
                 "",
-                f"```anchor {problem.id} (module := {problem.module})",
-                anchor_source(problem, benchmark_repo),
+                f"```anchor {problem.id} (module := {snapshot_module_name(problem)})",
+                snapshot_blocks[problem.id],
                 "```",
                 "",
             ]
@@ -217,6 +284,24 @@ def build_problem_page(benchmark_repo: pathlib.Path, problems: list[Problem]) ->
         add_problem(problem)
 
     return "\n".join(lines) + "\n"
+
+
+def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Problem]) -> None:
+    if BENCHMARK_SNAPSHOT_ROOT.exists():
+        shutil.rmtree(BENCHMARK_SNAPSHOT_ROOT)
+    BENCHMARK_SNAPSHOT_ROOT.mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(
+        BENCHMARK_SNAPSHOT_TEMPLATE_ROOT / "lakefile.toml",
+        BENCHMARK_SNAPSHOT_ROOT / "lakefile.toml",
+    )
+    shutil.copy2(benchmark_repo / "lean-toolchain", BENCHMARK_SNAPSHOT_ROOT / "lean-toolchain")
+    write_text(BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems.lean", "")
+    problems_dir = BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems"
+    problems_dir.mkdir(parents=True, exist_ok=True)
+    for problem in problems:
+        module_source, _ = build_snapshot_module(problem, benchmark_repo)
+        write_text(problems_dir / f"{camel_case(problem.id)}.lean", module_source)
 
 
 def public_solution_url(repo: str, ref: str, problem_id: str, public: bool) -> str | None:
@@ -430,6 +515,7 @@ def main() -> int:
         output_dir / "leaderboard.json",
         build_leaderboard_payload(REPO_ROOT, benchmark_repo, problems, raw_results),
     )
+    write_benchmark_snapshot(benchmark_repo, problems)
     write_text(PROBLEMS_PAGE_PATH, build_problem_page(benchmark_repo, problems))
     return 0
 

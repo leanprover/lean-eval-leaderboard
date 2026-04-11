@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-04-11T12:23:57Z",
+  "generated_at": "2026-04-11T12:37:17Z",
   "benchmark": {
     "repo": "kim-em/lean-eval",
-    "commit": "bdd504caf34f165e6fbbf37fe082148570e7c4b0"
+    "commit": "0e0858b4887768db0062879988681a0fc4b3aa17"
   },
   "problems": [
     {
