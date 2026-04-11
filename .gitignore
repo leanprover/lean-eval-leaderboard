@@ -1,0 +1,7 @@
+.lake/
+build/
+lake-manifest.json
+_site/
+_build/
+__pycache__/
+

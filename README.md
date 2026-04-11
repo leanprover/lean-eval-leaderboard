@@ -1,11 +1,16 @@
 # lean-eval-leaderboard
 
-Results store for the [lean-eval](https://github.com/kim-em/lean-eval) benchmark.
+Results store and public website data source for the
+[lean-eval](https://github.com/kim-em/lean-eval) benchmark.
 
-This repository holds machine-written artifacts produced by the lean-eval CI.
-**Do not edit files here by hand.** Each successful comparator run is appended
-to `results/<github-login>.json`, recording which benchmark problems that user
-has solved.
+This repository holds machine-written artifacts produced by the lean-eval CI
+and by the leaderboard-site build pipeline.
+
+- `results/` is the append-only public success log written by lean-eval CI.
+- `site-data/` is the derived, presentation-oriented data consumed by the
+  public website.
+
+**Do not edit generated files here by hand.**
 
 Successes are **sticky**: once a problem is marked solved for a given user,
 that record is never modified or removed, even if a later submission from the
@@ -16,11 +21,19 @@ same user no longer proves it.
 ```
 results/
   <github-login>.json
+
+site-data/
+  problems.json
+  leaderboard.json
 ```
 
 One file per submitter. Users without any successful submission have no file.
 Filenames use the user's GitHub login, lowercased, since GitHub logins are
 case-insensitive.
+
+The `site-data/` directory is generated from the raw `results/` files together
+with benchmark metadata imported from the benchmark repository. Its schema is
+documented in [docs/site-data-schema.md](docs/site-data-schema.md).
 
 ## Record schema (v1)
 
@@ -101,3 +114,20 @@ One commit per submission, grouping all newly-recorded problems together.
 Breaking changes bump `schema_version`. Consumers should refuse to parse a
 file whose `schema_version` they do not know. Non-breaking additive changes
 (new optional fields) keep the version number stable.
+
+## Website build direction
+
+The public website should live in this repository and consume derived artifacts
+from `site-data/`, not the raw `results/` tree directly. The site itself will
+be implemented in Verso.
+
+- Raw results preserve audit information and sticky solve history.
+- Derived site data resolves aggregation rules, ranking, and problem metadata.
+- The frontend should render `site-data/leaderboard.json` and
+  `site-data/problems.json` without re-implementing benchmark logic in the
+  browser.
+
+See:
+
+- [docs/site-data-schema.md](docs/site-data-schema.md)
+- [docs/website-plan.md](docs/website-plan.md)

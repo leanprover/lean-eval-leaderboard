@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-11T11:41:40Z",
+  "results_repo": {
+    "repo": "kim-em/lean-eval-leaderboard",
+    "commit": "3e0d35c87dc8b747b5ed2041948aca3ed4596f28"
+  },
+  "benchmark": {
+    "repo": "kim-em/lean-eval",
+    "commit": "bdd504caf34f165e6fbbf37fe082148570e7c4b0"
+  },
+  "summary": {
+    "models": 0,
+    "submitters": 0,
+    "problems": 17,
+    "main_problems": 15,
+    "test_problems": 2
+  },
+  "entries": []
+}
