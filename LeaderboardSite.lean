@@ -4,6 +4,7 @@ import SiteTheme
 import LeaderboardSite.Pages.Front
 import LeaderboardSite.Pages.Benchmark
 import LeaderboardSite.Pages.Problems
+import LeaderboardSite.Pages.Submit
 
 open Verso.Genre.Blog
 open Verso.Genre.Blog.Site.Syntax
@@ -13,6 +14,7 @@ def leaderboardSite : Site := site LeaderboardSite.Pages.Front /
   static "site-data" ← "site-data"
   "benchmark" LeaderboardSite.Pages.Benchmark
   "problems" LeaderboardSite.Pages.Problems
+  "submit" LeaderboardSite.Pages.Submit
 
 def main (args : List String) : IO UInt32 :=
   blogMain (theme "Leaderboard" "Lean AI formalization leaderboard") leaderboardSite {} args
