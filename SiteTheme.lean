@@ -9,17 +9,29 @@ def theme (name : String) (siteName : String) : Theme := {
   Theme.default with
   primaryTemplate := do
     let title ← param (α := String) "title"
+    let path := (← read).path
+    let isHome := path.isEmpty
+    let pageClass := if isHome then "home-page" else "inner-page"
+    let pageCopy ←
+      if isHome then
+        pure Html.empty
+      else
+        pure {{
+          <div class="wrap prose page-copy">
+            {{ ← param "content" }}
+          </div>
+        }}
     return {{
       <html lang="en">
         <head>
           <meta charset="UTF-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
           <title>{{ title }} s!" | {siteName}"</title>
+          {{← builtinHeader }}
           <link rel="stylesheet" href="static/style.css"/>
           <script defer="true" src="static/app.js"></script>
-          {{← builtinHeader }}
         </head>
-        <body>
+        <body class={{pageClass}}>
           <div class="site-shell">
             <header class="topbar">
               <div class="wrap topbar-inner">
@@ -31,10 +43,8 @@ def theme (name : String) (siteName : String) : Theme := {
               </div>
             </header>
             <main class="page" role="main">
-              <div class="wrap prose">
-                {{ ← param "content" }}
-              </div>
-              <div id="leaderboard-root" class="leaderboard-root"></div>
+              {{pageCopy}}
+              <div id="app-root" class="leaderboard-root" data-page={{title}}></div>
             </main>
             <footer class="footer">
               <div class="wrap footer-inner">

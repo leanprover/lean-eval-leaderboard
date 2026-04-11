@@ -150,6 +150,12 @@ nav.top .home {
   margin-bottom: 22px;
 }
 
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 28px;
+}
+
 .hero-kicker,
 .panel-kicker,
 .section-label,
@@ -186,6 +192,23 @@ nav.top .home {
   flex-wrap: wrap;
   gap: 14px;
   margin-top: 28px;
+}
+
+.hero-side {
+  align-self: stretch;
+  padding: 6px 0 0 18px;
+  border-left: 1px solid rgba(126, 227, 217, 0.08);
+}
+
+.hero-side-copy,
+.empty-lead,
+.catalog-notes {
+  color: #aeb8bf;
+}
+
+.hero-side-copy {
+  margin-top: 16px;
+  max-width: 30ch;
 }
 
 .hero-stat {
@@ -238,6 +261,41 @@ nav.top .home {
 .entry-list {
   display: grid;
   gap: 12px;
+}
+
+.empty-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  padding-top: 8px;
+}
+
+.empty-problem-list {
+  display: grid;
+  gap: 10px;
+}
+
+.empty-problem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(10, 14, 18, 0.66);
+  border: 1px solid rgba(126, 227, 217, 0.08);
+}
+
+.empty-problem-title {
+  font-size: 0.94rem;
+  color: #dbe2e5;
+}
+
+.empty-problem code,
+.catalog-item code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.76rem;
+  color: #7fe3d9;
 }
 
 .entry {
@@ -365,6 +423,14 @@ nav.top .home {
   color: #d7e2e6;
 }
 
+.theorem-card-static {
+  display: block;
+  position: static;
+  margin-top: 14px;
+  box-shadow: none;
+  background: rgba(7, 10, 14, 0.8);
+}
+
 .entry-side {
   border-left: 1px solid rgba(126, 227, 217, 0.08);
   padding-left: 22px;
@@ -430,10 +496,58 @@ nav.top .home {
   color: #e7ecef;
 }
 
+.catalog-panel {
+  margin-top: 0;
+}
+
+.catalog-columns {
+  display: grid;
+  gap: 28px;
+}
+
+.catalog-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.catalog-item {
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(10, 14, 18, 0.66);
+  border: 1px solid rgba(126, 227, 217, 0.08);
+}
+
+.catalog-item-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.catalog-item-head h3 {
+  margin-top: 6px;
+  font-size: 1.05rem;
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.catalog-kicker {
+  color: #7fe3d9;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-size: 0.68rem;
+}
+
+.catalog-notes {
+  margin-top: 12px;
+}
+
 @media (max-width: 900px) {
   .topbar-inner,
   .panel-header,
-  .entry-body {
+  .entry-body,
+  .hero-grid,
+  .empty-showcase {
     grid-template-columns: 1fr;
     display: grid;
   }
@@ -452,6 +566,13 @@ nav.top .home {
   }
 
   .entry-side {
+    border-left: 0;
+    border-top: 1px solid rgba(126, 227, 217, 0.08);
+    padding-left: 0;
+    padding-top: 18px;
+  }
+
+  .hero-side {
     border-left: 0;
     border-top: 1px solid rgba(126, 227, 217, 0.08);
     padding-left: 0;
