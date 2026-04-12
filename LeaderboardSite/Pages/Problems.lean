@@ -78,7 +78,7 @@ Informal solution: Prove that the Riemann hypothesis is equivalent to the inequa
 
 ```anchor riemann_hypothesis_iff_lagarias_elementary_criterion (module := BenchmarkProblems.Catalog)
 theorem riemann_hypothesis_iff_lagarias_elementary_criterion :
-    RiemannHypothesis ↔ LagariasElementaryCriterion := by
+    RiemannHypothesis ↔ FormalMathEval.NumberTheory.LagariasElementaryCriterion := by
   sorry
 ```
 
@@ -365,3 +365,4 @@ theorem list_append_singleton_length :
     (([1, 2] : List Nat).append [3]).length = 3 := by
   sorry
 ```
+

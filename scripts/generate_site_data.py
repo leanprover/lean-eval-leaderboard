@@ -182,6 +182,53 @@ def strip_imports(text: str) -> tuple[list[str], list[str]]:
     return imports, body
 
 
+DECL_PATTERN = re.compile(
+    r"^(?:@[A-Za-z0-9_.]+(?:\s*\[[^\]]+\])?\s+)*"
+    r"(?:(?:protected|private)\s+)?"
+    r"(?P<kind>abbrev|class|def|inductive|opaque|structure|theorem)\s+"
+    r"(?P<name>[A-Za-z0-9_']+)\b"
+)
+
+
+def collect_local_declarations(lines: list[str]) -> dict[str, str]:
+    namespace_stack: list[str] = []
+    declarations: dict[str, str] = {}
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("/-") or stripped.startswith("--"):
+            continue
+        if stripped.startswith("namespace "):
+            parts = stripped.split()
+            if len(parts) >= 2:
+                namespace_stack.append(parts[1])
+            continue
+        if stripped.startswith("end "):
+            parts = stripped.split()
+            if len(parts) >= 2 and namespace_stack and namespace_stack[-1] == parts[1]:
+                namespace_stack.pop()
+            continue
+        match = DECL_PATTERN.match(stripped)
+        if match is None:
+            continue
+        name = match.group("name")
+        declarations[name] = ".".join(namespace_stack + [name]) if namespace_stack else name
+    return declarations
+
+
+def qualify_theorem_text(problem: Problem, theorem_text: str, local_declarations: dict[str, str]) -> str:
+    theorem_name = problem.theorem.rsplit(".", maxsplit=1)[-1]
+    qualified = theorem_text
+    for short_name, full_name in sorted(local_declarations.items(), key=lambda item: len(item[0]), reverse=True):
+        if short_name == theorem_name:
+            continue
+        qualified = re.sub(
+            rf"(?<![A-Za-z0-9_.']){re.escape(short_name)}\b",
+            full_name,
+            qualified,
+        )
+    return qualified
+
+
 def inject_anchor(problem: Problem, theorem_text: str) -> tuple[str, str]:
     theorem_name = problem.theorem.rsplit(".", maxsplit=1)[-1]
     pattern = re.compile(
@@ -215,8 +262,13 @@ def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tu
             if line not in imports:
                 imports.append(line)
         body_parts.append("\n".join(deps_body).strip())
+        local_declarations = collect_local_declarations(deps_body)
+    else:
+        deps_body = []
+        local_declarations = {}
 
-    anchored_theorem, anchor_block = inject_anchor(problem, "\n".join(challenge_body).strip())
+    theorem_text = qualify_theorem_text(problem, "\n".join(challenge_body).strip(), local_declarations)
+    anchored_theorem, anchor_block = inject_anchor(problem, theorem_text)
     body_parts.append(anchored_theorem.strip())
     return imports, body_parts, anchor_block
 

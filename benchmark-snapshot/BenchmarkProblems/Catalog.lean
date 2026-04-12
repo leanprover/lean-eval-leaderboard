@@ -85,7 +85,7 @@ open scoped ArithmeticFunction.sigma
 
 -- ANCHOR: riemann_hypothesis_iff_lagarias_elementary_criterion
 theorem riemann_hypothesis_iff_lagarias_elementary_criterion :
-    RiemannHypothesis ↔ LagariasElementaryCriterion := by
+    RiemannHypothesis ↔ FormalMathEval.NumberTheory.LagariasElementaryCriterion := by
   sorry
 -- ANCHOR_END: riemann_hypothesis_iff_lagarias_elementary_criterion
 
