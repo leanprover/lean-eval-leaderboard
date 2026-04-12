@@ -25,11 +25,8 @@ jobs:
       - name: Checkout leaderboard repo
         uses: actions/checkout@v4
 
-      - name: Checkout benchmark repo
-        uses: actions/checkout@v4
-        with:
-          repository: kim-em/lean-eval
-          path: lean-eval
+      - name: Clone benchmark repo
+        run: git clone --depth=1 https://github.com/kim-em/lean-eval.git lean-eval
 
       - name: Set up elan
         shell: bash
