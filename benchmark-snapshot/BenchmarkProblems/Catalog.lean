@@ -25,7 +25,7 @@ open NumberField
 
 -- ANCHOR: cyclotomic_integer_house_le_two
 theorem cyclotomic_integer_house_le_two {K : Type*} [Field K] [NumberField K] [Algebra ℚ K]
-    {n : ℕ} [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
+    (n : ℕ) [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
     (hβ_int : IsIntegral ℤ β)
     (hβ_real : β ∈ NumberField.maximalRealSubfield K) :
     house β ≤ 2 →
@@ -161,8 +161,6 @@ def markoffGraph (p : ℕ) : SimpleGraph (MarkoffTriple p) where
 
 end Combinatorics
 end FormalMathEval
-
-open FormalMathEval.Combinatorics
 
 open scoped BigOperators
 

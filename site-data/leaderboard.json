@@ -1,20 +1,68 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-04-11T13:24:52Z",
+  "generated_at": "2026-04-12T09:26:30Z",
   "results_repo": {
     "repo": "kim-em/lean-eval-leaderboard",
-    "commit": "ae4f8ffc21599734ea48aa3d04780f9962b51b58"
+    "commit": "34c8e8e9160a873cd72a86c4bacc7deb7c8848f8"
   },
   "benchmark": {
     "repo": "kim-em/lean-eval",
-    "commit": "0af2e52ea0072dc7fce4236ed1d431f62f04b341"
+    "commit": "4a642afc944a58fd074e21ed1c2fe0e71d015559"
   },
   "summary": {
-    "models": 0,
-    "submitters": 0,
+    "models": 1,
+    "submitters": 1,
     "problems": 17,
     "main_problems": 15,
     "test_problems": 2
   },
-  "entries": []
+  "entries": [
+    {
+      "model_id": "dogfood",
+      "model_name": "dogfood",
+      "score": {
+        "solved_total": 1,
+        "solved_main": 0,
+        "solved_test": 1,
+        "display": "1"
+      },
+      "first_solved_at": "2026-04-12T03:27:23Z",
+      "last_solved_at": "2026-04-12T03:27:23Z",
+      "submitter_count": 1,
+      "submitters": [
+        {
+          "user": "kim-em",
+          "solved_total": 1
+        }
+      ],
+      "solved_problem_ids": [
+        "two_plus_two"
+      ],
+      "notable_problem_ids": [
+        "two_plus_two"
+      ],
+      "solved_problems": [
+        {
+          "problem_id": "two_plus_two",
+          "solved_at": "2026-04-12T03:27:23Z",
+          "rarity_rank": 1,
+          "rarity_score": 20555,
+          "public_solution": {
+            "available": false,
+            "repo": null,
+            "ref": null,
+            "url": null
+          },
+          "provenance": {
+            "user": "kim-em",
+            "issue_number": 2,
+            "benchmark_commit": "739e919f0086658c97055e80e06e540f81c74d42",
+            "submission_repo": "kim-em/lean-eval-dogfood",
+            "submission_ref": "d4f2f309e180037f352f8e6086dd4063ccbdce00"
+          }
+        }
+      ],
+      "rank": 1
+    }
+  ]
 }
