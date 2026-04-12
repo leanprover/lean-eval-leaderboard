@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -63,12 +66,22 @@ jobs:
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
 
+      - name: Install LinkChecker
+        run: |
+          pip install linkchecker
+
+      - name: Run LinkChecker (local links only)
+        run: |
+          linkchecker --config=.linkchecker/linkcheckerrc './_site/'
+
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

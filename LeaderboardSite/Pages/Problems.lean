@@ -10,9 +10,13 @@ open Verso.Code.External
 set_option verso.exampleProject "benchmark-snapshot"
 
 #doc (Page) "Problems" =>
-The benchmark catalog is rendered from generated Lean snapshot modules derived from the
-benchmark source. These code blocks are processed by Verso against a real Lean project, so
-hover information and symbol metadata come from Lean rather than from pre-rendered HTML.
+The benchmark catalog consists of carefully curated problems across mathematics,
+chosen so that their statements are mostly accessible using existing Mathlib definitions,
+but their solutions are difficult for current publicly available frontier models.
+
+The problem statements below are automatically extracted from the [lean-eval](https://github.com/kim-em/lean-eval) repository.
+Authors are encouraged to submit new problems via PRs to that repository, for inclusion in future benchmark releases.
+See [Submit](/submit) for details on submitting solutions.
 
 # Main benchmark problems
 
@@ -365,4 +369,3 @@ theorem list_append_singleton_length :
     (([1, 2] : List Nat).append [3]).length = 3 := by
   sorry
 ```
-

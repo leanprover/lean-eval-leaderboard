@@ -5,9 +5,7 @@ open Verso.Genre.Blog
 #doc (Page) "Submit" =>
 
 Submissions are made by opening a GitHub issue on the
-[lean-eval benchmark repository](https://github.com/kim-em/lean-eval). There
-is no pull request to open, no local build to run, and no CLI to install.
-Three short steps:
+[lean-eval benchmark repository](https://github.com/kim-em/lean-eval).
 
 # 1. Put your proof somewhere the lean-eval CI can fetch it
 
@@ -28,12 +26,11 @@ it. The install link is in the
 Secret (unlisted) gists are not supported in v1. Make your gist public, or
 host the proof in a repository.
 
-# 2. Lay the proof out so the CI can find it
+# 2. Lay out the proof so CI can find it
 
 The CI walks whatever you submit and tries every directory containing a
 `lakefile.toml` whose `name` field matches a benchmark problem id, and which
-has a `Submission.lean` next to it. Any layout satisfying this works. For
-example:
+has a `Submission.lean` next to it. For example:
 
 * a clone of a single generated workspace from
   [kim-em/lean-eval/generated/](https://github.com/kim-em/lean-eval/tree/main/generated)
