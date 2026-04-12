@@ -32,7 +32,7 @@ class Problem:
     id: str
     title: str
     test: bool
-    author: str
+    submitter: str
     module: str
     theorem: str
     notes: str | None
@@ -84,7 +84,7 @@ def load_manifest(manifest_path: pathlib.Path, benchmark_repo: pathlib.Path) -> 
                 id=str(raw["id"]),
                 title=str(raw["title"]),
                 test=bool(raw.get("test", False)),
-                author=str(raw["author"]),
+                submitter=str(raw["submitter"]),
                 module=str(raw["module"]),
                 theorem=str(raw["theorem"]),
                 notes=str(raw["notes"]).strip() if raw.get("notes") else None,
@@ -259,7 +259,7 @@ def build_problem_page(benchmark_repo: pathlib.Path, problems: list[Problem]) ->
                 "",
                 f"`{problem.id}`",
                 "",
-                f"Author: {problem.author}.",
+                f"Submitter: {problem.submitter}.",
                 "",
                 f"Notes: {verso_text(problem.notes)}",
                 "",
@@ -329,7 +329,7 @@ def timestamp_key(value: str) -> float:
 
 def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem]) -> dict[str, Any]:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": utc_now(),
         "benchmark": {
             "repo": "kim-em/lean-eval",
@@ -340,7 +340,7 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
                 "id": problem.id,
                 "title": problem.title,
                 "test": problem.test,
-                "author": problem.author,
+                "submitter": problem.submitter,
                 "module": problem.module,
                 "theorem": problem.theorem,
                 "statement": problem.statement,

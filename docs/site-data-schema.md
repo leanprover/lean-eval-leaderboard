@@ -30,7 +30,7 @@ This file is the benchmark catalog as consumed by the website.
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_at": "2026-04-11T12:00:00Z",
   "benchmark": {
     "repo": "kim-em/lean-eval",
@@ -41,7 +41,7 @@ This file is the benchmark catalog as consumed by the website.
       "id": "finite_graph_ramsey_theorem",
       "title": "Finite Ramsey theorem for graphs",
       "test": false,
-      "author": "Kim Morrison",
+      "submitter": "Kim Morrison",
       "module": "FormalMathEval.Combinatorics.Ramsey",
       "theorem": "finite_graph_ramsey_theorem",
       "statement": "(r s : ℕ) : ∃ n, ...",
@@ -68,7 +68,7 @@ This file is the benchmark catalog as consumed by the website.
 - `id`: stable benchmark problem id
 - `title`: display title
 - `test`: whether this is a test/starter problem
-- `author`: benchmark author
+- `submitter`: benchmark submitter
 - `module`: Lean module containing the theorem
 - `theorem`: Lean theorem identifier from the manifest
 - `statement`: theorem statement text extracted from the benchmark source
@@ -279,7 +279,7 @@ The frontend should treat `site-data/leaderboard.json` as authoritative for:
 
 ## Evolution guidance
 
-Additive changes may add optional fields while keeping `schema_version = 1`.
+Additive changes may add optional fields while keeping the current `schema_version`.
 
 Breaking changes should increment the version if they:
 
@@ -287,3 +287,8 @@ Breaking changes should increment the version if they:
 - change leaderboard row identity
 - change the meaning of `score`
 - change the meaning of `solved_problems` or `notable_problem_ids`
+
+### `problems.json` version history
+
+- `2`: renamed the per-problem `author` field to `submitter`
+- `1`: initial format
