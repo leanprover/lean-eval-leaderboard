@@ -1,0 +1,6 @@
+[filtering]
+ignorewarnings=url-content-too-large,url-too-long
+
+[checking]
+localonly=1
+maxrequestspersecond=30
