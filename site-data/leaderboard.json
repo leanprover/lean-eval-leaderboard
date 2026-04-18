@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-04-18T07:12:44Z",
+  "generated_at": "2026-04-18T08:07:14Z",
   "results_repo": {
     "repo": "kim-em/lean-eval-leaderboard",
-    "commit": "7f3e11bb53fd746b892ffac1390af5c618c793c2"
+    "commit": "74c82d7d2eac199c6a7636822d18c7fbf85a663e"
   },
   "benchmark": {
     "repo": "kim-em/lean-eval",
