@@ -81,6 +81,7 @@ def LagariasElementaryCriterion : Prop :=
 end NumberTheory
 end LeanEval
 
+open LeanEval.NumberTheory
 open scoped ArithmeticFunction.sigma
 
 -- ANCHOR: riemann_hypothesis_iff_lagarias_elementary_criterion
@@ -162,6 +163,7 @@ def markoffGraph (p : ℕ) : SimpleGraph (MarkoffTriple p) where
 end Combinatorics
 end LeanEval
 
+open LeanEval.Combinatorics
 open scoped BigOperators
 
 -- ANCHOR: dvd_card_connectedComponent_markoffGraph
@@ -312,3 +314,386 @@ theorem pi_succ_sphere_n_mulEquiv_zmod_two (n : ℕ) (hn : 3 ≤ n)
 -- ANCHOR_END: pi_succ_sphere_n_mulEquiv_zmod_two
 
 end ProblemPiSuccSphereNMulEquivZmodTwo
+
+namespace ProblemSubstInvXSubXSqEqCatalan
+
+open PowerSeries
+
+-- ANCHOR: substInv_X_sub_X_sq_eq_catalan
+theorem substInv_X_sub_X_sq_eq_catalan (n : ℕ) :
+    haveI : Invertible (coeff 1 ((X : ℚ⟦X⟧) - X ^ 2)) := by
+      simp [coeff_X, coeff_X_pow]; exact invertibleOne
+    coeff (n + 1) (substInv ((X : ℚ⟦X⟧) - X ^ 2)) =
+      (Nat.choose (2 * n) n : ℚ) / (↑n + 1) := by
+  sorry
+-- ANCHOR_END: substInv_X_sub_X_sq_eq_catalan
+
+end ProblemSubstInvXSubXSqEqCatalan
+
+namespace ProblemIsStarNormalMulOfCommute
+
+-- ANCHOR: isStarNormal_mul_of_commute
+theorem isStarNormal_mul_of_commute {A : Type*} [NonUnitalCStarAlgebra A]
+    {a b : A} (ha : IsStarNormal a) (hb : IsStarNormal b)
+    (hab : Commute a b) :
+    IsStarNormal (a * b) := by
+  sorry
+-- ANCHOR_END: isStarNormal_mul_of_commute
+
+end ProblemIsStarNormalMulOfCommute
+
+namespace ProblemPosSemidefMapExp
+
+open scoped MatrixOrder Matrix
+
+-- ANCHOR: posSemidef_map_exp
+theorem posSemidef_map_exp {n : Type*} [Fintype n] [DecidableEq n]
+    {A : Matrix n n ℝ} (hA : A.PosSemidef) :
+    (A.map Real.exp).PosSemidef := by
+  sorry
+-- ANCHOR_END: posSemidef_map_exp
+
+end ProblemPosSemidefMapExp
+
+namespace ProblemMulCayleyConnectedIffClosureEqTop
+
+-- ANCHOR: mulCayley_connected_iff_closure_eq_top
+theorem mulCayley_connected_iff_closure_eq_top {G : Type*} [Group G]
+    (S : Set G) :
+    (SimpleGraph.mulCayley S).Connected ↔ Subgroup.closure S = ⊤ := by
+  sorry
+-- ANCHOR_END: mulCayley_connected_iff_closure_eq_top
+
+end ProblemMulCayleyConnectedIffClosureEqTop
+
+namespace ProblemOppenheimInequality
+
+open scoped MatrixOrder Matrix
+
+-- ANCHOR: oppenheim_inequality
+theorem oppenheim_inequality {n : Type*} [Fintype n] [DecidableEq n]
+    {A B : Matrix n n ℝ} (hA : A.PosSemidef) (hB : B.PosSemidef) :
+    A.det * ∏ i, B i i ≤ (A ⊙ B).det := by
+  sorry
+-- ANCHOR_END: oppenheim_inequality
+
+end ProblemOppenheimInequality
+
+namespace ProblemSymActionRangeEqCentralizerGlAction
+
+namespace LeanEval
+namespace RepresentationTheory
+
+open scoped TensorProduct
+
+/-!
+Schur–Weyl duality on `V^⊗k`.
+
+Two commuting actions on `V^⊗k`:
+
+* `symAction`: the symmetric group `S_k` acts by permuting tensor factors.
+* `glAction`: the general linear group `GL(V)` acts diagonally as `g · (v₁ ⊗ ⋯ ⊗ v_k) =
+  (g v₁) ⊗ ⋯ ⊗ (g v_k)`.
+
+Schur–Weyl duality says their images in `End(V^⊗k)` generate mutual centralizers. We state
+the two directions as separate `eval_problem`s.
+-/
+
+/-- The symmetric group `S_k` acts on `V^⊗k` by permuting the tensor factors. -/
+def symAction (R M : Type*) [CommSemiring R] [AddCommMonoid M] [Module R M] (k : ℕ) :
+    Equiv.Perm (Fin k) →* Module.End R (⨂[R]^k M) where
+  toFun σ := (PiTensorProduct.reindex R (fun _ : Fin k => M) σ).toLinearMap
+  map_one' := by
+    ext x
+    simp only [LinearEquiv.coe_coe, LinearMap.coe_compMultilinearMap, Function.comp_apply,
+      PiTensorProduct.reindex_tprod, Module.End.one_apply]
+    rfl
+  map_mul' σ τ := by
+    ext x
+    simp only [Module.End.mul_apply, LinearEquiv.coe_coe, LinearMap.coe_compMultilinearMap,
+      Function.comp_apply, PiTensorProduct.reindex_tprod]
+    rfl
+
+/-- The general linear group `GL(V)` acts diagonally on `V^⊗k`:
+`g · (v₁ ⊗ ⋯ ⊗ v_k) = (g v₁) ⊗ ⋯ ⊗ (g v_k)`. -/
+def glAction (R M : Type*) [CommSemiring R] [AddCommMonoid M] [Module R M] (k : ℕ) :
+    (M →ₗ[R] M)ˣ →* Module.End R (⨂[R]^k M) where
+  toFun g := PiTensorProduct.map (fun _ : Fin k => (g : M →ₗ[R] M))
+  map_one' := by ext x; simp
+  map_mul' g h := by ext x; simp
+
+
+
+end RepresentationTheory
+end LeanEval
+
+open LeanEval.RepresentationTheory
+open scoped TensorProduct
+
+-- ANCHOR: symAction_range_eq_centralizer_glAction
+theorem symAction_range_eq_centralizer_glAction {R : Type*} [Field R]
+    {M : Type*} [AddCommGroup M] [Module R M] [FiniteDimensional R M]
+    {k : ℕ} [Invertible (k.factorial : R)] :
+    Algebra.adjoin R (Set.range (LeanEval.RepresentationTheory.symAction R M k)) =
+      Subalgebra.centralizer R (Set.range (LeanEval.RepresentationTheory.glAction R M k)) := by
+  sorry
+-- ANCHOR_END: symAction_range_eq_centralizer_glAction
+
+end ProblemSymActionRangeEqCentralizerGlAction
+
+namespace ProblemGlActionRangeEqCentralizerSymAction
+
+namespace LeanEval
+namespace RepresentationTheory
+
+open scoped TensorProduct
+
+/-!
+Schur–Weyl duality on `V^⊗k`.
+
+Two commuting actions on `V^⊗k`:
+
+* `symAction`: the symmetric group `S_k` acts by permuting tensor factors.
+* `glAction`: the general linear group `GL(V)` acts diagonally as `g · (v₁ ⊗ ⋯ ⊗ v_k) =
+  (g v₁) ⊗ ⋯ ⊗ (g v_k)`.
+
+Schur–Weyl duality says their images in `End(V^⊗k)` generate mutual centralizers. We state
+the two directions as separate `eval_problem`s.
+-/
+
+/-- The symmetric group `S_k` acts on `V^⊗k` by permuting the tensor factors. -/
+def symAction (R M : Type*) [CommSemiring R] [AddCommMonoid M] [Module R M] (k : ℕ) :
+    Equiv.Perm (Fin k) →* Module.End R (⨂[R]^k M) where
+  toFun σ := (PiTensorProduct.reindex R (fun _ : Fin k => M) σ).toLinearMap
+  map_one' := by
+    ext x
+    simp only [LinearEquiv.coe_coe, LinearMap.coe_compMultilinearMap, Function.comp_apply,
+      PiTensorProduct.reindex_tprod, Module.End.one_apply]
+    rfl
+  map_mul' σ τ := by
+    ext x
+    simp only [Module.End.mul_apply, LinearEquiv.coe_coe, LinearMap.coe_compMultilinearMap,
+      Function.comp_apply, PiTensorProduct.reindex_tprod]
+    rfl
+
+/-- The general linear group `GL(V)` acts diagonally on `V^⊗k`:
+`g · (v₁ ⊗ ⋯ ⊗ v_k) = (g v₁) ⊗ ⋯ ⊗ (g v_k)`. -/
+def glAction (R M : Type*) [CommSemiring R] [AddCommMonoid M] [Module R M] (k : ℕ) :
+    (M →ₗ[R] M)ˣ →* Module.End R (⨂[R]^k M) where
+  toFun g := PiTensorProduct.map (fun _ : Fin k => (g : M →ₗ[R] M))
+  map_one' := by ext x; simp
+  map_mul' g h := by ext x; simp
+
+
+
+end RepresentationTheory
+end LeanEval
+
+open LeanEval.RepresentationTheory
+open scoped TensorProduct
+
+-- ANCHOR: glAction_range_eq_centralizer_symAction
+theorem glAction_range_eq_centralizer_symAction {R : Type*} [Field R]
+    {M : Type*} [AddCommGroup M] [Module R M] [FiniteDimensional R M]
+    {k : ℕ} [Invertible (k.factorial : R)] :
+    Algebra.adjoin R (Set.range (LeanEval.RepresentationTheory.glAction R M k)) =
+      Subalgebra.centralizer R (Set.range (LeanEval.RepresentationTheory.symAction R M k)) := by
+  sorry
+-- ANCHOR_END: glAction_range_eq_centralizer_symAction
+
+end ProblemGlActionRangeEqCentralizerSymAction
+
+namespace ProblemG2IrrepTensorSquareDecomp
+
+namespace LeanEval
+namespace RepresentationTheory
+
+open scoped TensorProduct
+
+/-!
+Tensor square decomposition for irreducible representations of g₂ and e₈
+defined by the Serre construction.
+
+For each of the exceptional Lie algebras g₂ and e₈ over ℂ, the irreducible
+representation with highest weight `ω₁ + ω_n` (the sum of the first and last
+fundamental weights, in Bourbaki labelling) has a particular dimension `d`,
+and its tensor square decomposes into `k` isotypic components (counted as
+distinct isomorphism classes of irreducible Lie submodules):
+
+* g₂: dim V = 64,     k = 14   (highest weight ω₁ + ω₂)
+* e₈: dim V = 779247, k = 40   (highest weight ω₁ + ω₈)
+
+Mathlib's `isotypicComponents` is defined for modules over a ring. To use it
+on a Lie module `M`, we transport the action through the universal enveloping
+algebra: a `LieModule R L M` extends to a `Module (UniversalEnvelopingAlgebra R L) M`
+via the universal property.
+-/
+
+noncomputable instance lieModuleToEnvelopingModule
+    (R L M : Type*) [CommRing R] [LieRing L] [LieAlgebra R L]
+    [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M] :
+    Module (UniversalEnvelopingAlgebra R L) M :=
+  Module.compHom M
+    (UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R L M)).toRingHom
+
+
+
+end RepresentationTheory
+end LeanEval
+
+open LeanEval.RepresentationTheory
+open scoped TensorProduct
+
+-- ANCHOR: g2_irrep_tensor_square_decomp
+theorem g2_irrep_tensor_square_decomp :
+    ∃ (V : Type) (_ : AddCommGroup V) (_ : Module ℂ V)
+      (_ : LieRingModule (LieAlgebra.g₂ ℂ) V) (_ : LieModule ℂ (LieAlgebra.g₂ ℂ) V),
+      Module.finrank ℂ V = 64 ∧
+      LieModule.IsIrreducible ℂ (LieAlgebra.g₂ ℂ) V ∧
+      (isotypicComponents (UniversalEnvelopingAlgebra ℂ (LieAlgebra.g₂ ℂ))
+        (V ⊗[ℂ] V)).ncard = 14 := by
+  sorry
+-- ANCHOR_END: g2_irrep_tensor_square_decomp
+
+end ProblemG2IrrepTensorSquareDecomp
+
+namespace ProblemE8IrrepTensorSquareDecomp
+
+namespace LeanEval
+namespace RepresentationTheory
+
+open scoped TensorProduct
+
+/-!
+Tensor square decomposition for irreducible representations of g₂ and e₈
+defined by the Serre construction.
+
+For each of the exceptional Lie algebras g₂ and e₈ over ℂ, the irreducible
+representation with highest weight `ω₁ + ω_n` (the sum of the first and last
+fundamental weights, in Bourbaki labelling) has a particular dimension `d`,
+and its tensor square decomposes into `k` isotypic components (counted as
+distinct isomorphism classes of irreducible Lie submodules):
+
+* g₂: dim V = 64,     k = 14   (highest weight ω₁ + ω₂)
+* e₈: dim V = 779247, k = 40   (highest weight ω₁ + ω₈)
+
+Mathlib's `isotypicComponents` is defined for modules over a ring. To use it
+on a Lie module `M`, we transport the action through the universal enveloping
+algebra: a `LieModule R L M` extends to a `Module (UniversalEnvelopingAlgebra R L) M`
+via the universal property.
+-/
+
+noncomputable instance lieModuleToEnvelopingModule
+    (R L M : Type*) [CommRing R] [LieRing L] [LieAlgebra R L]
+    [AddCommGroup M] [Module R M] [LieRingModule L M] [LieModule R L M] :
+    Module (UniversalEnvelopingAlgebra R L) M :=
+  Module.compHom M
+    (UniversalEnvelopingAlgebra.lift R (LieModule.toEnd R L M)).toRingHom
+
+
+
+end RepresentationTheory
+end LeanEval
+
+open LeanEval.RepresentationTheory
+open scoped TensorProduct
+
+-- ANCHOR: e8_irrep_tensor_square_decomp
+theorem e8_irrep_tensor_square_decomp :
+    ∃ (V : Type) (_ : AddCommGroup V) (_ : Module ℂ V)
+      (_ : LieRingModule (LieAlgebra.e₈ ℂ) V) (_ : LieModule ℂ (LieAlgebra.e₈ ℂ) V),
+      Module.finrank ℂ V = 779247 ∧
+      LieModule.IsIrreducible ℂ (LieAlgebra.e₈ ℂ) V ∧
+      (isotypicComponents (UniversalEnvelopingAlgebra ℂ (LieAlgebra.e₈ ℂ))
+        (V ⊗[ℂ] V)).ncard = 40 := by
+  sorry
+-- ANCHOR_END: e8_irrep_tensor_square_decomp
+
+end ProblemE8IrrepTensorSquareDecomp
+
+namespace ProblemCerfGammaFour
+
+open scoped Manifold ContDiff
+open Metric (sphere)
+
+-- ANCHOR: cerf_gamma_four
+theorem cerf_gamma_four (f : sphere (0 : EuclideanSpace ℝ (Fin 4)) 1 ≃ₘ⟮𝓡 3, 𝓡 3⟯
+         sphere (0 : EuclideanSpace ℝ (Fin 4)) 1) :
+    ∃ (A : Matrix.orthogonalGroup (Fin 4) ℝ)
+      (F F' : unitInterval × sphere (0 : EuclideanSpace ℝ (Fin 4)) 1 →
+              sphere (0 : EuclideanSpace ℝ (Fin 4)) 1),
+      ContMDiff ((𝓡∂ 1).prod (𝓡 3)) (𝓡 3) ∞ F ∧
+      ContMDiff ((𝓡∂ 1).prod (𝓡 3)) (𝓡 3) ∞ F' ∧
+      (∀ t p, F  (t, F' (t, p)) = p) ∧
+      (∀ t p, F' (t, F  (t, p)) = p) ∧
+      (∀ p, F (0, p) = f p) ∧
+      (∀ p, (F (1, p) : EuclideanSpace ℝ (Fin 4)) =
+            Matrix.UnitaryGroup.toLinearEquiv A
+              (p : EuclideanSpace ℝ (Fin 4))) := by
+  sorry
+-- ANCHOR_END: cerf_gamma_four
+
+end ProblemCerfGammaFour
+
+namespace ProblemSmaleConjecture
+
+open scoped Manifold ContDiff
+open Metric (sphere)
+
+-- ANCHOR: smale_conjecture
+theorem smale_conjecture {n : ℕ} [NeZero n]
+    (X : Type) [TopologicalSpace X] [T2Space X] [SecondCountableTopology X]
+    [ChartedSpace (EuclideanHalfSpace n) X] [IsManifold (𝓡∂ n) ∞ X]
+    [CompactSpace X]
+    (F F' : X × sphere (0 : EuclideanSpace ℝ (Fin 4)) 1 →
+            sphere (0 : EuclideanSpace ℝ (Fin 4)) 1)
+    (hF  : ContMDiff ((𝓡∂ n).prod (𝓡 3)) (𝓡 3) ∞ F)
+    (hF' : ContMDiff ((𝓡∂ n).prod (𝓡 3)) (𝓡 3) ∞ F')
+    (hFinv₁ : ∀ x p, F  (x, F' (x, p)) = p)
+    (hFinv₂ : ∀ x p, F' (x, F  (x, p)) = p)
+    (ψ_bdry : (𝓡∂ n).boundary X → Matrix.orthogonalGroup (Fin 4) ℝ)
+    (hψ_bdry_cont : Continuous ψ_bdry)
+    (hF_bdry : ∀ (b : (𝓡∂ n).boundary X)
+                 (p : sphere (0 : EuclideanSpace ℝ (Fin 4)) 1),
+              (F ((b : X), p) : EuclideanSpace ℝ (Fin 4)) =
+                Matrix.UnitaryGroup.toLinearEquiv (ψ_bdry b)
+                  (p : EuclideanSpace ℝ (Fin 4))) :
+    ∃ (ψ : X → Matrix.orthogonalGroup (Fin 4) ℝ)
+      (H H' : X × unitInterval × sphere (0 : EuclideanSpace ℝ (Fin 4)) 1 →
+              sphere (0 : EuclideanSpace ℝ (Fin 4)) 1),
+      Continuous ψ ∧
+      (∀ b : (𝓡∂ n).boundary X, ψ (b : X) = ψ_bdry b) ∧
+      ContMDiff ((𝓡∂ n).prod ((𝓡∂ 1).prod (𝓡 3))) (𝓡 3) ∞ H ∧
+      ContMDiff ((𝓡∂ n).prod ((𝓡∂ 1).prod (𝓡 3))) (𝓡 3) ∞ H' ∧
+      (∀ x t p, H  (x, t, H' (x, t, p)) = p) ∧
+      (∀ x t p, H' (x, t, H  (x, t, p)) = p) ∧
+      (∀ x p, H (x, 0, p) = F (x, p)) ∧
+      (∀ x (p : sphere (0 : EuclideanSpace ℝ (Fin 4)) 1),
+              (H (x, 1, p) : EuclideanSpace ℝ (Fin 4)) =
+              Matrix.UnitaryGroup.toLinearEquiv (ψ x)
+                (p : EuclideanSpace ℝ (Fin 4))) ∧
+      (∀ (b : (𝓡∂ n).boundary X)
+         (t : unitInterval)
+         (p : sphere (0 : EuclideanSpace ℝ (Fin 4)) 1),
+              H ((b : X), t, p) = F ((b : X), p)) := by
+  sorry
+-- ANCHOR_END: smale_conjecture
+
+end ProblemSmaleConjecture
+
+namespace ProblemVonNeumannDoubleCommutantTfae
+
+-- ANCHOR: vonNeumann_doubleCommutant_tfae
+theorem vonNeumann_doubleCommutant_tfae {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+    (S : StarSubalgebra ℂ (H →L[ℂ] H)) :
+    List.TFAE
+      [ Set.centralizer (Set.centralizer (S : Set (H →L[ℂ] H))) = S
+      , IsClosed
+          (ContinuousLinearMap.toWOT (RingHom.id ℂ) H H '' (S : Set (H →L[ℂ] H)))
+      , IsClosed
+          (ContinuousLinearMap.toPointwiseConvergenceCLM ℂ (RingHom.id ℂ) H H ''
+            (S : Set (H →L[ℂ] H))) ] := by
+  sorry
+-- ANCHOR_END: vonNeumann_doubleCommutant_tfae
+
+end ProblemVonNeumannDoubleCommutantTfae
