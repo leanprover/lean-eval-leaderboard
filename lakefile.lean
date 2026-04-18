@@ -6,9 +6,14 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.30.0-rc1"
 
 package «lean-eval-leaderboard» where
 
+input_file problemsJson where
+  path := "site-data/problems.json"
+  text := true
+
 lean_lib SiteTheme where
 
 lean_lib LeaderboardSite where
+  needs := #[problemsJson]
 
 @[default_target]
 lean_exe «lean-eval-leaderboard» where
@@ -32,4 +37,3 @@ script generate (args) do
   if siteCode != 0 then
     return siteCode
   return 0
-
