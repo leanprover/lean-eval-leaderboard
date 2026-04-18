@@ -345,11 +345,34 @@ nav.top .home {
 }
 
 .hero-stat {
+  display: block;
   min-width: 130px;
   padding: 14px 16px;
   border-radius: 14px;
   background: rgba(13, 18, 23, 0.78);
   border: 1px solid rgba(126, 227, 217, 0.1);
+}
+
+.hero-stat-link {
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.hero-stat-link:hover,
+.hero-stat-link:focus-visible {
+  background: rgba(15, 23, 29, 0.96);
+  border-color: rgba(126, 227, 217, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+
+.hero-stat-link:focus-visible {
+  outline: 2px solid rgba(126, 227, 217, 0.45);
+  outline-offset: 2px;
 }
 
 .hero-stat span {

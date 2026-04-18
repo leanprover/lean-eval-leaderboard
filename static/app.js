@@ -23,6 +23,10 @@ function problemPageHref(problemId) {
   return `problems/#${encodeURIComponent(problemId)}`;
 }
 
+function problemsIndexHref() {
+  return "problems/";
+}
+
 function readProblemSections(root) {
   const prose = root.querySelector(".page-copy.prose, .prose.page-copy, .page-copy .prose");
   if (!prose) return [];
@@ -199,7 +203,9 @@ function renderHome(root, problems, leaderboard, renderedMap) {
           <div class="hero-stats">
             <div class="hero-stat"><span>${summary.models ?? 0}</span><label>models</label></div>
             <div class="hero-stat"><span>${summary.submitters ?? 0}</span><label>submitters</label></div>
-            <div class="hero-stat"><span>${summary.problems ?? 0}</span><label>problems</label></div>
+            <a class="hero-stat hero-stat-link" href="${escapeHtml(problemsIndexHref())}">
+              <span>${summary.problems ?? 0}</span><label>problems</label>
+            </a>
           </div>
         </div>
         <aside class="hero-side">
@@ -207,7 +213,6 @@ function renderHome(root, problems, leaderboard, renderedMap) {
           <div class="hero-side-metrics">
             <div class="stat-pair"><span>Main problems</span><span>${summary.main_problems ?? 0}</span></div>
             <div class="stat-pair"><span>Test problems</span><span>${summary.test_problems ?? 0}</span></div>
-            <div class="stat-pair"><span>Theorem previews</span><span>Live</span></div>
           </div>
           <p class="hero-side-copy">
             The site is already driven by extracted Lean statements and public
