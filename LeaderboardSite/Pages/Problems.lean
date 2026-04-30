@@ -122,7 +122,10 @@ elab_rules : term
       let expectedType ← Lean.Elab.Term.elabTerm (← `(Part Page)) none
       Lean.Elab.Term.elabTerm pageTerm (some expectedType)
 
-def _root_.LeaderboardSite.Pages.Problems : Part Page :=
-  problems_page%
+/-- Wrapped as a `VersoDoc` so the `site` DSL's lookup of
+`Problems.toPart` resolves to `VersoDoc.toPart` rather than the
+deprecated `Part.toPart`. -/
+def _root_.LeaderboardSite.Pages.Problems : VersoDoc Page :=
+  .mk (fun _ => problems_page%) "{}"
 
 end LeaderboardSite.Pages

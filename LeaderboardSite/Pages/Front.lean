@@ -62,9 +62,12 @@ private def introProse : Block Page :=
 
 /-- The home page: leaderboard widget (full-width) on top, intro prose
 (constrained-width) below. The page does its own wrapping; the theme
-does not impose a prose container on this page. -/
-def _root_.LeaderboardSite.Pages.Front : Part Page :=
-  pagePart "Lean AI formalization leaderboard"
-    (leaderboard% ++ #[introProse])
+does not impose a prose container on this page.
+
+Wrapped as a `VersoDoc` so the `site` DSL's lookup of `Front.toPart`
+resolves to `VersoDoc.toPart` rather than the deprecated `Part.toPart`. -/
+def _root_.LeaderboardSite.Pages.Front : VersoDoc Page :=
+  .mk (fun _ => pagePart "Lean AI formalization leaderboard"
+    (leaderboard% ++ #[introProse])) "{}"
 
 end LeaderboardSite.Pages
