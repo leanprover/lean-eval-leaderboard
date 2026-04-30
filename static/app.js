@@ -95,6 +95,17 @@ function renderProblemItem(problemMap, renderedMap, solved) {
   const title = problem?.title ?? solved.problem_id;
   const source = solved.public_solution?.available ? solved.public_solution.url : null;
   const problemHref = problemPageHref(solved.problem_id);
+  const description = typeof solved.production_description === "string"
+    ? solved.production_description.trim()
+    : "";
+  const productionMarkup = description
+    ? `
+      <details class="production-note">
+        <summary>How produced</summary>
+        <p>${escapeHtml(description)}</p>
+      </details>
+    `
+    : "";
   return `
     <div class="problem-item">
       <a class="problem-title-link" href="${escapeHtml(problemHref)}">${escapeHtml(title)}</a>
@@ -106,6 +117,7 @@ function renderProblemItem(problemMap, renderedMap, solved) {
         <span class="problem-meta">#${solved.rarity_rank}</span>
         ${source ? `<a class="problem-proof-link" href="${escapeHtml(source)}">proof</a>` : ""}
       </div>
+      ${productionMarkup}
     </div>
   `;
 }

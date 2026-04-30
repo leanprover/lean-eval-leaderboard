@@ -373,6 +373,12 @@ def build_leaderboard_payload(
             model_display.setdefault(model_id, model_name)
             per_model_submitters[model_id][user] += 1
             current = per_model_problem[model_id].get(problem_id)
+            production_description_raw = record.get("production_description")
+            production_description = (
+                str(production_description_raw).strip()
+                if isinstance(production_description_raw, str) and str(production_description_raw).strip()
+                else None
+            )
             candidate = {
                 "problem_id": problem_id,
                 "solved_at": str(record["solved_at"]),
@@ -394,6 +400,7 @@ def build_leaderboard_payload(
                         bool(record["submission_public"]),
                     ),
                 },
+                "production_description": production_description,
             }
             if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(current["solved_at"]):
                 per_model_problem[model_id][problem_id] = candidate
@@ -461,6 +468,7 @@ def build_leaderboard_payload(
                         "rarity_score": item["rarity_score"],
                         "public_solution": item["public_solution"],
                         "provenance": item["provenance"],
+                        "production_description": item.get("production_description"),
                     }
                     for item in notable
                 ],

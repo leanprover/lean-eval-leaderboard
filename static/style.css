@@ -539,6 +539,32 @@ nav.top .home {
   flex-wrap: wrap;
 }
 
+.production-note {
+  border-top: 1px solid rgba(126, 227, 217, 0.08);
+  padding-top: 8px;
+  font-size: 0.82rem;
+  color: #aab8bd;
+}
+
+.production-note > summary {
+  cursor: pointer;
+  color: #86ece0;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.production-note > summary:hover {
+  color: #f2f6f8;
+}
+
+.production-note > p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
 .problem-meta {
   color: #8fa0a6;
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
