@@ -9,6 +9,15 @@ theorem two_plus_two_eq_four : (2 : Nat) + 2 = 4 := by
 
 end ProblemTwoPlusTwo
 
+namespace ProblemCiRegenerateMainCheck
+
+-- ANCHOR: ci_regenerate_main_check
+theorem ci_regenerate_main_check : True := by
+  sorry
+-- ANCHOR_END: ci_regenerate_main_check
+
+end ProblemCiRegenerateMainCheck
+
 namespace ProblemListAppendSingletonLength
 
 -- ANCHOR: list_append_singleton_length
@@ -19,41 +28,54 @@ theorem list_append_singleton_length :
 
 end ProblemListAppendSingletonLength
 
-namespace ProblemCyclotomicIntegerHouseLeTwo
+namespace ProblemChudnovskyFormulaForPiInv
 
-open NumberField
+open scoped Real
 
--- ANCHOR: cyclotomic_integer_house_le_two
-theorem cyclotomic_integer_house_le_two {K : Type*} [Field K] [NumberField K] [Algebra ℚ K]
-    (n : ℕ) [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
-    (hβ_int : IsIntegral ℤ β)
-    (hβ_real : β ∈ NumberField.maximalRealSubfield K) :
-    house β ≤ 2 →
-      house β = 2 ∨ ∃ m : ℕ, 0 < m ∧ house β = 2 * Real.cos (Real.pi / m) := by
+-- ANCHOR: chudnovsky_formula_for_pi_inv
+theorem chudnovsky_formula_for_pi_inv :
+    chudnovskySum = π⁻¹ := by
   sorry
--- ANCHOR_END: cyclotomic_integer_house_le_two
+-- ANCHOR_END: chudnovsky_formula_for_pi_inv
 
-end ProblemCyclotomicIntegerHouseLeTwo
+end ProblemChudnovskyFormulaForPiInv
 
-namespace ProblemCyclotomicIntegerHouseBetweenTwoAnd7633
+namespace ProblemPi1CircleMulEquivInt
 
-open NumberField
-
--- ANCHOR: cyclotomic_integer_house_between_two_and_76_33
-theorem cyclotomic_integer_house_between_two_and_76_33 {K : Type*} [Field K] [NumberField K] [Algebra ℚ K]
-    (n : ℕ) [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
-    (hβ_int : IsIntegral ℤ β)
-    (hβ_real : β ∈ NumberField.maximalRealSubfield K) :
-    (2 < house β ∧ house β < (76 : ℝ) / 33) →
-      house β = (7 + Real.sqrt 3) / 2 ∨
-      house β = Real.sqrt 5 ∨
-      house β = 1 + 2 * Real.cos (2 * Real.pi / 7) ∨
-      house β = (1 + Real.sqrt 5) / Real.sqrt 2 ∨
-      house β = (1 + Real.sqrt 13) / 2 := by
+-- ANCHOR: pi1_circle_mulEquiv_int
+theorem pi1_circle_mulEquiv_int :
+    Nonempty (HomotopyGroup.Pi 1 Circle (1 : Circle) ≃* Multiplicative ℤ) := by
   sorry
--- ANCHOR_END: cyclotomic_integer_house_between_two_and_76_33
+-- ANCHOR_END: pi1_circle_mulEquiv_int
 
-end ProblemCyclotomicIntegerHouseBetweenTwoAnd7633
+end ProblemPi1CircleMulEquivInt
+
+namespace ProblemFiniteGraphRamseyTheorem
+
+open SimpleGraph
+
+-- ANCHOR: finite_graph_ramsey_theorem
+theorem finite_graph_ramsey_theorem :
+    ∀ r s : ℕ, 2 ≤ r → 2 ≤ s → ∃ n : ℕ, ∀ G : SimpleGraph (Fin n), ¬ G.CliqueFree r ∨ ¬ Gᶜ.CliqueFree s := by
+  sorry
+-- ANCHOR_END: finite_graph_ramsey_theorem
+
+end ProblemFiniteGraphRamseyTheorem
+
+namespace ProblemSubstInvXSubXSqEqCatalan
+
+open PowerSeries
+
+-- ANCHOR: substInv_X_sub_X_sq_eq_catalan
+theorem substInv_X_sub_X_sq_eq_catalan (n : ℕ) :
+    haveI : Invertible (coeff 1 ((X : ℚ⟦X⟧) - X ^ 2)) := by
+      simp [coeff_X, coeff_X_pow]; exact invertibleOne
+    coeff (n + 1) (substInv ((X : ℚ⟦X⟧) - X ^ 2)) =
+      (Nat.choose (2 * n) n : ℚ) / (↑n + 1) := by
+  sorry
+-- ANCHOR_END: substInv_X_sub_X_sq_eq_catalan
+
+end ProblemSubstInvXSubXSqEqCatalan
 
 namespace ProblemRiemannHypothesisIffLagariasElementaryCriterion
 
@@ -91,18 +113,6 @@ theorem riemann_hypothesis_iff_lagarias_elementary_criterion :
 -- ANCHOR_END: riemann_hypothesis_iff_lagarias_elementary_criterion
 
 end ProblemRiemannHypothesisIffLagariasElementaryCriterion
-
-namespace ProblemFiniteGraphRamseyTheorem
-
-open SimpleGraph
-
--- ANCHOR: finite_graph_ramsey_theorem
-theorem finite_graph_ramsey_theorem :
-    ∀ r s : ℕ, 2 ≤ r → 2 ≤ s → ∃ n : ℕ, ∀ G : SimpleGraph (Fin n), ¬ G.CliqueFree r ∨ ¬ Gᶜ.CliqueFree s := by
-  sorry
--- ANCHOR_END: finite_graph_ramsey_theorem
-
-end ProblemFiniteGraphRamseyTheorem
 
 namespace ProblemDvdCardConnectedComponentMarkoffGraph
 
@@ -174,108 +184,16 @@ theorem dvd_card_connectedComponent_markoffGraph {p : ℕ} (hp : Nat.Prime p) (h
 
 end ProblemDvdCardConnectedComponentMarkoffGraph
 
-namespace ProblemFiniteGroupIsSolvableOfCardEqPrimePowMulPrimePow
+namespace ProblemMulCayleyConnectedIffClosureEqTop
 
--- ANCHOR: finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow
-theorem finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow {G : Type*} [Group G] [Fintype G]
-    {p q a b : ℕ}
-    (hp : Nat.Prime p)
-    (hq : Nat.Prime q)
-    (hpq : p ≠ q)
-    (hcard : Fintype.card G = p ^ a * q ^ b) :
-    IsSolvable G := by
+-- ANCHOR: mulCayley_connected_iff_closure_eq_top
+theorem mulCayley_connected_iff_closure_eq_top {G : Type*} [Group G]
+    (S : Set G) :
+    (SimpleGraph.mulCayley S).Connected ↔ Subgroup.closure S = ⊤ := by
   sorry
--- ANCHOR_END: finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow
+-- ANCHOR_END: mulCayley_connected_iff_closure_eq_top
 
-end ProblemFiniteGroupIsSolvableOfCardEqPrimePowMulPrimePow
-
-namespace ProblemRoucheLogCountingZeroEq
-
-open ValueDistribution
-
--- ANCHOR: rouche_logCounting_zero_eq
-theorem rouche_logCounting_zero_eq {f g : ℂ → ℂ} {R : ℝ}
-    (hR : 1 ≤ R)
-    (hf : Meromorphic f)
-    (hg : AnalyticOn ℂ g Set.univ)
-    (hbound : ∀ z : ℂ, ‖z‖ = R → ‖g z‖ < ‖f z‖) :
-    logCounting (f + g) 0 R = logCounting f 0 R := by
-  sorry
--- ANCHOR_END: rouche_logCounting_zero_eq
-
-end ProblemRoucheLogCountingZeroEq
-
-namespace ProblemExistsComplementaryPolynomialOnUnitCircle
-
-open Polynomial
-
--- ANCHOR: exists_complementary_polynomial_on_unit_circle
-theorem exists_complementary_polynomial_on_unit_circle (P : ℂ[X])
-    (hP : ∀ z : Circle, ‖P.eval (z : ℂ)‖ ≤ 1) :
-    ∃ Q : ℂ[X],
-      Q.natDegree = P.natDegree ∧
-        ∀ z : Circle, ‖P.eval (z : ℂ)‖ ^ 2 + ‖Q.eval (z : ℂ)‖ ^ 2 = 1 := by
-  sorry
--- ANCHOR_END: exists_complementary_polynomial_on_unit_circle
-
-end ProblemExistsComplementaryPolynomialOnUnitCircle
-
-namespace ProblemIrreducibleNonnegativeMatrixHasPositiveEigenvectorAtSpectralRadius
-
-open scoped NNReal
-
--- ANCHOR: irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius
-theorem irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius {n : Type*} [Fintype n] [DecidableEq n]
-    (A : Matrix n n ℝ)
-    (hA : A.IsIrreducible) :
-    ∃ v : n → ℝ,
-      Module.End.HasEigenvector (Matrix.toLin' A) (spectralRadius ℝ A).toReal v ∧
-      (∀ i, 0 < v i) := by
-  sorry
--- ANCHOR_END: irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius
-
-end ProblemIrreducibleNonnegativeMatrixHasPositiveEigenvectorAtSpectralRadius
-
-namespace ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
-
-open Set
-
--- ANCHOR: mem_convexHull_finset_extremePoints_of_mem_compact_convex
-theorem mem_convexHull_finset_extremePoints_of_mem_compact_convex {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
-    {s : Set E} {x : E}
-    (hscomp : IsCompact s)
-    (hsconv : Convex ℝ s)
-    (hx : x ∈ s) :
-    ∃ t : Finset E,
-      (↑t : Set E) ⊆ s.extremePoints ℝ ∧
-      t.card ≤ Module.finrank ℝ E + 1 ∧
-      x ∈ convexHull ℝ (↑t : Set E) := by
-  sorry
--- ANCHOR_END: mem_convexHull_finset_extremePoints_of_mem_compact_convex
-
-end ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
-
-namespace ProblemChudnovskyFormulaForPiInv
-
-open scoped Real
-
--- ANCHOR: chudnovsky_formula_for_pi_inv
-theorem chudnovsky_formula_for_pi_inv :
-    chudnovskySum = π⁻¹ := by
-  sorry
--- ANCHOR_END: chudnovsky_formula_for_pi_inv
-
-end ProblemChudnovskyFormulaForPiInv
-
-namespace ProblemPi1CircleMulEquivInt
-
--- ANCHOR: pi1_circle_mulEquiv_int
-theorem pi1_circle_mulEquiv_int :
-    Nonempty (HomotopyGroup.Pi 1 Circle (1 : Circle) ≃* Multiplicative ℤ) := by
-  sorry
--- ANCHOR_END: pi1_circle_mulEquiv_int
-
-end ProblemPi1CircleMulEquivInt
+end ProblemMulCayleyConnectedIffClosureEqTop
 
 namespace ProblemPi3SphereTwoMulEquivInt
 
@@ -315,20 +233,86 @@ theorem pi_succ_sphere_n_mulEquiv_zmod_two (n : ℕ) (hn : 3 ≤ n)
 
 end ProblemPiSuccSphereNMulEquivZmodTwo
 
-namespace ProblemSubstInvXSubXSqEqCatalan
+namespace ProblemFiniteGroupIsSolvableOfCardEqPrimePowMulPrimePow
 
-open PowerSeries
-
--- ANCHOR: substInv_X_sub_X_sq_eq_catalan
-theorem substInv_X_sub_X_sq_eq_catalan (n : ℕ) :
-    haveI : Invertible (coeff 1 ((X : ℚ⟦X⟧) - X ^ 2)) := by
-      simp [coeff_X, coeff_X_pow]; exact invertibleOne
-    coeff (n + 1) (substInv ((X : ℚ⟦X⟧) - X ^ 2)) =
-      (Nat.choose (2 * n) n : ℚ) / (↑n + 1) := by
+-- ANCHOR: finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow
+theorem finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow {G : Type*} [Group G] [Fintype G]
+    {p q a b : ℕ}
+    (hp : Nat.Prime p)
+    (hq : Nat.Prime q)
+    (hpq : p ≠ q)
+    (hcard : Fintype.card G = p ^ a * q ^ b) :
+    IsSolvable G := by
   sorry
--- ANCHOR_END: substInv_X_sub_X_sq_eq_catalan
+-- ANCHOR_END: finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow
 
-end ProblemSubstInvXSubXSqEqCatalan
+end ProblemFiniteGroupIsSolvableOfCardEqPrimePowMulPrimePow
+
+namespace ProblemRoucheLogCountingZeroEq
+
+open ValueDistribution
+
+-- ANCHOR: rouche_logCounting_zero_eq
+theorem rouche_logCounting_zero_eq {f g : ℂ → ℂ} {R : ℝ}
+    (hR : 1 ≤ R)
+    (hf : Meromorphic f)
+    (hg : AnalyticOn ℂ g Set.univ)
+    (hbound : ∀ z : ℂ, ‖z‖ = R → ‖g z‖ < ‖f z‖) :
+    logCounting (f + g) 0 R = logCounting f 0 R := by
+  sorry
+-- ANCHOR_END: rouche_logCounting_zero_eq
+
+end ProblemRoucheLogCountingZeroEq
+
+namespace ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
+
+open Set
+
+-- ANCHOR: mem_convexHull_finset_extremePoints_of_mem_compact_convex
+theorem mem_convexHull_finset_extremePoints_of_mem_compact_convex {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {s : Set E} {x : E}
+    (hscomp : IsCompact s)
+    (hsconv : Convex ℝ s)
+    (hx : x ∈ s) :
+    ∃ t : Finset E,
+      (↑t : Set E) ⊆ s.extremePoints ℝ ∧
+      t.card ≤ Module.finrank ℝ E + 1 ∧
+      x ∈ convexHull ℝ (↑t : Set E) := by
+  sorry
+-- ANCHOR_END: mem_convexHull_finset_extremePoints_of_mem_compact_convex
+
+end ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
+
+namespace ProblemIrreducibleNonnegativeMatrixHasPositiveEigenvectorAtSpectralRadius
+
+open scoped NNReal
+
+-- ANCHOR: irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius
+theorem irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius {n : Type*} [Fintype n] [DecidableEq n]
+    (A : Matrix n n ℝ)
+    (hA : A.IsIrreducible) :
+    ∃ v : n → ℝ,
+      Module.End.HasEigenvector (Matrix.toLin' A) (spectralRadius ℝ A).toReal v ∧
+      (∀ i, 0 < v i) := by
+  sorry
+-- ANCHOR_END: irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius
+
+end ProblemIrreducibleNonnegativeMatrixHasPositiveEigenvectorAtSpectralRadius
+
+namespace ProblemExistsComplementaryPolynomialOnUnitCircle
+
+open Polynomial
+
+-- ANCHOR: exists_complementary_polynomial_on_unit_circle
+theorem exists_complementary_polynomial_on_unit_circle (P : ℂ[X])
+    (hP : ∀ z : Circle, ‖P.eval (z : ℂ)‖ ≤ 1) :
+    ∃ Q : ℂ[X],
+      Q.natDegree = P.natDegree ∧
+        ∀ z : Circle, ‖P.eval (z : ℂ)‖ ^ 2 + ‖Q.eval (z : ℂ)‖ ^ 2 = 1 := by
+  sorry
+-- ANCHOR_END: exists_complementary_polynomial_on_unit_circle
+
+end ProblemExistsComplementaryPolynomialOnUnitCircle
 
 namespace ProblemIsStarNormalMulOfCommute
 
@@ -355,17 +339,6 @@ theorem posSemidef_map_exp {n : Type*} [Fintype n] [DecidableEq n]
 
 end ProblemPosSemidefMapExp
 
-namespace ProblemMulCayleyConnectedIffClosureEqTop
-
--- ANCHOR: mulCayley_connected_iff_closure_eq_top
-theorem mulCayley_connected_iff_closure_eq_top {G : Type*} [Group G]
-    (S : Set G) :
-    (SimpleGraph.mulCayley S).Connected ↔ Subgroup.closure S = ⊤ := by
-  sorry
--- ANCHOR_END: mulCayley_connected_iff_closure_eq_top
-
-end ProblemMulCayleyConnectedIffClosureEqTop
-
 namespace ProblemOppenheimInequality
 
 open scoped MatrixOrder Matrix
@@ -378,6 +351,23 @@ theorem oppenheim_inequality {n : Type*} [Fintype n] [DecidableEq n]
 -- ANCHOR_END: oppenheim_inequality
 
 end ProblemOppenheimInequality
+
+namespace ProblemVonNeumannDoubleCommutantTfae
+
+-- ANCHOR: vonNeumann_doubleCommutant_tfae
+theorem vonNeumann_doubleCommutant_tfae {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+    (S : StarSubalgebra ℂ (H →L[ℂ] H)) :
+    List.TFAE
+      [ Set.centralizer (Set.centralizer (S : Set (H →L[ℂ] H))) = S
+      , IsClosed
+          (ContinuousLinearMap.toWOT (RingHom.id ℂ) H H '' (S : Set (H →L[ℂ] H)))
+      , IsClosed
+          (ContinuousLinearMap.toPointwiseConvergenceCLM ℂ (RingHom.id ℂ) H H ''
+            (S : Set (H →L[ℂ] H))) ] := by
+  sorry
+-- ANCHOR_END: vonNeumann_doubleCommutant_tfae
+
+end ProblemVonNeumannDoubleCommutantTfae
 
 namespace ProblemSymActionRangeEqCentralizerGlAction
 
@@ -511,22 +501,32 @@ namespace RepresentationTheory
 open scoped TensorProduct
 
 /-!
-Tensor square decomposition for irreducible representations of g₂ and e₈
+Existential tensor-square problems for irreducible representations of g₂ and e₈
 defined by the Serre construction.
 
-For each of the exceptional Lie algebras g₂ and e₈ over ℂ, the irreducible
-representation with highest weight `ω₁ + ω_n` (the sum of the first and last
-fundamental weights, in Bourbaki labelling) has a particular dimension `d`,
-and its tensor square decomposes into `k` isotypic components (counted as
+For each of the exceptional Lie algebras g₂ and e₈ over ℂ, we ask only for the
+existence of an irreducible representation `V` of a specified dimension whose
+tensor square has a specified number of isotypic components (counted as
 distinct isomorphism classes of irreducible Lie submodules):
 
-* g₂: dim V = 64,     k = 14   (highest weight ω₁ + ω₂)
-* e₈: dim V = 779247, k = 40   (highest weight ω₁ + ω₈)
+* g₂: dim V = 64,     `V ⊗ V` has 14 isotypic components
+* e₈: dim V = 779247, `V ⊗ V` has 40 isotypic components
 
-Mathlib's `isotypicComponents` is defined for modules over a ring. To use it
-on a Lie module `M`, we transport the action through the universal enveloping
-algebra: a `LieModule R L M` extends to a `Module (UniversalEnvelopingAlgebra R L) M`
-via the universal property.
+In the intended solution, one exhibits `V` as the highest-weight
+representation `ω₁ + ω_n` (the sum of the first and last fundamental weights,
+in Bourbaki labelling):
+
+* g₂: highest weight `ω₁ + ω₂`
+* e₈: highest weight `ω₁ + ω₈`
+
+Mathlib does not yet package the highest-weight classification needed to state
+those descriptions directly, so they serve here as mathematical guidance for
+constructing a witness rather than as part of the formal theorem statement.
+
+Mathlib's `isotypicComponents` is defined for modules over a ring. To use it on
+a Lie module `M`, we transport the action through the universal enveloping
+algebra: a `LieModule R L M` extends to a
+`Module (UniversalEnvelopingAlgebra R L) M` via the universal property.
 -/
 
 noncomputable instance lieModuleToEnvelopingModule
@@ -565,22 +565,32 @@ namespace RepresentationTheory
 open scoped TensorProduct
 
 /-!
-Tensor square decomposition for irreducible representations of g₂ and e₈
+Existential tensor-square problems for irreducible representations of g₂ and e₈
 defined by the Serre construction.
 
-For each of the exceptional Lie algebras g₂ and e₈ over ℂ, the irreducible
-representation with highest weight `ω₁ + ω_n` (the sum of the first and last
-fundamental weights, in Bourbaki labelling) has a particular dimension `d`,
-and its tensor square decomposes into `k` isotypic components (counted as
+For each of the exceptional Lie algebras g₂ and e₈ over ℂ, we ask only for the
+existence of an irreducible representation `V` of a specified dimension whose
+tensor square has a specified number of isotypic components (counted as
 distinct isomorphism classes of irreducible Lie submodules):
 
-* g₂: dim V = 64,     k = 14   (highest weight ω₁ + ω₂)
-* e₈: dim V = 779247, k = 40   (highest weight ω₁ + ω₈)
+* g₂: dim V = 64,     `V ⊗ V` has 14 isotypic components
+* e₈: dim V = 779247, `V ⊗ V` has 40 isotypic components
 
-Mathlib's `isotypicComponents` is defined for modules over a ring. To use it
-on a Lie module `M`, we transport the action through the universal enveloping
-algebra: a `LieModule R L M` extends to a `Module (UniversalEnvelopingAlgebra R L) M`
-via the universal property.
+In the intended solution, one exhibits `V` as the highest-weight
+representation `ω₁ + ω_n` (the sum of the first and last fundamental weights,
+in Bourbaki labelling):
+
+* g₂: highest weight `ω₁ + ω₂`
+* e₈: highest weight `ω₁ + ω₈`
+
+Mathlib does not yet package the highest-weight classification needed to state
+those descriptions directly, so they serve here as mathematical guidance for
+constructing a witness rather than as part of the formal theorem statement.
+
+Mathlib's `isotypicComponents` is defined for modules over a ring. To use it on
+a Lie module `M`, we transport the action through the universal enveloping
+algebra: a `LieModule R L M` extends to a
+`Module (UniversalEnvelopingAlgebra R L) M` via the universal property.
 -/
 
 noncomputable instance lieModuleToEnvelopingModule
@@ -681,19 +691,170 @@ theorem smale_conjecture {n : ℕ} [NeZero n]
 
 end ProblemSmaleConjecture
 
-namespace ProblemVonNeumannDoubleCommutantTfae
+namespace ProblemCyclotomicIntegerHouseLeTwo
 
--- ANCHOR: vonNeumann_doubleCommutant_tfae
-theorem vonNeumann_doubleCommutant_tfae {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
-    (S : StarSubalgebra ℂ (H →L[ℂ] H)) :
-    List.TFAE
-      [ Set.centralizer (Set.centralizer (S : Set (H →L[ℂ] H))) = S
-      , IsClosed
-          (ContinuousLinearMap.toWOT (RingHom.id ℂ) H H '' (S : Set (H →L[ℂ] H)))
-      , IsClosed
-          (ContinuousLinearMap.toPointwiseConvergenceCLM ℂ (RingHom.id ℂ) H H ''
-            (S : Set (H →L[ℂ] H))) ] := by
+open NumberField
+
+-- ANCHOR: cyclotomic_integer_house_le_two
+theorem cyclotomic_integer_house_le_two {K : Type*} [Field K] [NumberField K] [Algebra ℚ K]
+    (n : ℕ) [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
+    (hβ_int : IsIntegral ℤ β)
+    (hβ_real : β ∈ NumberField.maximalRealSubfield K) :
+    house β ≤ 2 →
+      house β = 2 ∨ ∃ m : ℕ, 0 < m ∧ house β = 2 * Real.cos (Real.pi / m) := by
   sorry
--- ANCHOR_END: vonNeumann_doubleCommutant_tfae
+-- ANCHOR_END: cyclotomic_integer_house_le_two
 
-end ProblemVonNeumannDoubleCommutantTfae
+end ProblemCyclotomicIntegerHouseLeTwo
+
+namespace ProblemCyclotomicIntegerHouseBetweenTwoAnd7633
+
+open NumberField
+
+-- ANCHOR: cyclotomic_integer_house_between_two_and_76_33
+theorem cyclotomic_integer_house_between_two_and_76_33 {K : Type*} [Field K] [NumberField K] [Algebra ℚ K]
+    (n : ℕ) [NeZero n] [IsCyclotomicExtension {n} ℚ K] {β : K}
+    (hβ_int : IsIntegral ℤ β)
+    (hβ_real : β ∈ NumberField.maximalRealSubfield K) :
+    (2 < house β ∧ house β < (76 : ℝ) / 33) →
+      house β = (7 + Real.sqrt 3) / 2 ∨
+      house β = Real.sqrt 5 ∨
+      house β = 1 + 2 * Real.cos (2 * Real.pi / 7) ∨
+      house β = (1 + Real.sqrt 5) / Real.sqrt 2 ∨
+      house β = (1 + Real.sqrt 13) / 2 := by
+  sorry
+-- ANCHOR_END: cyclotomic_integer_house_between_two_and_76_33
+
+end ProblemCyclotomicIntegerHouseBetweenTwoAnd7633
+
+namespace ProblemGleasonTheoremFinite
+
+namespace LeanEval
+namespace Analysis
+
+/-!
+Gleason's theorem (1957).
+
+Let `H` be a complex Hilbert space of dimension at least `3`. Every non-negative function
+on the orthogonal projections of `H` that is countably additive on orthogonal families and
+sends the identity to `1` is given by `P ↦ Tr(ρ P)` for a unique density operator `ρ`
+(positive trace-class operator with trace `1`).
+
+This file states two versions:
+
+1. `gleason_theorem_finite`: `H` is finite-dimensional. The trace-class condition is
+   automatic, additivity on orthogonal pairs already implies countable additivity, and
+   the conclusion uses the standard finite trace `LinearMap.trace`.
+
+2. `gleason_theorem_separable`: `H` is separable. Stated in Gleason's original "frame
+   function on the unit sphere" form: a non-negative function on the unit sphere that
+   sums to `1` along every Hilbert basis is given by `x ↦ re ⟨x, ρ x⟩` for some positive
+   bounded operator `ρ`. (The Lean conclusion does not assert that `ρ` is trace-class
+   with `Tr ρ = 1`; stating that would require trace-class infrastructure not yet at
+   this Mathlib pin. It is recoverable by combining the conclusion with `f.basis_sum`.)
+-/
+
+variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+
+/-- An orthogonal projection on `H`: a self-adjoint idempotent continuous linear map. -/
+def IsOrthProj (P : H →L[ℂ] H) : Prop :=
+  IsIdempotentElem P ∧ IsSelfAdjoint P
+
+/-- A frame function on the projection lattice: non-negative on orthogonal projections,
+finitely additive on orthogonal pairs, and `μ I = 1`. (In finite dimensions any countable
+orthogonal family is finite, so finite additivity already yields countable additivity.) -/
+structure FrameFunction (H : Type*) [NormedAddCommGroup H] [InnerProductSpace ℂ H]
+    [CompleteSpace H] where
+  μ : (H →L[ℂ] H) → ℝ
+  nonneg : ∀ P : H →L[ℂ] H, IsOrthProj P → 0 ≤ μ P
+  additive : ∀ P Q : H →L[ℂ] H, IsOrthProj P → IsOrthProj Q → P * Q = 0 →
+    μ (P + Q) = μ P + μ Q
+  normalized : μ (1 : H →L[ℂ] H) = 1
+
+/-- The real part of the complex trace of a continuous linear operator on a
+finite-dimensional complex inner product space. -/
+noncomputable def reTr [FiniteDimensional ℂ H] (A : H →L[ℂ] H) : ℝ :=
+  (LinearMap.trace ℂ H A.toLinearMap).re
+
+
+
+end Analysis
+end LeanEval
+
+open LeanEval.Analysis
+
+-- ANCHOR: gleason_theorem_finite
+theorem gleason_theorem_finite {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H]
+      [CompleteSpace H] [FiniteDimensional ℂ H]
+    (hdim : 3 ≤ Module.finrank ℂ H)
+    (f : LeanEval.Analysis.FrameFunction H) :
+    ∃! ρ : H →L[ℂ] H,
+      ContinuousLinearMap.IsPositive ρ ∧
+      reTr ρ = 1 ∧
+      ∀ P : H →L[ℂ] H, LeanEval.Analysis.IsOrthProj P → f.μ P = reTr (ρ * P) := by
+  sorry
+-- ANCHOR_END: gleason_theorem_finite
+
+end ProblemGleasonTheoremFinite
+
+namespace ProblemGleasonTheoremSeparable
+
+namespace LeanEval
+namespace Analysis
+
+/-!
+Gleason's theorem (1957).
+
+Let `H` be a complex Hilbert space of dimension at least `3`. Every non-negative function
+on the orthogonal projections of `H` that is countably additive on orthogonal families and
+sends the identity to `1` is given by `P ↦ Tr(ρ P)` for a unique density operator `ρ`
+(positive trace-class operator with trace `1`).
+
+This file states two versions:
+
+1. `gleason_theorem_finite`: `H` is finite-dimensional. The trace-class condition is
+   automatic, additivity on orthogonal pairs already implies countable additivity, and
+   the conclusion uses the standard finite trace `LinearMap.trace`.
+
+2. `gleason_theorem_separable`: `H` is separable. Stated in Gleason's original "frame
+   function on the unit sphere" form: a non-negative function on the unit sphere that
+   sums to `1` along every Hilbert basis is given by `x ↦ re ⟨x, ρ x⟩` for some positive
+   bounded operator `ρ`. (The Lean conclusion does not assert that `ρ` is trace-class
+   with `Tr ρ = 1`; stating that would require trace-class infrastructure not yet at
+   this Mathlib pin. It is recoverable by combining the conclusion with `f.basis_sum`.)
+-/
+
+variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+
+/-- A frame function on the unit sphere of `H` (Gleason's original 1957 definition).
+A non-negative function on unit vectors whose values sum to `1` along every Hilbert
+basis. -/
+structure SphereFrameFunction (H : Type*) [NormedAddCommGroup H] [InnerProductSpace ℂ H]
+    [CompleteSpace H] where
+  f : Metric.sphere (0 : H) 1 → ℝ
+  nonneg : ∀ x : Metric.sphere (0 : H) 1, 0 ≤ f x
+  basis_sum : ∀ {ι : Type*} (b : HilbertBasis ι ℂ H),
+    HasSum
+      (fun i : ι => f ⟨b i, mem_sphere_zero_iff_norm.mpr (b.orthonormal.norm_eq_one i)⟩)
+      1
+
+
+
+end Analysis
+end LeanEval
+
+open LeanEval.Analysis
+
+-- ANCHOR: gleason_theorem_separable
+theorem gleason_theorem_separable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H]
+      [CompleteSpace H] [TopologicalSpace.SeparableSpace H]
+    (hdim : 3 ≤ Module.rank ℂ H)
+    (f : LeanEval.Analysis.SphereFrameFunction H) :
+    ∃ ρ : H →L[ℂ] H,
+      ContinuousLinearMap.IsPositive ρ ∧
+      ∀ x : Metric.sphere (0 : H) 1,
+        f.f x = (inner ℂ (x : H) (ρ (x : H))).re := by
+  sorry
+-- ANCHOR_END: gleason_theorem_separable
+
+end ProblemGleasonTheoremSeparable
