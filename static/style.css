@@ -861,3 +861,9 @@ nav.top .home {
     display: none;
   }
 }
+
+/* Home page: hide the auto-generated <article><h1> title — the hero
+   panel renders its own styled <h1> in the right place. */
+.home-page article > h1 {
+  display: none;
+}
