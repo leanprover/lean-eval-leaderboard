@@ -9,13 +9,6 @@ open Verso.Code.External
 
 set_option verso.exampleProject "benchmark-snapshot"
 set_option maxHeartbeats 1000000
--- The catalog has ~69 highlighted anchor blocks across 36 problems
--- (jacobian_challenge_diffgeo alone contributes 24). Both the elaborator
--- and the code generator need a deeper recursion budget than default to
--- handle the resulting expression tree without "maximum recursion depth
--- reached" errors.
-set_option maxRecDepth 10000
-set_option compiler.maxRecDepth 10000
 
 namespace LeaderboardSite.Pages
 
