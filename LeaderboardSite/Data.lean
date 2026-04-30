@@ -142,11 +142,26 @@ instance : FromJson PublicSolution where
       url := (json.getObjValAs? String "url").toOption
     }
 
+/-- Per-solve provenance. `user` is the GitHub login of the submitter who
+solved the problem; multiple submitters can contribute solves to the same
+leaderboard row, so per-problem attribution lives here rather than on the
+parent `LeaderboardEntry`. -/
+structure Provenance where
+  user : String
+deriving Quote, Inhabited, Repr
+
+instance : FromJson Provenance where
+  fromJson? json := do
+    return {
+      user := ← json.getObjValAs? String "user"
+    }
+
 structure SolvedProblem where
   problemId : String
   solvedAt : String
   rarityRank : Nat
   publicSolution : PublicSolution
+  provenance : Provenance
   productionDescription : Option String
 deriving Quote, Inhabited, Repr
 
@@ -157,6 +172,7 @@ instance : FromJson SolvedProblem where
       solvedAt := ← json.getObjValAs? String "solved_at"
       rarityRank := ← json.getObjValAs? Nat "rarity_rank"
       publicSolution := ← json.getObjValAs? PublicSolution "public_solution"
+      provenance := ← json.getObjValAs? Provenance "provenance"
       productionDescription := (json.getObjValAs? String "production_description").toOption
     }
 

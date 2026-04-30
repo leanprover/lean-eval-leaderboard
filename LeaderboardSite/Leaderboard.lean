@@ -184,7 +184,7 @@ private def problemItem
     (proofUrl? : Option String)
     (rarityRank? : Option Nat)
     (productionDescription? : Option String) : Block Page :=
-  let problemHref := s!"problems/#{problemId}"
+  let problemHref := s!"problems/{problemId}/"
   let titleLink := htmlBlobBlock {{
     <a class="problem-title-link" href={{problemHref}}>{{textHtml title}}</a>
   }}
