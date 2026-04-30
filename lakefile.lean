@@ -1,8 +1,8 @@
 import Lake
 open Lake DSL
 
-require std from git "https://github.com/leanprover/std4" @ "v4.30.0-rc1"
-require verso from git "https://github.com/leanprover/verso" @ "v4.30.0-rc1"
+require std from git "https://github.com/leanprover/std4" @ "v4.30.0-rc2"
+require verso from git "https://github.com/leanprover/verso" @ "v4.30.0-rc2"
 
 package «lean-eval-leaderboard» where
 
