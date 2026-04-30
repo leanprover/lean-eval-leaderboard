@@ -311,12 +311,12 @@ def anchorConstName (problemId : String) (hole : Hole) : Lean.Name :=
   (((Lean.Name.mkSimple "LeaderboardSite").str "Pages").str "Anchors").str leaf
 
 /-- Identifier referring to the top-level constant declared by
-`register_problem_anchors%` for this hole. -/
+`register_problem_anchors` for this hole. -/
 def anchorConstIdent (problemId : String) (hole : Hole) : Lean.Ident :=
   Lean.mkIdent (anchorConstName problemId hole)
 
 /-- One identifier reference per hole, in source order. The identifier
-points at the constant declared by `register_problem_anchors%`. -/
+points at the constant declared by `register_problem_anchors`. -/
 def anchorBlockTerms (problem : ProblemEntry) : Array (TSyntax `term) :=
   problem.holes.map fun hole => ⟨anchorConstIdent problem.id hole⟩
 
@@ -334,10 +334,10 @@ for the Lean code generator — inlining 24+ Verso anchors into a single
 Runs at root scope so the emitted `def`s pick up the absolute name
 `LeaderboardSite.Pages.Anchors._anc_<id>__<basename>` rather than being
 nested under whatever namespace the invocation site happens to be in. -/
-syntax "register_problem_anchors%" : command
+syntax "register_problem_anchors" : command
 
 elab_rules : command
-  | `(register_problem_anchors%) => do
+  | `(register_problem_anchors) => do
       let (catalog, problems) ← Lean.Elab.Command.runTermElabM fun _ => do
         let payload ← parseProblemsPayload
         let catalog ← loadSnapshotCatalog
@@ -356,4 +356,4 @@ elab_rules : command
 
 /-- Run the registration at module-elaboration time so all downstream
 pages can reference the constants by name. -/
-register_problem_anchors%
+register_problem_anchors
