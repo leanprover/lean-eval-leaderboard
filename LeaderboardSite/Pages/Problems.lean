@@ -1,5 +1,6 @@
 import VersoBlog
 import LeaderboardSite.Data
+import LeaderboardSite.AnchorRegistry
 
 open Lean
 open Lean.Elab Term

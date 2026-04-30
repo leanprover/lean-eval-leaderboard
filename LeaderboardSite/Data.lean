@@ -321,39 +321,3 @@ def anchorBlockTerms (problem : ProblemEntry) : Array (TSyntax `term) :=
   problem.holes.map fun hole => ⟨anchorConstIdent problem.id hole⟩
 
 end LeaderboardSite.Data
-
-open LeaderboardSite.Data
-
-/-- Register one top-level constant per `@[eval_problem]`-tagged hole, each
-of type `Block Page` and holding the Verso anchor block for that hole.
-Pages downstream (catalog and home-page popovers) reference these
-constants by name, which keeps each downstream `def`'s body small enough
-for the Lean code generator — inlining 24+ Verso anchors into a single
-`def`'s expression tree overflows the default codegen recursion budget.
-
-Runs at root scope so the emitted `def`s pick up the absolute name
-`LeaderboardSite.Pages.Anchors._anc_<id>__<basename>` rather than being
-nested under whatever namespace the invocation site happens to be in. -/
-syntax "register_problem_anchors" : command
-
-elab_rules : command
-  | `(register_problem_anchors) => do
-      let (catalog, problems) ← Lean.Elab.Command.runTermElabM fun _ => do
-        let payload ← parseProblemsPayload
-        let catalog ← loadSnapshotCatalog
-        let problems ← validateProblems payload
-        pure (catalog, problems)
-      for problem in problems do
-        for hole in problem.holes do
-          let constName := anchorConstName problem.id hole
-          if (← Lean.getEnv).contains constName then
-            continue
-          let anchorTerm ← Lean.Elab.Command.runTermElabM fun _ =>
-            inlineAnchorTerm catalog problem hole
-          let constIdent := Lean.mkIdent constName
-          let cmd ← `(def $constIdent : Block Page := $anchorTerm)
-          Lean.Elab.Command.elabCommand cmd
-
-/-- Run the registration at module-elaboration time so all downstream
-pages can reference the constants by name. -/
-register_problem_anchors
