@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "two_plus_two": {
+      "benchmark_commit": "92af7179df9f82d74f3fbbbfbd8942ea23fb0e94",
+      "issue_number": 30,
+      "model": "dogfood",
+      "production_description": "Hand-written dogfood proof to populate the leaderboard end-to-end during development. The two_plus_two problem reduces to decide / definitional reduction on 2 + 2 = 4 : \u2115, so the \"solution\" is essentially a one-liner with no model or orchestrator involved. Human time: a few seconds. AI time, tokens, and cost: zero \u2014 no LLM was invoked. This entry exists to demonstrate the new \"How produced\" field on the leaderboard, not as a real benchmark result.",
+      "solved_at": "2026-04-30T06:29:16Z",
+      "submission_public": false,
+      "submission_ref": "d4f2f309e180037f352f8e6086dd4063ccbdce00",
+      "submission_repo": "kim-em/lean-eval-dogfood"
+    }
+  },
+  "user": "kim-em"
+}
