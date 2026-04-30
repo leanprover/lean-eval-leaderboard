@@ -693,6 +693,23 @@ nav.top .home {
   border-bottom: 1px solid rgba(126, 227, 217, 0.06);
 }
 
+.stat-pair-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.stat-pair-link:hover,
+.stat-pair-link:focus-visible {
+  color: #e7ecef;
+  border-bottom-color: rgba(126, 227, 217, 0.3);
+}
+
+.stat-pair-link:focus-visible {
+  outline: 2px solid rgba(126, 227, 217, 0.45);
+  outline-offset: 2px;
+}
+
 .submitter-list {
   display: flex;
   flex-wrap: wrap;

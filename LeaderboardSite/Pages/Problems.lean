@@ -212,10 +212,10 @@ private def problemPartTerm (catalog : String) (problem : ProblemEntry) : TermEl
       $anchorBlock
     ] #[] (some $(quote problem.id)))
 
-private def sectionPartTerm (catalog : String) (title : String) (problems : Array ProblemEntry) : TermElabM (TSyntax `term) := do
+private def sectionPartTerm (catalog : String) (title : String) (htmlId : String) (problems : Array ProblemEntry) : TermElabM (TSyntax `term) := do
   let subParts ← problems.mapM (problemPartTerm catalog)
   let subParts : TSyntaxArray `term := subParts
-  `(pagePart $(quote title) #[] #[$subParts,*])
+  `(pagePart $(quote title) #[] #[$subParts,*] (some $(quote htmlId)))
 
 private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
   pure #[
@@ -242,10 +242,10 @@ elab_rules : term
       let introBlocks ← introParagraphTerms
       let mainProblems := Array.filter (fun problem => !problem.test) problems
       let starterProblems := Array.filter (·.test) problems
-      let mainSection ← sectionPartTerm catalog "Main benchmark problems" mainProblems
+      let mainSection ← sectionPartTerm catalog "Main benchmark problems" "main-problems" mainProblems
       let mut subParts := #[mainSection]
       if !starterProblems.isEmpty then
-        subParts := subParts.push (← sectionPartTerm catalog "Starter problems" starterProblems)
+        subParts := subParts.push (← sectionPartTerm catalog "Starter problems" "starter-problems" starterProblems)
       let introBlocks' : TSyntaxArray `term := introBlocks
       let subParts' : TSyntaxArray `term := subParts
       let pageTerm ← `(pagePart "Problems" #[$introBlocks',*] #[$subParts',*])

@@ -223,8 +223,8 @@ function renderHome(root, problems, leaderboard, renderedMap) {
         <aside class="hero-side">
           <div class="section-label">Benchmark breakdown</div>
           <div class="hero-side-metrics">
-            <div class="stat-pair"><span>Main problems</span><span>${summary.main_problems ?? 0}</span></div>
-            <div class="stat-pair"><span>Test problems</span><span>${summary.test_problems ?? 0}</span></div>
+            <a class="stat-pair stat-pair-link" href="${escapeHtml(problemsIndexHref())}#main-problems"><span>Main problems</span><span>${summary.main_problems ?? 0}</span></a>
+            <a class="stat-pair stat-pair-link" href="${escapeHtml(problemsIndexHref())}#starter-problems"><span>Test problems</span><span>${summary.test_problems ?? 0}</span></a>
           </div>
           <p class="hero-side-copy">
             Problem statements and leaderboard results are generated from public
