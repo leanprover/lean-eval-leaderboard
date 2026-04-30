@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "finite_graph_ramsey_theorem": {
+      "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
+      "issue_number": 21,
+      "model": "Claude Opus 4.7 with 1M context",
+      "solved_at": "2026-04-30T10:05:19Z",
+      "submission_public": true,
+      "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
+      "submission_repo": "rkirov/lean-eval"
+    },
+    "list_append_singleton_length": {
+      "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
+      "issue_number": 21,
+      "model": "Claude Opus 4.7 with 1M context",
+      "solved_at": "2026-04-30T10:05:19Z",
+      "submission_public": true,
+      "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
+      "submission_repo": "rkirov/lean-eval"
+    },
+    "two_plus_two": {
+      "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
+      "issue_number": 21,
+      "model": "Claude Opus 4.7 with 1M context",
+      "solved_at": "2026-04-30T10:05:19Z",
+      "submission_public": true,
+      "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
+      "submission_repo": "rkirov/lean-eval"
+    }
+  },
+  "user": "rkirov"
+}
