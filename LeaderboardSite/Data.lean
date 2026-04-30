@@ -259,8 +259,10 @@ is `<problem-id>__<basename>`. Returns the trimmed body so callers can use
 it for plain-text fallbacks. -/
 def anchorSourceText (catalog : String) (problemId : String) (hole : Hole) : TermElabM String := do
   let anchorId := holeAnchorId problemId hole
-  let startMarker := s!"-- ANCHOR: {anchorId}"
-  let endMarker := s!"-- ANCHOR_END: {anchorId}"
+  -- Trailing newline pins the match to the full anchor line; without it,
+  -- a basename like `genus` would prefix-match `genus_eq_zero_iff_homeo`.
+  let startMarker := s!"-- ANCHOR: {anchorId}\n"
+  let endMarker := s!"-- ANCHOR_END: {anchorId}\n"
   let parts := catalog.splitOn startMarker
   let some rest := parts[1]?
     | throwError "Anchor '{anchorId}' not found in {snapshotCatalogPath}"
