@@ -5,22 +5,22 @@ the public leaderboard site.
 
 ## Repo split
 
-- `kim-em/lean-eval`
+- `leanprover/lean-eval`
   - benchmark source of truth
   - theorem extraction
   - generated challenge workspaces
   - evaluation pipeline
-- `kim-em/lean-eval-leaderboard`
+- `leanprover/lean-eval-leaderboard`
   - public results store
   - derived website data under `site-data/`
   - Verso website
 
-The site should live in `kim-em/lean-eval-leaderboard`.
+The site should live in `leanprover/lean-eval-leaderboard`.
 
 ## Data flow
 
 1. Read raw `results/*.json` from this repo.
-2. Import benchmark metadata from `kim-em/lean-eval` at a pinned commit.
+2. Import benchmark metadata from `leanprover/lean-eval` at a pinned commit.
 3. Extract theorem statements and problem metadata into `site-data/problems.json`.
 4. Aggregate raw success records into `site-data/leaderboard.json`.
 5. Render the Verso site from `site-data/*.json`.

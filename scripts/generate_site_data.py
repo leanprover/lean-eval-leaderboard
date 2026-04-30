@@ -330,7 +330,7 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
         "schema_version": 2,
         "generated_at": utc_now(),
         "benchmark": {
-            "repo": "kim-em/lean-eval",
+            "repo": "leanprover/lean-eval",
             "commit": git_head(benchmark_repo),
         },
         "problems": [
@@ -482,11 +482,11 @@ def build_leaderboard_payload(
         "schema_version": 1,
         "generated_at": utc_now(),
         "results_repo": {
-            "repo": "kim-em/lean-eval-leaderboard",
+            "repo": "leanprover/lean-eval-leaderboard",
             "commit": git_head(results_repo),
         },
         "benchmark": {
-            "repo": "kim-em/lean-eval",
+            "repo": "leanprover/lean-eval",
             "commit": git_head(benchmark_repo),
         },
         "summary": {

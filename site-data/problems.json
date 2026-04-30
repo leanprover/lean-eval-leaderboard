@@ -2,7 +2,7 @@
   "schema_version": 2,
   "generated_at": "2026-04-18T08:07:14Z",
   "benchmark": {
-    "repo": "kim-em/lean-eval",
+    "repo": "leanprover/lean-eval",
     "commit": "97fbfe2dd049375534df6c4e018fb86bbcec183c"
   },
   "problems": [

@@ -5,7 +5,7 @@ open Verso.Genre.Blog
 #doc (Page) "Submit" =>
 
 Submissions are made by opening a GitHub issue on the
-[lean-eval benchmark repository](https://github.com/kim-em/lean-eval).
+[lean-eval benchmark repository](https://github.com/leanprover/lean-eval).
 
 # 1. Put your proof somewhere the lean-eval CI can fetch it
 
@@ -21,7 +21,7 @@ Accepted submission sources are URLs of one of these shapes:
 Private GitHub repositories are supported. To use one, install the
 `lean-eval-bot` GitHub App on the repository first, so that the CI can clone
 it. The install link is in the
-[lean-eval README](https://github.com/kim-em/lean-eval).
+[lean-eval README](https://github.com/leanprover/lean-eval).
 
 Secret (unlisted) gists are not supported in v1. Make your gist public, or
 host the proof in a repository.
@@ -33,8 +33,8 @@ The CI walks whatever you submit and tries every directory containing a
 has a `Submission.lean` next to it. For example:
 
 * a clone of a single generated workspace from
-  [kim-em/lean-eval/generated/](https://github.com/kim-em/lean-eval/tree/main/generated)
-* a fork of kim-em/lean-eval itself with your proofs under the relevant
+  [leanprover/lean-eval/generated/](https://github.com/leanprover/lean-eval/tree/main/generated)
+* a fork of leanprover/lean-eval itself with your proofs under the relevant
   `generated/<problem_id>/` directories
 * a custom repository containing several benchmark workspaces side by side
 * a gist containing a two-file minimum: a `lakefile.toml` with
@@ -50,7 +50,7 @@ check the proof.
 # 3. Open a submission issue
 
 Click
-[Submit benchmark solution](https://github.com/kim-em/lean-eval/issues/new?template=submit.yml)
+[Submit benchmark solution](https://github.com/leanprover/lean-eval/issues/new?template=submit.yml)
 to open a pre-filled issue. The form asks for two things:
 
 * a submission URL in one of the shapes above

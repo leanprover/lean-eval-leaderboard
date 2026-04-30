@@ -222,7 +222,7 @@ private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
     ← `(paragraph #[textInline "The benchmark catalog consists of carefully curated problems across mathematics, chosen so that their statements are mostly accessible using existing Mathlib definitions, but their solutions are difficult for current publicly available frontier models."]),
     ← `(paragraph #[
       textInline "The problem statements below are automatically extracted from the ",
-      linkInline "lean-eval" "https://github.com/kim-em/lean-eval",
+      linkInline "lean-eval" "https://github.com/leanprover/lean-eval",
       textInline " repository."
     ]),
     ← `(paragraph #[

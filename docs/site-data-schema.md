@@ -33,7 +33,7 @@ This file is the benchmark catalog as consumed by the website.
   "schema_version": 2,
   "generated_at": "2026-04-11T12:00:00Z",
   "benchmark": {
-    "repo": "kim-em/lean-eval",
+    "repo": "leanprover/lean-eval",
     "commit": "8e1b9cf5e1d3c2b1a0f9e8d7c6b5a4938271605f"
   },
   "problems": [
@@ -88,11 +88,11 @@ aggregated, ranked, and enriched with provenance and notability metadata.
   "schema_version": 1,
   "generated_at": "2026-04-11T12:00:00Z",
   "results_repo": {
-    "repo": "kim-em/lean-eval-leaderboard",
+    "repo": "leanprover/lean-eval-leaderboard",
     "commit": "0123456789abcdef0123456789abcdef01234567"
   },
   "benchmark": {
-    "repo": "kim-em/lean-eval",
+    "repo": "leanprover/lean-eval",
     "commit": "8e1b9cf5e1d3c2b1a0f9e8d7c6b5a4938271605f"
   },
   "summary": {

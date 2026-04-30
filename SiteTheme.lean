@@ -57,8 +57,8 @@ def theme (name : String) (siteName : String) : Theme := {
             <footer class="footer">
               <div class="wrap footer-inner">
                 <span>"Public results for lean-eval."</span>
-                <a href="https://github.com/kim-em/lean-eval">"Benchmark repo"</a>
-                <a href="https://github.com/kim-em/lean-eval-leaderboard">"Results repo"</a>
+                <a href="https://github.com/leanprover/lean-eval">"Benchmark repo"</a>
+                <a href="https://github.com/leanprover/lean-eval-leaderboard">"Results repo"</a>
               </div>
             </footer>
           </div>
