@@ -1063,14 +1063,27 @@ nav.top a[aria-current="page"] {
 
 .problems-filter-label {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 280px;
+  align-items: baseline;
+  gap: 6px;
+  color: #c3cdd2;
+  font-weight: 500;
+  font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .problems-filter-icon {
   color: #7fe3d9;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+}
+
+.problems-filter-label-text {
+  font-family: inherit;
+}
+
+/* The hidden filter haystack span carries the searchable text as a
+   `data-filter-text` attribute. Keep it out of the layout entirely. */
+.problem-filter-haystack {
+  display: none !important;
 }
 
 .problems-filter-input {

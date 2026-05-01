@@ -82,14 +82,17 @@ doesn't include the query (case-insensitive). -/
 private def filterBlock : Block Page :=
   let html : Verso.Output.Html := {{
     <div class="problems-filter" data-problems-filter="true">
-      <label class="problems-filter-label">
+      <label class="problems-filter-label" for="problems-filter-input">
         <span class="problems-filter-icon" aria-hidden="true">"⌕"</span>
-        <input type="search" class="problems-filter-input"
-               placeholder="Filter problems by title, id, notes, source, or Lean source"
-               aria-label="Filter problems"
-               autocomplete="off" spellcheck="false"/>
+        <span class="problems-filter-label-text">"Filter problems"</span>
       </label>
-      <span class="problems-filter-count" aria-live="polite"></span>
+      <input id="problems-filter-input" type="search" class="problems-filter-input"
+             placeholder="title, id, notes, source, or Lean source"
+             aria-describedby="problems-filter-count"
+             autocomplete="off" spellcheck="false"/>
+      <span id="problems-filter-count"
+            class="problems-filter-count"
+            aria-live="polite"></span>
     </div>
   }}
   Verso.Doc.Block.other (BlockExt.blob html) #[]
@@ -114,28 +117,56 @@ private def tocBlock (items : Array (String × String)) : Block Page :=
   }}
   Verso.Doc.Block.other (BlockExt.blob html) #[]
 
+open Verso.Output Html in
+/-- Hidden marker emitted as the first child of each problem `<section>`.
+The element carries a precomputed lower-cased `data-filter-text`
+haystack of every field the filter should match against (title, id,
+submitter, notes, source, informal solution, Lean source). The JS
+filter selects on `[data-problem-section]` rather than guessing
+structure from heading levels, and reads the haystack from
+`data-filter-text` instead of walking `innerText` of the whole
+section, so future visible decorations don't accidentally become
+matchable. -/
+private def filterHaystack (haystack : String) : Block Page :=
+  let html : Verso.Output.Html := {{
+    <span class="problem-filter-haystack" data-problem-section="true"
+          data-filter-text={{haystack}} hidden="true" aria-hidden="true"></span>
+  }}
+  Verso.Doc.Block.other (BlockExt.blob html) #[]
+
 /-- Assemble one problem's `Part Page` at runtime from the spliced anchor
 blocks. Routing per-problem assembly through this function keeps the
 elaborator-time syntax tree shallow (one runtime call per problem rather
 than a 5-plus-#holes literal), which avoids the code generator's
 maximum-recursion-depth limit on problems with many holes. -/
 private def assembleProblemPart
-    (title id submitterText : String)
+    (title id submitterText haystack : String)
     (notes source solution : Block Page)
     (anchors : Array (Block Page)) : Part Page :=
   let prelude : Array (Block Page) := #[
-    -- The id chip doubles as a link to the per-problem detail page.
-    paragraph #[
-      codeLinkInline id s!"problems/{id}/",
-      textInline " ",
-      linkInline "(detail page)" s!"problems/{id}/"
-    ],
+    filterHaystack haystack,
+    -- The id chip is a link to the per-problem detail page.
+    paragraph #[codeLinkInline id s!"problems/{id}/"],
     paragraph #[textInline submitterText],
     notes,
     source,
     solution
   ]
   pagePart title (prelude ++ anchors.map holeWrap) #[] (some id)
+
+/-- Build the lower-cased filter haystack for a problem: title, id,
+submitter, notes, source, informal solution, and the body of every
+hole. This is what the live filter on `/problems/` matches against. -/
+private def filterHaystackText (problem : ProblemEntry) : String :=
+  let parts : Array String := #[
+    problem.title,
+    problem.id,
+    problem.submitter,
+    problem.notesText.getD "",
+    problem.sourceText.getD "",
+    problem.informalSolution.getD ""
+  ] ++ problem.holes.map (·.body)
+  (String.intercalate " " parts.toList).toLower
 
 private def problemPartTerm (problem : ProblemEntry) : TermElabM (TSyntax `term) := do
   let notesBlock ← optionalParagraphTerm "Notes" problem.notesText
@@ -146,16 +177,29 @@ private def problemPartTerm (problem : ProblemEntry) : TermElabM (TSyntax `term)
       $(quote problem.title)
       $(quote problem.id)
       $(quote s!"Submitter: {problem.submitter}.")
+      $(quote (filterHaystackText problem))
       $notesBlock
       $sourceBlock
       $solutionBlock
       #[$anchorsArr,*])
 
+open Verso.Output Html in
+/-- Hidden marker emitted as the first child of each group section
+("Main benchmark problems" / "Test problems"). The JS filter selects
+on `[data-problem-group]` rather than guessing structure from heading
+levels or "any section with direct child sections". -/
+private def groupHaystack : Block Page :=
+  let html : Verso.Output.Html := {{
+    <span class="problem-filter-haystack" data-problem-group="true"
+          hidden="true" aria-hidden="true"></span>
+  }}
+  Verso.Doc.Block.other (BlockExt.blob html) #[]
+
 private def sectionPartTerm (title : String) (htmlId : String)
     (problems : Array ProblemEntry) : TermElabM (TSyntax `term) := do
   let subParts ← problems.mapM problemPartTerm
   let subParts : TSyntaxArray `term := subParts
-  `(pagePart $(quote title) #[] #[$subParts,*] (some $(quote htmlId)))
+  `(pagePart $(quote title) #[groupHaystack] #[$subParts,*] (some $(quote htmlId)))
 
 private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
   pure #[
