@@ -23,6 +23,17 @@
         "submission_repo": "kim-em/22bad2dccd67bcca0df87c01d072ef39"
       }
     },
+    "DeepSeek V4 Pro": {
+      "two_plus_two": {
+        "benchmark_commit": "953d54a7af5038566775507761e48e365e7feb3b",
+        "issue_number": 48,
+        "production_description": "Seed submission to populate the leaderboard. Solved by DeepSeek V4 Pro via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
+        "solved_at": "2026-05-01T03:48:53Z",
+        "submission_public": true,
+        "submission_ref": "ccfef2885c0266c48386e243ee59e009dedb8d9f",
+        "submission_repo": "kim-em/626f5e295e4073d0e82bf8d157ef494d"
+      }
+    },
     "GLM 4.7": {
       "two_plus_two": {
         "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
