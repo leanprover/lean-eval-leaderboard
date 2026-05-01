@@ -1,11 +1,12 @@
 {
-  "schema_version": 2,
+  "schema_version": 1,
   "solved": {
     "Claude Opus 4.7": {
       "finite_graph_ramsey_theorem": {
         "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
         "issue_number": 21,
         "solved_at": "2026-04-30T10:05:19Z",
+        "submission_kind": "github_repo",
         "submission_public": true,
         "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
         "submission_repo": "rkirov/lean-eval"
@@ -14,6 +15,7 @@
         "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
         "issue_number": 21,
         "solved_at": "2026-04-30T10:05:19Z",
+        "submission_kind": "github_repo",
         "submission_public": true,
         "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
         "submission_repo": "rkirov/lean-eval"
@@ -22,6 +24,7 @@
         "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
         "issue_number": 21,
         "solved_at": "2026-04-30T10:05:19Z",
+        "submission_kind": "github_repo",
         "submission_public": true,
         "submission_ref": "212bebf172ea4a345071d0b3fc40a978515d09c6",
         "submission_repo": "rkirov/lean-eval"

@@ -407,9 +407,13 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     write_text(BENCHMARK_SNAPSHOT_ROOT / ".benchmark-commit", git_head(benchmark_repo) + "\n")
 
 
-def public_solution_url(repo: str, ref: str, problem_id: str, public: bool) -> str | None:
+def public_solution_url(
+    kind: str, repo: str, ref: str, problem_id: str, public: bool
+) -> str | None:
     if not public:
         return None
+    if kind == "gist":
+        return f"https://gist.github.com/{repo}/{ref}"
     return f"https://github.com/{repo}/tree/{ref}/generated/{problem_id}"
 
 
@@ -466,11 +470,10 @@ def build_leaderboard_payload(
     for user_record in raw_results:
         user = str(user_record["user"])
         schema_version = user_record.get("schema_version")
-        if schema_version != 2:
+        if schema_version != 1:
             raise SystemExit(
                 f"results file for user {user!r} has schema_version "
-                f"{schema_version!r}; this generator only knows version 2. "
-                "Run scripts/migrate_v1_to_v2.py if it is still v1."
+                f"{schema_version!r}; this generator only knows version 1."
             )
         solved_per_model = user_record.get("solved", {})
         for raw_model_name, problems_for_model in solved_per_model.items():
@@ -486,6 +489,7 @@ def build_leaderboard_payload(
                     if isinstance(production_description_raw, str) and str(production_description_raw).strip()
                     else None
                 )
+                submission_kind = str(record["submission_kind"])
                 candidate = {
                     "problem_id": problem_id,
                     "solved_at": str(record["solved_at"]),
@@ -493,14 +497,17 @@ def build_leaderboard_payload(
                         "user": user,
                         "issue_number": int(record["issue_number"]),
                         "benchmark_commit": str(record["benchmark_commit"]),
+                        "submission_kind": submission_kind,
                         "submission_repo": str(record["submission_repo"]),
                         "submission_ref": str(record["submission_ref"]),
                     },
                     "public_solution": {
                         "available": bool(record["submission_public"]),
+                        "kind": submission_kind if record["submission_public"] else None,
                         "repo": str(record["submission_repo"]) if record["submission_public"] else None,
                         "ref": str(record["submission_ref"]) if record["submission_public"] else None,
                         "url": public_solution_url(
+                            submission_kind,
                             str(record["submission_repo"]),
                             str(record["submission_ref"]),
                             problem_id,

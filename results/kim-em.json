@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 1,
   "solved": {
     "Aristotle (Harmonic)": {
       "ci_regenerate_main_check": {
@@ -7,6 +7,7 @@
         "issue_number": 58,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:08:56Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "fc7a817912cd276ff3fca7bdabe02bcc904bef8d",
         "submission_repo": "kim-em/d50dde8f11006b2d975671123d0acddd"
@@ -16,6 +17,7 @@
         "issue_number": 60,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:09:27Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "13d74bd985294975f54a1457633364117c38f840",
         "submission_repo": "kim-em/15cab769a93e323f4a87f68ecb84ffb8"
@@ -25,6 +27,7 @@
         "issue_number": 59,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:09:05Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "e33579d39754d2fc53e00f725191eb3a17f495f8",
         "submission_repo": "kim-em/87ef9e588d516f7901475e64a77b350d"
@@ -34,6 +37,7 @@
         "issue_number": 61,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:08:39Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "accf5aa1d158976df301d07f784a4c8ae8c35618",
         "submission_repo": "kim-em/d692ae845fdc1f874946aecbf31a84d6"
@@ -43,6 +47,7 @@
         "issue_number": 62,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:46:23Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "cdffb90c53ee5fdcf41369769f15130fa6bd6b3b",
         "submission_repo": "kim-em/ba837b9520ea4ec64c7945bb1f0cf10f"
@@ -52,6 +57,7 @@
         "issue_number": 57,
         "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
         "solved_at": "2026-05-01T04:09:08Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "4b214dba34932bed874a770e65d8177b80c96b13",
         "submission_repo": "kim-em/e29d0c42ccdda277d3b14b024f5e7c64"
@@ -63,6 +69,7 @@
         "issue_number": 45,
         "production_description": "Seed submission to populate the leaderboard. Solved by Claude Opus 4.7 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:16:18Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "567b8d1feebbc6ccbb1f8ebb0a7bbcf5e914f135",
         "submission_repo": "kim-em/22bad2dccd67bcca0df87c01d072ef39"
@@ -74,6 +81,7 @@
         "issue_number": 56,
         "production_description": "Seed submission to populate the leaderboard. Solved by Claude Sonnet 4.6 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:59:26Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "abc391f430430e663b2b71050c7a362d7591bbe3",
         "submission_repo": "kim-em/0429e116fa42128b951113658a123eab"
@@ -85,6 +93,7 @@
         "issue_number": 48,
         "production_description": "Seed submission to populate the leaderboard. Solved by DeepSeek V4 Pro via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:48:53Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "ccfef2885c0266c48386e243ee59e009dedb8d9f",
         "submission_repo": "kim-em/626f5e295e4073d0e82bf8d157ef494d"
@@ -96,6 +105,7 @@
         "issue_number": 43,
         "production_description": "Seed submission to populate the leaderboard. Solved by GPT-5.5 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:11:33Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "da68385911d37e6916c310f347d152022a1a4c85",
         "submission_repo": "kim-em/ce24eda45a01b835b8697d240308fcb9"
@@ -107,6 +117,7 @@
         "issue_number": 44,
         "production_description": "Seed submission to populate the leaderboard. Solved by Gemini 3.1 Pro via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:44:12Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "c4deee32c0418ef7f3f6ed2d9900e7f347930919",
         "submission_repo": "kim-em/a6470f0ab82fa73f923d85dd964cf501"
@@ -118,6 +129,7 @@
         "issue_number": 46,
         "production_description": "Seed submission to populate the leaderboard. Solved by Grok 4.3 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:55:50Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "730ee114f8fdae4cc3cdca00931b78833097a978",
         "submission_repo": "kim-em/11fe79b3ff4112a8db688b5925586f7c"
@@ -129,6 +141,7 @@
         "issue_number": 49,
         "production_description": "Seed submission to populate the leaderboard. Solved by Kimi K2.6 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:20:56Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "813801e70c6b76749fcb636a8f4b3a0d06f5b6e2",
         "submission_repo": "kim-em/a571fe19cb7a77a48fffe941dc970577"
@@ -140,6 +153,7 @@
         "issue_number": 51,
         "production_description": "Seed submission to populate the leaderboard. Solved by Mistral Large 3 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:43:52Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "bdc70d0a887e7b351fd3868751d2414ff01fa525",
         "submission_repo": "kim-em/1ba370e1c56f56f91f7db5007223fa4d"
@@ -151,6 +165,7 @@
         "issue_number": 47,
         "production_description": "Seed submission to populate the leaderboard. Solved by Qwen3.6 Max via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
         "solved_at": "2026-05-01T03:55:01Z",
+        "submission_kind": "gist",
         "submission_public": true,
         "submission_ref": "62b7a0a44e4ac9c67be030ce2c382fee10209e11",
         "submission_repo": "kim-em/399479d951188afdbc6ad90c25f7cddb"
