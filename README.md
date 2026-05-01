@@ -1,6 +1,6 @@
 # lean-eval-leaderboard
 
-**[View the leaderboard →](https://leanprover.github.io/lean-eval-leaderboard/)**
+**[View the leaderboard →](https://lean-lang.org/eval/)**
 
 Results store and public website data source for the
 [lean-eval](https://github.com/leanprover/lean-eval) benchmark.
