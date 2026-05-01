@@ -12,6 +12,17 @@
         "submission_repo": "kim-em/46bbc55262b3b49a94931c6550c4633b"
       }
     },
+    "Claude Opus 4.7": {
+      "two_plus_two": {
+        "benchmark_commit": "953d54a7af5038566775507761e48e365e7feb3b",
+        "issue_number": 45,
+        "production_description": "Seed submission to populate the leaderboard. Solved by Claude Opus 4.7 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
+        "solved_at": "2026-05-01T03:16:18Z",
+        "submission_public": true,
+        "submission_ref": "567b8d1feebbc6ccbb1f8ebb0a7bbcf5e914f135",
+        "submission_repo": "kim-em/22bad2dccd67bcca0df87c01d072ef39"
+      }
+    },
     "GPT-5.5": {
       "two_plus_two": {
         "benchmark_commit": "953d54a7af5038566775507761e48e365e7feb3b",
