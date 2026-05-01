@@ -82,7 +82,7 @@ private def formatDate (iso : String) : String :=
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       match mm.toNat? with
       | some m =>
-        if h : 1 ≤ m ∧ m ≤ 12 then
+        if 1 ≤ m ∧ m ≤ 12 then
           let name := monthNames[m - 1]!
           let dayNum := dd.toNat?.getD 0
           s!"{name} {dayNum}, {yyyy}"
@@ -200,14 +200,14 @@ private def problemItem
     | none => htmlBlobBlock {{ <span></span> }}
   let productionNote := match productionDescription? with
     | some description =>
-      let trimmed := description.trim
+      let trimmed := description.trimAscii
       if trimmed.isEmpty then
         htmlBlobBlock {{ <span></span> }}
       else
         htmlBlobBlock {{
           <details class="production-note">
             <summary>"How produced"</summary>
-            <p>{{textHtml trimmed}}</p>
+            <p>{{textHtml trimmed.toString}}</p>
           </details>
         }}
     | none => htmlBlobBlock {{ <span></span> }}
