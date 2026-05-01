@@ -367,26 +367,6 @@
       "sort_index": 17
     },
     {
-      "id": "isStarNormal_mul_of_commute",
-      "title": "Product of commuting normal elements is normal",
-      "test": false,
-      "submitter": "Kim Morrison",
-      "module": "LeanEval.Algebra.NormalProduct",
-      "holes": [
-        {
-          "name": "LeanEval.Algebra.isStarNormal_mul_of_commute",
-          "basename": "isStarNormal_mul_of_commute",
-          "kind": "theorem",
-          "body": "theorem isStarNormal_mul_of_commute\n    {A : Type*} [NonUnitalCStarAlgebra A]\n    {a b : A} (ha : IsStarNormal a) (hb : IsStarNormal b)\n    (hab : Commute a b) :\n    IsStarNormal (a * b) := by\n  sorry"
-        }
-      ],
-      "notes": "Uses the Fuglede-Putnam-Rosenblum theorem to show all four of a, star a, b, star b pairwise commute, then verifies the normality condition by direct computation.",
-      "source": "B. Fuglede, A commutativity theorem for normal operators, 1950.",
-      "informal_solution": "From Commute a b and normality, apply Fuglede-Putnam twice to get Commute (star a) b and Commute (star a) (star b). Then star(ab)\u00b7(ab) = b*\u00b7a*\u00b7a\u00b7b = b*\u00b7a\u00b7a*\u00b7b (a normal) = a\u00b7b*\u00b7b\u00b7a* (all commute) = a\u00b7b\u00b7b*\u00b7a* (b normal) = (ab)\u00b7star(ab).",
-      "challenge_path": "generated/isStarNormal_mul_of_commute",
-      "sort_index": 18
-    },
-    {
       "id": "posSemidef_map_exp",
       "title": "Entrywise exponential of a PSD matrix is PSD",
       "test": false,
