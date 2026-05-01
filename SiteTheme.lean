@@ -12,6 +12,9 @@ def theme (name : String) (siteName : String) : Theme := {
     let path := (← read).path
     let isHome := path.isEmpty
     let pageClass := if isHome then "home-page" else "inner-page"
+    -- Verso emits a `<base href>` tag pointing at the site root, so all
+    -- relative URLs in the page resolve against that base. Asset and nav
+    -- hrefs below use plain relative paths (no leading `/` or `../`).
     -- The home page emits its own wrappers (a full-width
     -- `.leaderboard-root` for the hero/leaderboard plus a
     -- `.wrap.prose.page-copy` for the intro prose), so the theme just
@@ -51,7 +54,12 @@ def theme (name : String) (siteName : String) : Theme := {
                   <span class="wordmark-mark">"⊢"</span>
                   <span class="wordmark-text">"lean-eval"</span>
                 </a>
-                {{ ← topNav (homeLink := name) }}
+                <nav class="top">
+                  <ol>
+                    <li><a href="problems/">"Problems"</a></li>
+                    <li><a href="submit/">"Submit"</a></li>
+                  </ol>
+                </nav>
               </div>
             </header>
             <main class="page" role="main">

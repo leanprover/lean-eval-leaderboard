@@ -75,9 +75,13 @@ open Verso.Output Html in
 /-- Render an in-page table of contents as a collapsible `<details>` block.
 Each item links to the per-problem detail page. -/
 private def tocBlock (items : Array (String × String)) : Block Page :=
+  -- Verso emits a `<base href>` pointing at the site root, so all
+  -- relative URLs in the page resolve from there. We want each TOC
+  -- entry to point at `<root>/problems/<id>/`, so use the explicit
+  -- `problems/<id>/` shape (no leading slash, no `..`).
   let lis : Verso.Output.Html := Verso.Output.Html.fromArray <|
     items.map fun (id, title) =>
-      let href := s!"/problems/{id}/"
+      let href := s!"problems/{id}/"
       {{ <li><a href={{href}}>{{Verso.Output.Html.text true title}}</a></li> }}
   let html : Verso.Output.Html := {{
     <details class="problems-toc">
@@ -135,7 +139,7 @@ private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
     ]),
     ← `(paragraph #[
       textInline "Authors are encouraged to submit new problems via PRs to that repository, for inclusion in future benchmark releases. See ",
-      linkInline "Submit" "../submit/",
+      linkInline "Submit" "submit/",
       textInline " for details on submitting solutions."
     ])
   ]

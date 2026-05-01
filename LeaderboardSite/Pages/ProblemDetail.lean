@@ -125,7 +125,10 @@ private def sourceParagraph (value : Option String) : Block Page :=
   | none => paragraph #[textInline s!"Source: {unavailableText}"]
 
 private def backLink : Block Page :=
-  paragraph #[linkInline "← All problems" "../"]
+  -- Verso emits a `<base href>` pointing at the site root, so a plain
+  -- `problems/` href resolves to `<root>/problems/` rather than back up
+  -- past the GitHub Pages base path.
+  paragraph #[linkInline "← All problems" "problems/"]
 
 /-- Assemble one detail page's `Part Page` at runtime from spliced anchor
 blocks plus the (already-flattened) solver list. Routing assembly through a
