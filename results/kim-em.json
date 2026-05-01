@@ -56,6 +56,17 @@
         "submission_repo": "kim-em/a571fe19cb7a77a48fffe941dc970577"
       }
     },
+    "Mistral Large 3": {
+      "two_plus_two": {
+        "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
+        "issue_number": 51,
+        "production_description": "Seed submission to populate the leaderboard. Solved by Mistral Large 3 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
+        "solved_at": "2026-05-01T03:43:52Z",
+        "submission_public": true,
+        "submission_ref": "bdc70d0a887e7b351fd3868751d2414ff01fa525",
+        "submission_repo": "kim-em/1ba370e1c56f56f91f7db5007223fa4d"
+      }
+    },
     "Qwen3.6 Max": {
       "two_plus_two": {
         "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
