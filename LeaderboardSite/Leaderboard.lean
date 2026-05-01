@@ -265,21 +265,24 @@ private def entryBody
     (problems : Std.HashMap String (String × String))
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (entry : LeaderboardEntry) : Array (Block Page) :=
+  let renderItem (item : SolvedProblem) : Block Page :=
+    let (title, statement) := problemTitleAndStatement problems item.problemId
+    let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
+    problemItem anchorMap item.problemId title statement proofUrl? (some item.rarityRank)
+      item.productionDescription
+  let renderSection (label : String) (items : Array SolvedProblem) : Array (Block Page) :=
+    if items.isEmpty then #[] else
+      #[divBlock "entry-section" #[
+          sectionLabel label,
+          divBlock "problem-grid" (items.map renderItem)
+        ]]
   let unique := entry.uniqueProblemIds.filterMap fun pid =>
     entry.solvedProblems.find? (·.problemId == pid)
-  let uniqueSection : Array (Block Page) :=
-    if unique.isEmpty then
-      #[]
-    else
-      let items : Array (Block Page) := unique.map fun item =>
-        let (title, statement) := problemTitleAndStatement problems item.problemId
-        let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
-        problemItem anchorMap item.problemId title statement proofUrl? (some item.rarityRank)
-          item.productionDescription
-      #[divBlock "entry-section" #[
-          sectionLabel "Problems uniquely solved by this model",
-          divBlock "problem-grid" items
-        ]]
+  let uniqueIds : Std.HashSet String :=
+    entry.uniqueProblemIds.foldl (init := ({} : Std.HashSet String)) (·.insert ·)
+  let shared := entry.solvedProblems.filter fun s => ! uniqueIds.contains s.problemId
+  let uniqueSection := renderSection "Problems uniquely solved by this model" unique
+  let sharedSection := renderSection "Other solved problems" shared
   let submitters : Html :=
     if entry.submitters.isEmpty then
       {{ <span class="empty-inline">"None"</span> }}
@@ -302,7 +305,7 @@ private def entryBody
       sectionLabel "Contributors",
       htmlBlobBlock {{ <div class="submitter-list">{{submitters}}</div> }}
     ]
-  uniqueSection.push provenanceSection
+  uniqueSection ++ sharedSection |>.push provenanceSection
 
 private def entryBlock
     (problems : Std.HashMap String (String × String))
