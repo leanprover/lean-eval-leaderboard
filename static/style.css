@@ -279,14 +279,15 @@ nav.top .home {
 }
 
 .hero-panel {
-  padding: 32px;
+  padding: 24px 28px;
   margin-bottom: 22px;
 }
 
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 28px;
+  gap: 24px;
+  align-items: start;
 }
 
 .hero-kicker,
@@ -323,12 +324,51 @@ nav.top .home {
 .hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 28px;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.hero-stat-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(13, 18, 23, 0.78);
+  overflow: hidden;
+}
+
+.hero-stat-strip .hero-stat,
+.hero-stat-strip .hero-stat-link {
+  border: 0;
+  border-right: 1px solid rgba(126, 227, 217, 0.08);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 18px;
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hero-stat-strip > :last-child {
+  border-right: 0;
+}
+
+.hero-stat-strip .hero-stat span {
+  font-size: 1.05rem;
+  display: inline;
+}
+
+.hero-stat-strip .hero-stat label {
+  display: inline;
+  margin-top: 0;
+  font-size: 0.78rem;
+  color: #93a0a8;
 }
 
 .hero-side {
-  align-self: stretch;
   padding: 6px 0 0 18px;
   border-left: 1px solid rgba(126, 227, 217, 0.08);
 }
@@ -453,16 +493,35 @@ nav.top .home {
 
 .entry summary {
   display: grid;
-  grid-template-columns: 60px minmax(0, 1fr) auto;
+  grid-template-columns: 60px minmax(0, 1fr) auto 24px;
   align-items: center;
   gap: 16px;
   padding: 18px 20px;
   cursor: pointer;
   list-style: none;
+  transition: background-color 140ms ease;
 }
 
 .entry summary::-webkit-details-marker {
   display: none;
+}
+
+.entry summary::after {
+  content: "▾";
+  color: #7fe3d9;
+  font-size: 0.85rem;
+  text-align: center;
+  transition: transform 160ms ease;
+  transform-origin: center;
+}
+
+.entry[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.entry:hover summary,
+.entry summary:focus-visible {
+  background: rgba(126, 227, 217, 0.04);
 }
 
 .entry[open] summary {
@@ -592,12 +651,32 @@ nav.top .home {
 }
 
 .problem-id-trigger {
-  cursor: default;
+  cursor: pointer;
+}
+
+.problem-id-trigger:focus-visible {
+  outline: 2px solid rgba(126, 227, 217, 0.5);
+  outline-offset: 2px;
+}
+
+.problem-proof-link {
+  font-weight: 600;
+  color: #a8f0e5;
+  border-color: rgba(126, 227, 217, 0.32);
+  background: rgba(126, 227, 217, 0.06);
+  gap: 4px;
 }
 
 .problem-proof-link:hover {
   color: #f2f6f8;
-  border-color: rgba(126, 227, 217, 0.22);
+  border-color: rgba(126, 227, 217, 0.55);
+  background: rgba(126, 227, 217, 0.12);
+}
+
+.problem-proof-link svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
 .theorem-card {
@@ -815,7 +894,315 @@ nav.top .home {
   margin-top: 12px;
 }
 
-@media (max-width: 900px) {
+/* Suppress Verso's `sorry` warning underline + tooltip on theorem cards
+   and the problems page. Problem statements are deliberate placeholders;
+   the warning treatment is noise. */
+.verso-message.warning,
+.has-info.warning > .hover-info {
+  display: none;
+}
+
+.has-info.warning {
+  text-decoration: none;
+  background: transparent;
+}
+
+/* Hide Verso's tactic-state toggle and goal panel — irrelevant on a
+   read-only catalog/leaderboard. */
+input.tactic-toggle,
+.tactic-state {
+  display: none;
+}
+
+label[for^="tactic-state"] {
+  cursor: default;
+}
+
+/* Inline-code overflow control so URL examples on the Submit page don't
+   spill out of the container on narrow viewports. */
+code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Score pills in leaderboard summary row. */
+.entry-score-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.entry-score-primary {
+  color: #e7ecef;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.entry-score-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.74rem;
+  border: 1px solid transparent;
+}
+
+.entry-score-pill--main {
+  color: #f4c27b;
+  border-color: rgba(244, 194, 123, 0.28);
+  background: rgba(244, 194, 123, 0.08);
+}
+
+.entry-score-pill--test {
+  color: #9fc7ff;
+  border-color: rgba(159, 199, 255, 0.28);
+  background: rgba(159, 199, 255, 0.08);
+}
+
+/* Active-nav state: highlight the link for the current page. */
+nav.top a[aria-current="page"] {
+  color: #e7ecef;
+  border-bottom: 2px solid rgba(126, 227, 217, 0.65);
+  padding-bottom: 2px;
+}
+
+/* Footer: two-row layout — repos with icons, then community links. */
+.footer-inner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-row a:focus-visible {
+  outline: 2px solid rgba(126, 227, 217, 0.45);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.footer-row svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.footer-row--community {
+  border-top: 1px solid rgba(126, 227, 217, 0.06);
+  padding-top: 10px;
+  font-size: 0.84rem;
+  color: #93a0a8;
+}
+
+/* Submit-page CTA button: the primary action on /submit. */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 24px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(126, 227, 217, 0.94), rgba(76, 207, 193, 0.92));
+  color: #0b1014;
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(76, 207, 193, 0.18);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.cta-button:hover,
+.cta-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px rgba(76, 207, 193, 0.28);
+}
+
+.cta-button:focus-visible {
+  outline: 2px solid rgba(126, 227, 217, 0.65);
+  outline-offset: 3px;
+}
+
+.submit-tldr {
+  margin: 4px 0 18px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(13, 18, 23, 0.6);
+  color: #c3cdd2;
+  font-size: 0.95rem;
+}
+
+/* Problems-page table of contents. Collapsed by default. */
+.problems-toc {
+  margin: 0 0 24px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(13, 18, 23, 0.6);
+}
+
+.problems-toc > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  list-style: none;
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  font-weight: 600;
+  color: #d8e6e5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.problems-toc > summary::-webkit-details-marker {
+  display: none;
+}
+
+.problems-toc > summary::after {
+  content: "▾";
+  color: #7fe3d9;
+  font-size: 0.85rem;
+  transition: transform 160ms ease;
+}
+
+.problems-toc[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.problems-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 16px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 4px 16px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.problems-toc-list li {
+  font-size: 0.88rem;
+}
+
+.problems-toc-list a {
+  color: #b8c4ca;
+  text-decoration: none;
+  display: inline-block;
+  padding: 4px 0;
+}
+
+.problems-toc-list a:hover,
+.problems-toc-list a:focus-visible {
+  color: #e7ecef;
+}
+
+/* Coverage matrix panel: rows = problems, cols = models. */
+.coverage-panel {
+  border: 1px solid rgba(126, 227, 217, 0.12);
+  background: rgba(19, 25, 31, 0.78);
+  border-radius: 20px;
+  padding: 22px;
+  margin-top: 22px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.24);
+}
+
+.coverage-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(126, 227, 217, 0.06);
+}
+
+.coverage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.coverage-table th,
+.coverage-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(126, 227, 217, 0.06);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.coverage-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(13, 18, 23, 0.96);
+  color: #b8c4ca;
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.coverage-table tbody tr:hover {
+  background: rgba(126, 227, 217, 0.04);
+}
+
+.coverage-cell {
+  text-align: center;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  width: 60px;
+}
+
+.coverage-cell--solved {
+  color: #7fe3d9;
+}
+
+.coverage-cell--unsolved {
+  color: #3a4046;
+}
+
+.coverage-row-link {
+  color: #d8e6e5;
+  text-decoration: none;
+}
+
+.coverage-row-link:hover,
+.coverage-row-link:focus-visible {
+  color: #f2f6f8;
+}
+
+.coverage-kind {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.7rem;
+  margin-left: 8px;
+}
+
+.coverage-kind--main {
+  color: #f4c27b;
+  background: rgba(244, 194, 123, 0.08);
+}
+
+.coverage-kind--test {
+  color: #9fc7ff;
+  background: rgba(159, 199, 255, 0.08);
+}
+
+@media (max-width: 1023px) {
   .topbar-inner,
   .panel-header,
   .entry-body,
@@ -830,17 +1217,26 @@ nav.top .home {
     text-align: left;
   }
 
+  .entry-score-line {
+    justify-content: flex-start;
+  }
+
   .prose ul,
   .prose ol {
     padding-left: 1.15rem;
   }
 
   .entry summary {
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr) 24px;
   }
 
   .entry-score {
     grid-column: 2;
+  }
+
+  .entry summary::after {
+    grid-column: 3;
+    grid-row: 1;
   }
 
   .entry-side {
@@ -858,15 +1254,61 @@ nav.top .home {
   }
 
   nav.top ol {
-    gap: 12px;
+    gap: 14px;
   }
 
   .theorem-card {
     width: min(520px, calc(100vw - 64px));
   }
 
-  .wordmark-text {
+  /* Hide the coverage matrix on tablet/mobile — use the existing list view. */
+  .coverage-panel {
     display: none;
+  }
+
+  .topbar-inner {
+    display: flex;
+    grid-template-columns: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-inner {
+    min-height: 56px;
+    gap: 12px;
+  }
+
+  .wordmark-mark {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  .wordmark-text {
+    font-size: 0.85rem;
+  }
+
+  nav.top ol {
+    gap: 14px;
+    font-size: 0.92rem;
+  }
+
+  .hero-panel {
+    padding: 18px;
+  }
+
+  .hero-grid {
+    gap: 18px;
+  }
+
+  .cta-button {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .footer-row {
+    gap: 12px;
   }
 }
 

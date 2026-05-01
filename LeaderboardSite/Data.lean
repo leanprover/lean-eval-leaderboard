@@ -185,6 +185,7 @@ structure LeaderboardEntry where
   lastSolvedAt : String
   submitters : Array SubmitterRef
   notableProblemIds : Array String
+  uniqueProblemIds : Array String
   solvedProblems : Array SolvedProblem
 deriving Quote, Inhabited, Repr
 
@@ -199,6 +200,8 @@ instance : FromJson LeaderboardEntry where
       lastSolvedAt := ← json.getObjValAs? String "last_solved_at"
       submitters := ← json.getObjValAs? (Array SubmitterRef) "submitters"
       notableProblemIds := ← json.getObjValAs? (Array String) "notable_problem_ids"
+      uniqueProblemIds :=
+        (json.getObjValAs? (Array String) "unique_problem_ids").toOption.getD #[]
       solvedProblems := ← json.getObjValAs? (Array SolvedProblem) "solved_problems"
     }
 

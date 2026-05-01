@@ -555,6 +555,14 @@ def build_leaderboard_payload(
                 ],
                 "solved_problem_ids": [item["problem_id"] for item in solved_items],
                 "notable_problem_ids": [item["problem_id"] for item in notable[:10]],
+                # Problems where this entry is the only solver across the
+                # whole leaderboard. Used by the home page to highlight
+                # genuinely-unique solves.
+                "unique_problem_ids": [
+                    item["problem_id"]
+                    for item in notable
+                    if solving_model_counts[item["problem_id"]] == 1
+                ],
                 "solved_problems": [
                     {
                         "problem_id": item["problem_id"],

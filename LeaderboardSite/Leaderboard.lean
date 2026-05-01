@@ -91,8 +91,15 @@ private def formatDate (iso : String) : String :=
     | _ => iso
   | [] => iso
 
-private def scoreLine (score : LeaderboardScore) : String :=
-  s!"{score.display} total • {score.solvedMain} main • {score.solvedTest} test"
+private def scoreLineHtml (score : LeaderboardScore) : Html :=
+  let solved : String := s!"{score.display} solved"
+  {{
+    <span class="entry-score-line">
+      <span class="entry-score-primary">{{textHtml solved}}</span>
+      <span class="entry-score-pill entry-score-pill--main">{{textHtml s!"{score.solvedMain} main"}}</span>
+      <span class="entry-score-pill entry-score-pill--test">{{textHtml s!"{score.solvedTest} test"}}</span>
+    </span>
+  }}
 
 /-! ## Hero panel -/
 
@@ -120,7 +127,7 @@ private def sectionLabel (text : String) : Block Page :=
 private def heroBlock (summary : LeaderboardSummary) : Block Page :=
   let problemsHref := "problems/"
   let mainProblemsHref := s!"{problemsHref}#main-problems"
-  let testProblemsHref := s!"{problemsHref}#starter-problems"
+  let testProblemsHref := s!"{problemsHref}#test-problems"
   let heroCopy :=
     "Public results on a benchmark of hard Lean formalization problems. "
     ++ "Expand any row to inspect solved theorems, extracted statements, and "
@@ -132,9 +139,9 @@ private def heroBlock (summary : LeaderboardSummary) : Block Page :=
     divBlock "hero-kicker" #[paragraph #[textInline "lean-eval"]],
     htmlBlobBlock {{ <h1 class="hero-title">"Lean AI formalization leaderboard"</h1> }},
     htmlBlobBlock {{ <p class="hero-copy">{{textHtml heroCopy}}</p> }},
-    divBlock "hero-stats" #[
+    divBlock "hero-stats hero-stat-strip" #[
       heroStat summary.models "models",
-      heroStat summary.submitters "submitters",
+      heroStat summary.submitters (pluralize summary.submitters "submitter" "submitters"),
       heroStatLink summary.problems "problems" problemsHref
     ]
   ]
@@ -190,7 +197,12 @@ private def problemItem
   }}
   let proofLink := match proofUrl? with
     | some url => htmlBlobBlock {{
-        <a class="problem-proof-link" href={{url}}>"proof"</a>
+        <a class="problem-proof-link" href={{url}}>
+          <span>"proof"</span>
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M9 1v1.5h3.44L6.97 7.97l1.06 1.06L13.5 3.56V7H15V1H9zM2 3v11h11V8.5h-1.5V12.5h-8v-8H6.5V3H2z"/>
+          </svg>
+        </a>
       }}
     | none => htmlBlobBlock {{ <span></span> }}
   let rarityChip := match rarityRank? with
@@ -216,7 +228,11 @@ private def problemItem
     divBlock "problem-meta-row" #[
       htmlWrapperBlock "span" #[("class", "problem-id-wrap")] #[
         htmlBlobBlock {{
-          <span class="problem-id-trigger" tabindex="0">{{textHtml problemId}}</span>
+          <span class="problem-id-trigger" role="button" tabindex="0"
+                aria-haspopup="true"
+                aria-label={{s!"Show theorem statement for {problemId}"}}>
+            {{textHtml problemId}}
+          </span>
         }},
         theoremCard anchorMap problemId statement
       ],
@@ -236,64 +252,57 @@ private def problemTitleAndStatement
 
 /-- Render the `<summary>` row for an entry. -/
 private def entrySummary (entry : LeaderboardEntry) : Html :=
-  let suffix := if entry.submitterCount == 1 then "" else "s"
-  let line := scoreLine entry.score
   {{
     <span class="entry-rank">{{textHtml (toString entry.rank)}}</span>
     <span class="entry-model">
       <span class="entry-model-name">{{textHtml entry.modelName}}</span>
-      <span class="entry-model-meta">{{
-        textHtml s!"{entry.submitterCount} submitter{suffix}"
-      }}</span>
     </span>
-    <span class="entry-score">{{textHtml line}}</span>
+    <span class="entry-score">{{scoreLineHtml entry.score}}</span>
   }}
 
-/-- Render the body of a `<details>` row: notable problems + provenance. -/
+/-- Render the body of a `<details>` row: solved-by-this-model + provenance. -/
 private def entryBody
     (problems : Std.HashMap String (String × String))
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (entry : LeaderboardEntry) : Array (Block Page) :=
-  let notable := entry.notableProblemIds.filterMap fun pid =>
+  let unique := entry.uniqueProblemIds.filterMap fun pid =>
     entry.solvedProblems.find? (·.problemId == pid)
-  let notableItems : Array (Block Page) :=
-    if notable.isEmpty then
-      #[htmlBlobBlock {{
-          <p class="empty-state">"No public solves recorded for this row yet."</p>
-        }}]
+  let uniqueSection : Array (Block Page) :=
+    if unique.isEmpty then
+      #[]
     else
-      notable.map fun item =>
+      let items : Array (Block Page) := unique.map fun item =>
         let (title, statement) := problemTitleAndStatement problems item.problemId
         let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
         problemItem anchorMap item.problemId title statement proofUrl? (some item.rarityRank)
           item.productionDescription
+      #[divBlock "entry-section" #[
+          sectionLabel "Problems uniquely solved by this model",
+          divBlock "problem-grid" items
+        ]]
   let submitters : Html :=
     if entry.submitters.isEmpty then
       {{ <span class="empty-inline">"None"</span> }}
     else
       Html.fromArray (entry.submitters.map fun s =>
         {{ <span class="submitter-chip">{{textHtml s.user}} <span>{{textHtml (toString s.solvedTotal)}}</span></span> }})
-  #[
-    divBlock "entry-section" #[
-      sectionLabel "Notable solved problems",
-      divBlock "problem-grid" notableItems
-    ],
+  let provenanceSection : Block Page :=
     divBlock "entry-section entry-side" #[
-      sectionLabel "Row provenance",
+      sectionLabel "Submission history",
       htmlBlobBlock {{
         <div class="stat-pair">
-          <span>"First solve"</span>
+          <span>"First submission"</span>
           <span>{{textHtml (formatDate entry.firstSolvedAt)}}</span>
         </div>
         <div class="stat-pair">
-          <span>"Latest solve"</span>
+          <span>"Last submission"</span>
           <span>{{textHtml (formatDate entry.lastSolvedAt)}}</span>
         </div>
       }},
       sectionLabel "Contributors",
       htmlBlobBlock {{ <div class="submitter-list">{{submitters}}</div> }}
     ]
-  ]
+  uniqueSection.push provenanceSection
 
 private def entryBlock
     (problems : Std.HashMap String (String × String))
@@ -336,6 +345,61 @@ private def emptyShowcase
     divBlock "empty-problem-list" previewItems
   ]
 
+/-! ## Coverage matrix -/
+
+/-- Build a coverage matrix block: rows = problems (in catalog order),
+columns = models (in current rank order). Each cell is a check or a
+dash showing whether the model has a recorded solve. The matrix is
+hidden on narrow viewports via CSS — desktop users get the dense view,
+mobile/tablet keep the existing list view. -/
+private def coverageMatrix
+    (problemMeta : Array (String × String × Bool))
+    (entries : Array LeaderboardEntry) : Block Page :=
+  let solverSets : Array (Std.HashSet String) :=
+    entries.map fun e =>
+      e.solvedProblems.foldl (init := ({} : Std.HashSet String))
+        (fun s p => s.insert p.problemId)
+  let headerCells : Html := Html.fromArray <|
+    #[{{ <th scope="col">"Problem"</th> }}] ++
+    entries.map (fun e =>
+      {{ <th scope="col">{{textHtml e.modelName}}</th> }})
+  let rows : Array Html := problemMeta.map fun (id, title, isTest) =>
+    let kindClass := if isTest then "coverage-kind coverage-kind--test"
+                                else "coverage-kind coverage-kind--main"
+    let kindLabel := if isTest then "test" else "main"
+    let cells : Array Html := entries.zipIdx.map fun (_, i) =>
+      let solved := (solverSets[i]!).contains id
+      if solved then
+        {{ <td class="coverage-cell coverage-cell--solved" aria-label={{s!"{title}: solved"}}>"✓"</td> }}
+      else
+        {{ <td class="coverage-cell coverage-cell--unsolved" aria-label={{s!"{title}: not solved"}}>"—"</td> }}
+    let cellsHtml : Html := Html.fromArray cells
+    {{
+      <tr>
+        <th scope="row">
+          <a class="coverage-row-link" href={{s!"problems/{id}/"}}>{{textHtml title}}</a>
+          <span class={{kindClass}}>{{textHtml kindLabel}}</span>
+        </th>
+        {{cellsHtml}}
+      </tr>
+    }}
+  let body : Html := Html.fromArray rows
+  htmlBlobBlock {{
+    <section class="coverage-panel" aria-labelledby="coverage-heading">
+      <div class="panel-kicker">"Coverage"</div>
+      <h2 id="coverage-heading">"Per-problem coverage"</h2>
+      <p class="panel-note">"Which problems each model has solved. Hidden on narrow screens."</p>
+      <div class="coverage-table-wrap">
+        <table class="coverage-table">
+          <thead>
+            <tr>{{headerCells}}</tr>
+          </thead>
+          <tbody>{{body}}</tbody>
+        </table>
+      </div>
+    </section>
+  }}
+
 /-- Render the leaderboard panel: header + either the entry list or the
 empty showcase with a 4-problem catalog preview. -/
 private def leaderboardPanel
@@ -370,19 +434,39 @@ Wrapped in `.leaderboard-root` so it renders full-width. -/
 def leaderboardBlocks
     (summary : LeaderboardSummary)
     (problemEntries : Array (String × String × String))
+    (problemKinds : Array (String × Bool))
     (entries : Array LeaderboardEntry)
     (previewIds : Array String)
     (anchorMap : Std.HashMap String (Array (Block Page))) : Array (Block Page) :=
+  -- Compute uniqueness from leaderboard data (works even when the JSON
+  -- file pre-dates the `unique_problem_ids` field): a problem is
+  -- "uniquely solved" by an entry iff exactly one entry has it.
+  let solverCounts : Std.HashMap String Nat :=
+    entries.foldl (init := ({} : Std.HashMap String Nat)) fun m e =>
+      e.solvedProblems.foldl (init := m) fun m s =>
+        m.insert s.problemId (m.getD s.problemId 0 + 1)
+  let entries := entries.map fun e =>
+    let unique := e.solvedProblems.filterMap fun s =>
+      if solverCounts.getD s.problemId 0 == 1 then some s.problemId else none
+    { e with uniqueProblemIds := unique }
   let problemMap : Std.HashMap String (String × String) :=
     problemEntries.foldl
-      (fun m (id, title, statement) => m.insert id (title, statement))
-      {}
+      (fun m (id, title, statement) => m.insert id (title, statement)) {}
+  let kindMap : Std.HashMap String Bool :=
+    problemKinds.foldl (fun m (id, isTest) => m.insert id isTest) {}
   let preview : Array (String × String × String) :=
     previewIds.filterMap fun id =>
       problemMap[id]?.map fun (title, statement) => (id, title, statement)
+  let problemMeta : Array (String × String × Bool) := problemEntries.map
+    fun (id, title, _) => (id, title, kindMap.getD id false)
+  let leaderboard := leaderboardPanel problemMap anchorMap preview entries
+  let coverage :=
+    if entries.isEmpty then htmlBlobBlock {{ <span></span> }}
+    else coverageMatrix problemMeta entries
   #[divBlock "leaderboard-root" #[
     heroBlock summary,
-    leaderboardPanel problemMap anchorMap preview entries
+    leaderboard,
+    coverage
   ]]
 
 /-! ## Term elaborator
@@ -417,6 +501,8 @@ elab_rules : term
         problems.map fun p =>
           let joined := String.intercalate "\n\n" (p.holes.map (·.body)).toList
           (p.id, p.title, joined)
+      let problemKinds : Array (String × Bool) :=
+        problems.map fun p => (p.id, p.test)
       -- The empty-state preview shows the first four main (non-test)
       -- problems, mirroring what the JS rendering used to emit.
       let mainProblems := problems.filter (!·.test)
@@ -433,6 +519,7 @@ elab_rules : term
       let term ← `(leaderboardBlocks
         $(quote summary)
         $(quote problemTriples)
+        $(quote problemKinds)
         $(quote entries)
         $(quote previewIds)
         $anchorMap)

@@ -71,6 +71,22 @@ private def sourceParagraphTerm (problem : ProblemEntry) : TermElabM (TSyntax `t
 private def holeWrap (child : Block Page) : Block Page :=
   .other (BlockExt.htmlDiv "hole") #[child]
 
+open Verso.Output Html in
+/-- Render an in-page table of contents as a collapsible `<details>` block.
+Each item links to the per-problem detail page. -/
+private def tocBlock (items : Array (String × String)) : Block Page :=
+  let lis : Verso.Output.Html := Verso.Output.Html.fromArray <|
+    items.map fun (id, title) =>
+      let href := s!"/problems/{id}/"
+      {{ <li><a href={{href}}>{{Verso.Output.Html.text true title}}</a></li> }}
+  let html : Verso.Output.Html := {{
+    <details class="problems-toc">
+      <summary>"All problems"</summary>
+      <ul class="problems-toc-list">{{lis}}</ul>
+    </details>
+  }}
+  Verso.Doc.Block.other (BlockExt.blob html) #[]
+
 /-- Assemble one problem's `Part Page` at runtime from the spliced anchor
 blocks. Routing per-problem assembly through this function keeps the
 elaborator-time syntax tree shallow (one runtime call per problem rather
@@ -136,8 +152,11 @@ elab_rules : term
       let mainSection ← sectionPartTerm "Main benchmark problems" "main-problems" mainProblems
       let mut subParts := #[mainSection]
       if !starterProblems.isEmpty then
-        subParts := subParts.push (← sectionPartTerm "Starter problems" "starter-problems" starterProblems)
-      let introBlocks' : TSyntaxArray `term := introBlocks
+        subParts := subParts.push (← sectionPartTerm "Test problems" "test-problems" starterProblems)
+      let tocItems : Array (String × String) :=
+        (mainProblems ++ starterProblems).map fun p => (p.id, p.title)
+      let tocTerm ← `(tocBlock $(quote tocItems))
+      let introBlocks' : TSyntaxArray `term := introBlocks.push tocTerm
       let subParts' : TSyntaxArray `term := subParts
       let pageTerm ← `(pagePart "Problems" #[$introBlocks',*] #[$subParts',*])
       let expectedType ← Lean.Elab.Term.elabTerm (← `(Part Page)) none
