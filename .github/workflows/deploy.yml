@@ -66,13 +66,15 @@ jobs:
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
 
-      - name: Install LinkChecker
+      - name: Check internal links resolve under the GitHub Pages base path
+        # GitHub Pages serves this site under `/lean-eval-leaderboard/`, so a
+        # link like `/foo` (root-absolute) or `../foo` (popping past the base
+        # path) 404s in production even though it might resolve fine against a
+        # flat `_site/` mount. `scripts/check_links.py` emulates the deployed
+        # URL shape and fails on any href/src that escapes the base path or
+        # points at a file that doesn't exist under `_site/`.
         run: |
-          pip install linkchecker
-
-      - name: Run LinkChecker (local links only)
-        run: |
-          linkchecker --config=.linkchecker/linkcheckerrc './_site/'
+          python3 scripts/check_links.py --site-dir _site --prefix lean-eval-leaderboard
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'

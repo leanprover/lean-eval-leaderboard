@@ -22,7 +22,14 @@ BENCHMARK_SNAPSHOT_ROOT = REPO_ROOT / "benchmark-snapshot"
 DEFAULT_BENCHMARK_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-evals"))
 )
-THEOREM_PATTERN = r"(?:^|\s)theorem\s+{name}\b(?P<body>.*?)(?:\s*:=\s*by\b)"
+
+
+@dataclass(frozen=True)
+class Hole:
+    name: str
+    basename: str
+    kind: str
+    body: str
 
 
 @dataclass(frozen=True)
@@ -32,11 +39,10 @@ class Problem:
     test: bool
     submitter: str
     module: str
-    theorem: str
     notes: str | None
     source: str | None
     informal_solution: str | None
-    statement: str
+    holes: tuple[Hole, ...]
     challenge_path: str
     sort_index: int
 
@@ -69,40 +75,49 @@ def load_json(path: pathlib.Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_holes(benchmark_repo: pathlib.Path, problem_id: str) -> tuple[Hole, ...]:
+    """Read `generated/<id>/holes.json` and return the per-hole metadata."""
+    path = benchmark_repo / "generated" / problem_id / "holes.json"
+    if not path.is_file():
+        raise SystemExit(
+            f"holes.json not found for problem '{problem_id}': {path}. "
+            f"Re-run `python scripts/generate_projects.py` in the benchmark repo "
+            f"to publish per-hole metadata."
+        )
+    payload = load_json(path)
+    holes = []
+    for raw in payload["holes"]:
+        holes.append(Hole(
+            name=str(raw["name"]),
+            basename=str(raw["basename"]),
+            kind=str(raw["kind"]),
+            body=str(raw["body"]),
+        ))
+    return tuple(holes)
+
+
 def load_manifest(manifest_path: pathlib.Path, benchmark_repo: pathlib.Path) -> list[Problem]:
     data = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
     problems: list[Problem] = []
     for index, raw in enumerate(data["problem"]):
-        statement = extract_statement(
-            benchmark_repo / pathlib.Path(*str(raw["module"]).split(".")).with_suffix(".lean"),
-            str(raw["theorem"]).rsplit(".", maxsplit=1)[-1],
-        )
+        problem_id = str(raw["id"])
+        holes = load_holes(benchmark_repo, problem_id)
         problems.append(
             Problem(
-                id=str(raw["id"]),
+                id=problem_id,
                 title=str(raw["title"]),
                 test=bool(raw.get("test", False)),
                 submitter=str(raw["submitter"]),
                 module=str(raw["module"]),
-                theorem=str(raw["theorem"]),
                 notes=str(raw["notes"]).strip() if raw.get("notes") else None,
                 source=str(raw["source"]).strip() if raw.get("source") else None,
                 informal_solution=str(raw["informal_solution"]).strip() if raw.get("informal_solution") else None,
-                statement=statement,
-                challenge_path=f"generated/{raw['id']}",
+                holes=holes,
+                challenge_path=f"generated/{problem_id}",
                 sort_index=index,
             )
         )
     return problems
-
-
-def extract_statement(source_path: pathlib.Path, theorem_name: str) -> str:
-    text = source_path.read_text(encoding="utf-8")
-    pattern = re.compile(THEOREM_PATTERN.format(name=re.escape(theorem_name)), re.DOTALL)
-    match = pattern.search(text)
-    if not match:
-        return ""
-    return match.group("body").strip()
 
 
 def write_json(path: pathlib.Path, payload: Any) -> None:
@@ -171,15 +186,20 @@ def generated_problem_root(benchmark_repo: pathlib.Path, problem: Problem) -> pa
 
 
 def strip_imports(text: str) -> tuple[list[str], list[str]]:
+    """Pull every `import ...` line out of `text`, regardless of position.
+
+    The multi-hole `Challenge.lean` may contain `import` lines interleaved
+    with the source module's copyright comment block, so we cannot rely on
+    a contiguous header run. Lean only accepts imports at the top of a
+    file anyway, so removing them globally and re-emitting them at the
+    catalog's top is safe."""
     imports: list[str] = []
     body: list[str] = []
-    in_imports = True
     for line in text.splitlines():
-        if in_imports and line.startswith("import "):
+        if line.startswith("import "):
             imports.append(line)
-            continue
-        in_imports = False
-        body.append(line)
+        else:
+            body.append(line)
     return imports, body
 
 
@@ -216,11 +236,16 @@ def collect_local_declarations(lines: list[str]) -> dict[str, str]:
     return declarations
 
 
-def qualify_theorem_text(problem: Problem, theorem_text: str, local_declarations: dict[str, str]) -> str:
-    theorem_name = problem.theorem.rsplit(".", maxsplit=1)[-1]
+def qualify_theorem_text(theorem_text: str, theorem_basename: str, local_declarations: dict[str, str]) -> str:
+    """Rewrite short references in a theorem body to fully-qualified forms.
+
+    Used only on the legacy single-theorem path, where the theorem body
+    references same-module helpers via short names but the helpers will
+    live inside our per-problem `Problem<CamelId>` namespace at the
+    catalog level."""
     qualified = theorem_text
     for short_name, full_name in sorted(local_declarations.items(), key=lambda item: len(item[0]), reverse=True):
-        if short_name == theorem_name:
+        if short_name == theorem_basename:
             continue
         qualified = re.sub(
             rf"(?<![A-Za-z0-9_.']){re.escape(short_name)}\b",
@@ -230,25 +255,68 @@ def qualify_theorem_text(problem: Problem, theorem_text: str, local_declarations
     return qualified
 
 
-def inject_anchor(problem: Problem, theorem_text: str) -> tuple[str, str]:
-    theorem_name = problem.theorem.rsplit(".", maxsplit=1)[-1]
+def anchor_id(problem_id: str, hole: Hole) -> str:
+    return f"{problem_id}__{hole.basename}"
+
+
+def inject_legacy_theorem_anchor(problem: Problem, hole: Hole, theorem_text: str) -> str:
     pattern = re.compile(
-        rf"(?ms)^theorem\s+{re.escape(theorem_name)}\b.*?^\s*sorry\s*$"
+        rf"(?ms)^theorem\s+{re.escape(hole.basename)}\b.*?^\s*sorry\s*$"
     )
     match = pattern.search(theorem_text)
     if not match:
-        raise SystemExit(f"Could not find theorem block for {problem.id}")
-    anchored = (
+        raise SystemExit(f"Could not find theorem block for {problem.id}::{hole.basename}")
+    aid = anchor_id(problem.id, hole)
+    return (
         theorem_text[:match.start()]
-        + f"-- ANCHOR: {problem.id}\n"
+        + f"-- ANCHOR: {aid}\n"
         + match.group(0)
-        + f"\n-- ANCHOR_END: {problem.id}"
+        + f"\n-- ANCHOR_END: {aid}"
         + theorem_text[match.end():]
     )
-    return anchored, match.group(0).rstrip()
 
 
-def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tuple[list[str], list[str], str]:
+def inject_multi_hole_anchor(problem: Problem, hole: Hole, source_text: str) -> str:
+    """Wrap a hole's body inline with `-- ANCHOR: <id>__<basename>` markers.
+
+    For multi-hole problems the per-hole `body` string is a verbatim
+    substring of the generated `Challenge.lean`, so plain string search
+    suffices and we don't need to keyword-match across kinds. Extend the
+    captured span to end-of-line so any trailing same-line `-- ...`
+    inline comments end up inside the anchor wrap rather than on the
+    closing marker line (which subverso parses as part of the anchor
+    name)."""
+    aid = anchor_id(problem.id, hole)
+    idx = source_text.find(hole.body)
+    if idx < 0:
+        raise SystemExit(
+            f"Could not locate hole body for {problem.id}::{hole.basename} "
+            f"in Challenge.lean — `body` field in holes.json must be a substring of the generated Challenge.lean."
+        )
+    end_idx = idx + len(hole.body)
+    nl = source_text.find("\n", end_idx)
+    if nl != -1:
+        end_idx = nl
+    return (
+        source_text[:idx]
+        + f"-- ANCHOR: {aid}\n"
+        + source_text[idx:end_idx]
+        + f"\n-- ANCHOR_END: {aid}"
+        + source_text[end_idx:]
+    )
+
+
+def is_legacy_single_theorem(problem: Problem) -> bool:
+    return len(problem.holes) == 1 and problem.holes[0].kind == "theorem"
+
+
+def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tuple[list[str], list[str]]:
+    """Build a per-problem catalog fragment.
+
+    Returns `(imports, body_parts)` where `body_parts` are concatenated
+    inside the problem's `namespace Problem<CamelId>` block. The fragment
+    contains one `-- ANCHOR: <id>__<basename>` block per hole, in source
+    order."""
     root = generated_problem_root(benchmark_repo, problem)
     challenge_path = root / "Challenge.lean"
     deps_path = root / "ChallengeDeps.lean"
@@ -257,30 +325,35 @@ def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tu
     imports = [line for line in challenge_imports if line.strip() != "import ChallengeDeps"]
     body_parts: list[str] = []
 
-    if deps_path.is_file():
-        deps_imports, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
-        for line in deps_imports:
-            if line not in imports:
-                imports.append(line)
-        body_parts.append("\n".join(deps_body).strip())
-        local_declarations = collect_local_declarations(deps_body)
+    if is_legacy_single_theorem(problem):
+        # Legacy single-theorem path. Preserve the existing
+        # ChallengeDeps + qualify-theorem-references machinery so byte
+        # equivalence is maintained for problems that previously rendered
+        # cleanly.
+        local_declarations: dict[str, str] = {}
+        if deps_path.is_file():
+            deps_imports, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
+            for line in deps_imports:
+                if line not in imports:
+                    imports.append(line)
+            body_parts.append("\n".join(deps_body).strip())
+            local_declarations = collect_local_declarations(deps_body)
+        hole = problem.holes[0]
+        theorem_text = qualify_theorem_text("\n".join(challenge_body).strip(), hole.basename, local_declarations)
+        body_parts.append(inject_legacy_theorem_anchor(problem, hole, theorem_text).strip())
     else:
-        deps_body = []
-        local_declarations = {}
-
-    theorem_text = qualify_theorem_text(problem, "\n".join(challenge_body).strip(), local_declarations)
-    anchored_theorem, anchor_block = inject_anchor(problem, theorem_text)
-    body_parts.append(anchored_theorem.strip())
-    return imports, body_parts, anchor_block
+        # Multi-hole path: the entire source module is reproduced verbatim
+        # in Challenge.lean (with `@[eval_problem]` already stripped).
+        # Inject one anchor block per hole around its `body` substring.
+        text = "\n".join(challenge_body).strip()
+        for hole in problem.holes:
+            text = inject_multi_hole_anchor(problem, hole, text)
+        body_parts.append(text.strip())
+    return imports, body_parts
 
 
 def snapshot_namespace(problem: Problem) -> str:
     return f"Problem{camel_case(problem.id)}"
-
-
-def snapshot_module_name(problem: Problem) -> str:
-    _ = problem
-    return "BenchmarkProblems.Catalog"
 
 
 def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Problem]) -> None:
@@ -296,19 +369,34 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     module_imports: list[str] = []
     module_lines: list[str] = []
     for problem in sorted(problems, key=lambda p: p.sort_index):
-        imports, fragments, _ = build_problem_fragment(problem, benchmark_repo)
+        imports, fragments = build_problem_fragment(problem, benchmark_repo)
         for line in imports:
             if line not in module_imports:
                 module_imports.append(line)
-        namespace = snapshot_namespace(problem)
-        module_lines.append(f"namespace {namespace}")
-        module_lines.append("")
-        for fragment in fragments:
-            if fragment:
-                module_lines.append(fragment)
-                module_lines.append("")
-        module_lines.append(f"end {namespace}")
-        module_lines.append("")
+        # Legacy single-theorem problems get a per-problem `namespace
+        # Problem<CamelId>` wrap so their `ChallengeDeps`-derived helpers
+        # (often in shared namespaces like `Foo.bar`) don't collide
+        # across problems. Multi-hole problems instead reproduce the
+        # source module's full namespace structure verbatim, which both
+        # gives the bodies the original namespace context they need to
+        # type-check (e.g. references to `Spec` inside `namespace
+        # AlgebraicGeometry`) and isolates each problem under its
+        # original module's logical namespace path.
+        if is_legacy_single_theorem(problem):
+            namespace = snapshot_namespace(problem)
+            module_lines.append(f"namespace {namespace}")
+            module_lines.append("")
+            for fragment in fragments:
+                if fragment:
+                    module_lines.append(fragment)
+                    module_lines.append("")
+            module_lines.append(f"end {namespace}")
+            module_lines.append("")
+        else:
+            for fragment in fragments:
+                if fragment:
+                    module_lines.append(fragment)
+                    module_lines.append("")
 
     catalog_path = BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems" / "Catalog.lean"
     write_text(catalog_path, "\n".join(module_imports + [""] + module_lines).rstrip() + "\n")
@@ -327,7 +415,7 @@ def timestamp_key(value: str) -> float:
 
 def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem]) -> dict[str, Any]:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "generated_at": utc_now(),
         "benchmark": {
             "repo": "leanprover/lean-eval",
@@ -340,8 +428,15 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
                 "test": problem.test,
                 "submitter": problem.submitter,
                 "module": problem.module,
-                "theorem": problem.theorem,
-                "statement": problem.statement,
+                "holes": [
+                    {
+                        "name": hole.name,
+                        "basename": hole.basename,
+                        "kind": hole.kind,
+                        "body": hole.body,
+                    }
+                    for hole in problem.holes
+                ],
                 "notes": problem.notes,
                 "source": problem.source,
                 "informal_solution": problem.informal_solution,
@@ -460,6 +555,14 @@ def build_leaderboard_payload(
                 ],
                 "solved_problem_ids": [item["problem_id"] for item in solved_items],
                 "notable_problem_ids": [item["problem_id"] for item in notable[:10]],
+                # Problems where this entry is the only solver across the
+                # whole leaderboard. Used by the home page to highlight
+                # genuinely-unique solves.
+                "unique_problem_ids": [
+                    item["problem_id"]
+                    for item in notable
+                    if solving_model_counts[item["problem_id"]] == 1
+                ],
                 "solved_problems": [
                     {
                         "problem_id": item["problem_id"],

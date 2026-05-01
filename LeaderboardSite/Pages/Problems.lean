@@ -1,5 +1,6 @@
 import VersoBlog
 import LeaderboardSite.Data
+import LeaderboardSite.AnchorRegistry
 
 open Lean
 open Lean.Elab Term
@@ -67,23 +68,64 @@ private def sourceParagraphTerm (problem : ProblemEntry) : TermElabM (TSyntax `t
   | none =>
       `(paragraph #[textInline $(quote s!"Source: {unavailableText}")])
 
-private def problemPartTerm (catalog : String) (problem : ProblemEntry) : TermElabM (TSyntax `term) := do
+private def holeWrap (child : Block Page) : Block Page :=
+  .other (BlockExt.htmlDiv "hole") #[child]
+
+open Verso.Output Html in
+/-- Render an in-page table of contents as a collapsible `<details>` block.
+Each item links to the per-problem detail page. -/
+private def tocBlock (items : Array (String × String)) : Block Page :=
+  -- Verso emits a `<base href>` pointing at the site root, so all
+  -- relative URLs in the page resolve from there. We want each TOC
+  -- entry to point at `<root>/problems/<id>/`, so use the explicit
+  -- `problems/<id>/` shape (no leading slash, no `..`).
+  let lis : Verso.Output.Html := Verso.Output.Html.fromArray <|
+    items.map fun (id, title) =>
+      let href := s!"problems/{id}/"
+      {{ <li><a href={{href}}>{{Verso.Output.Html.text true title}}</a></li> }}
+  let html : Verso.Output.Html := {{
+    <details class="problems-toc">
+      <summary>"All problems"</summary>
+      <ul class="problems-toc-list">{{lis}}</ul>
+    </details>
+  }}
+  Verso.Doc.Block.other (BlockExt.blob html) #[]
+
+/-- Assemble one problem's `Part Page` at runtime from the spliced anchor
+blocks. Routing per-problem assembly through this function keeps the
+elaborator-time syntax tree shallow (one runtime call per problem rather
+than a 5-plus-#holes literal), which avoids the code generator's
+maximum-recursion-depth limit on problems with many holes. -/
+private def assembleProblemPart
+    (title id submitterText : String)
+    (notes source solution : Block Page)
+    (anchors : Array (Block Page)) : Part Page :=
+  let prelude : Array (Block Page) := #[
+    paragraph #[codeInline id],
+    paragraph #[textInline submitterText],
+    notes,
+    source,
+    solution
+  ]
+  pagePart title (prelude ++ anchors.map holeWrap) #[] (some id)
+
+private def problemPartTerm (problem : ProblemEntry) : TermElabM (TSyntax `term) := do
   let notesBlock ← optionalParagraphTerm "Notes" problem.notesText
   let sourceBlock ← sourceParagraphTerm problem
   let solutionBlock ← optionalParagraphTerm "Informal solution" problem.informalSolution
-  let anchorBlock ← anchorBlockTerm catalog problem
-  `(pagePart $(quote problem.title) #[
-      paragraph #[codeInline $(quote problem.id)],
-      paragraph #[textInline $(quote s!"Submitter: {problem.submitter}.")],
-      $notesBlock,
-      $sourceBlock,
-      $solutionBlock,
-      $anchorBlock
-    ] #[] (some $(quote problem.id)))
+  let anchorsArr : TSyntaxArray `term := anchorBlockTerms problem
+  `(assembleProblemPart
+      $(quote problem.title)
+      $(quote problem.id)
+      $(quote s!"Submitter: {problem.submitter}.")
+      $notesBlock
+      $sourceBlock
+      $solutionBlock
+      #[$anchorsArr,*])
 
-private def sectionPartTerm (catalog : String) (title : String) (htmlId : String)
+private def sectionPartTerm (title : String) (htmlId : String)
     (problems : Array ProblemEntry) : TermElabM (TSyntax `term) := do
-  let subParts ← problems.mapM (problemPartTerm catalog)
+  let subParts ← problems.mapM problemPartTerm
   let subParts : TSyntaxArray `term := subParts
   `(pagePart $(quote title) #[] #[$subParts,*] (some $(quote htmlId)))
 
@@ -97,7 +139,7 @@ private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
     ]),
     ← `(paragraph #[
       textInline "Authors are encouraged to submit new problems via PRs to that repository, for inclusion in future benchmark releases. See ",
-      linkInline "Submit" "/submit",
+      linkInline "Submit" "submit/",
       textInline " for details on submitting solutions."
     ])
   ]
@@ -107,16 +149,18 @@ scoped syntax "problems_page%" : term
 elab_rules : term
   | `(problems_page%) => do
       let payload ← parseProblemsPayload
-      let catalog ← loadSnapshotCatalog
       let problems ← validateProblems payload
       let introBlocks ← introParagraphTerms
       let mainProblems := Array.filter (fun problem => !problem.test) problems
       let starterProblems := Array.filter (·.test) problems
-      let mainSection ← sectionPartTerm catalog "Main benchmark problems" "main-problems" mainProblems
+      let mainSection ← sectionPartTerm "Main benchmark problems" "main-problems" mainProblems
       let mut subParts := #[mainSection]
       if !starterProblems.isEmpty then
-        subParts := subParts.push (← sectionPartTerm catalog "Starter problems" "starter-problems" starterProblems)
-      let introBlocks' : TSyntaxArray `term := introBlocks
+        subParts := subParts.push (← sectionPartTerm "Test problems" "test-problems" starterProblems)
+      let tocItems : Array (String × String) :=
+        (mainProblems ++ starterProblems).map fun p => (p.id, p.title)
+      let tocTerm ← `(tocBlock $(quote tocItems))
+      let introBlocks' : TSyntaxArray `term := introBlocks.push tocTerm
       let subParts' : TSyntaxArray `term := subParts
       let pageTerm ← `(pagePart "Problems" #[$introBlocks',*] #[$subParts',*])
       let expectedType ← Lean.Elab.Term.elabTerm (← `(Part Page)) none

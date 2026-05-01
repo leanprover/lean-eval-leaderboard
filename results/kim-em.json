@@ -1,6 +1,16 @@
 {
   "schema_version": 1,
   "solved": {
+    "list_append_singleton_length": {
+      "benchmark_commit": "153074273553d2bb085dad121e56ff4908922159",
+      "issue_number": 39,
+      "model": "dogfood",
+      "production_description": "Hand-written starter proof for the lean-eval test problem `list_append_singleton_length`. The proof is a one-line `rfl` after importing the benchmark helper module. Human time: under a minute. AI time, tokens, and cost: none.",
+      "solved_at": "2026-05-01T00:59:23Z",
+      "submission_public": true,
+      "submission_ref": "4ddea908fe0b67b1fbeace49b23f5d688eeeecf4",
+      "submission_repo": "kim-em/65d3c6ed853ea74dc2e1d1088bc4b323"
+    },
     "two_plus_two": {
       "benchmark_commit": "48b8530beb9ff567d8932326aaec1e1acb67b749",
       "issue_number": 30,
