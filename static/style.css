@@ -215,6 +215,7 @@ body::before {
   gap: var(--space-3);
   text-decoration: none;
   color: var(--color-text);
+  font-size: 25px;
   font-weight: 300;
   transition: color var(--transition-base);
 }
@@ -231,19 +232,19 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border: 1.5px solid var(--color-primary);
   border-radius: var(--radius-md);
   color: var(--color-primary);
   font-family: var(--font-mono);
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 500;
 }
 
 .wordmark-text {
-  font-size: 1rem;
-  font-weight: 400;
+  font-size: inherit;
+  font-weight: 300;
   letter-spacing: 0.005em;
 }
 
@@ -331,6 +332,39 @@ nav.top .home { display: none; }
 .dark-theme .theme-toggle .icon-sun  { display: none; }
 .dark-theme .theme-toggle .icon-moon { display: inline-block; }
 
+.topbar-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.topbar-github:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-hover);
+}
+
+.topbar-github:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.topbar-github svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    Footer
    ───────────────────────────────────────────────────────────────────────── */
@@ -390,13 +424,13 @@ nav.top .home { display: none; }
 
 .prose li { margin-bottom: var(--space-2); }
 
-.prose a {
+.prose a:not(.cta-button) {
   color: var(--color-primary);
   text-decoration: none;
   background: linear-gradient(transparent 80%, rgba(56, 110, 224, 0.12) 80%);
 }
 
-.prose a:hover { color: var(--color-primary-focus); }
+.prose a:not(.cta-button):hover { color: var(--color-primary-focus); }
 
 .page-copy {
   margin-top: var(--space-8);

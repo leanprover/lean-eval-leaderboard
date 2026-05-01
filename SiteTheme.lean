@@ -65,6 +65,9 @@ def theme (name : String) (siteName : String) : Theme := {
                       <li><a href="submit/">"Submit"</a></li>
                     </ol>
                   </nav>
+                  <a class="topbar-github" href="https://github.com/leanprover/lean-eval-leaderboard"
+                     aria-label="View source on GitHub"
+                     target="_blank" rel="noopener">{{githubIcon}}</a>
                   <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
                     <span class="icon-sun" aria-hidden="true">"☀"</span>
                     <span class="icon-moon" aria-hidden="true">"☾"</span>
