@@ -372,7 +372,11 @@ nav.top .home { display: none; }
 .footer {
   border-top: 1px solid var(--color-border);
   padding: var(--space-6) 0 var(--space-10);
-  background: transparent;
+  background-color: var(--color-bg-translucent);
+  backdrop-filter: blur(10px);
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base);
 }
 
 .footer-inner {
