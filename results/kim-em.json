@@ -11,6 +11,15 @@
         "submission_ref": "fc7a817912cd276ff3fca7bdabe02bcc904bef8d",
         "submission_repo": "kim-em/d50dde8f11006b2d975671123d0acddd"
       },
+      "finite_graph_ramsey_theorem": {
+        "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
+        "issue_number": 60,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
+        "solved_at": "2026-05-01T04:09:27Z",
+        "submission_public": true,
+        "submission_ref": "13d74bd985294975f54a1457633364117c38f840",
+        "submission_repo": "kim-em/15cab769a93e323f4a87f68ecb84ffb8"
+      },
       "list_append_singleton_length": {
         "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
         "issue_number": 59,
