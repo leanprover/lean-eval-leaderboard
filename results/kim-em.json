@@ -45,6 +45,17 @@
         "submission_repo": "kim-em/a6470f0ab82fa73f923d85dd964cf501"
       }
     },
+    "Grok 4.3": {
+      "two_plus_two": {
+        "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
+        "issue_number": 46,
+        "production_description": "Seed submission to populate the leaderboard. Solved by Grok 4.3 via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
+        "solved_at": "2026-05-01T03:55:50Z",
+        "submission_public": true,
+        "submission_ref": "730ee114f8fdae4cc3cdca00931b78833097a978",
+        "submission_repo": "kim-em/11fe79b3ff4112a8db688b5925586f7c"
+      }
+    },
     "Kimi K2.6": {
       "two_plus_two": {
         "benchmark_commit": "953d54a7af5038566775507761e48e365e7feb3b",
