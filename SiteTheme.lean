@@ -42,7 +42,7 @@ def theme (name : String) (siteName : String) : Theme := {
           <title>{{ title }} s!" | {siteName}"</title>
           <link rel="preconnect" href="https://fonts.googleapis.com"/>
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Oranienbaum&family=Fira+Code:wght@400;500&display=swap"/>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"/>
           {{← builtinHeader }}
           <link rel="icon" type="image/svg+xml" href="static/favicon.svg"/>
           <link rel="stylesheet" href="static/style.css"/>

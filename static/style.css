@@ -6,7 +6,7 @@
 :root {
   /* Typography */
   --font-primary: 'Open Sans', Arial, sans-serif;
-  --font-secondary: 'Oranienbaum', serif;
+  --font-secondary: var(--font-primary);
   --font-mono: 'Fira Code', 'IBM Plex Mono', 'SFMono-Regular', monospace;
 
   --fs-xs:   0.75rem;
@@ -377,8 +377,8 @@ nav.top .home { display: none; }
 
 .footer-inner {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
   color: var(--color-text-light);
   font-size: 0.88rem;
 }
