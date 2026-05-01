@@ -221,6 +221,12 @@ body::before {
 
 .wordmark:hover { color: var(--color-primary); }
 
+.wordmark:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
 .wordmark-mark {
   display: inline-flex;
   align-items: center;
@@ -265,6 +271,12 @@ nav.top a {
 nav.top a:hover {
   color: var(--color-primary);
   background: var(--color-hover);
+}
+
+nav.top a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  color: var(--color-primary);
 }
 
 nav.top .home { display: none; }
@@ -344,6 +356,13 @@ nav.top .home { display: none; }
 }
 
 .footer-inner a:hover { color: var(--color-primary); }
+
+.footer-inner a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
    Page wrappers, prose, headings
@@ -650,6 +669,11 @@ nav.top .home { display: none; }
 
 .entry summary::-webkit-details-marker { display: none; }
 
+.entry summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
 .entry[open] summary { border-bottom: 1px solid var(--color-border); }
 
 .entry-rank {
@@ -724,6 +748,13 @@ nav.top .home { display: none; }
 
 .problem-title-link:hover { color: var(--color-primary); }
 
+.problem-title-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
 .problem-meta-row {
   display: flex;
   align-items: center;
@@ -797,6 +828,11 @@ nav.top .home { display: none; }
   color: var(--color-text-contrast);
   background: var(--color-primary);
   border-color: var(--color-primary);
+}
+
+.problem-proof-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* Theorem-statement popover, anchored to the problem-id pill */

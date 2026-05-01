@@ -5,10 +5,18 @@
     return document.documentElement.classList.contains("dark-theme");
   }
 
+  function syncToggleButtons() {
+    const dark = isDark();
+    document.querySelectorAll(".theme-toggle").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(dark));
+    });
+  }
+
   function applyTheme(mode) {
     const root = document.documentElement;
     if (mode === "dark") root.classList.add("dark-theme");
     else root.classList.remove("dark-theme");
+    syncToggleButtons();
     document.dispatchEvent(new CustomEvent("themechange", { detail: { mode } }));
   }
 
@@ -27,21 +35,19 @@
   }
 
   function wireToggleButtons() {
-    const buttons = document.querySelectorAll(".theme-toggle");
-    buttons.forEach((btn) => {
+    document.querySelectorAll(".theme-toggle").forEach((btn) => {
       btn.addEventListener("click", () => {
         const next = isDark() ? "light" : "dark";
         applyTheme(next);
         persist(next);
-        btn.setAttribute("aria-pressed", String(next === "dark"));
       });
-      btn.setAttribute("aria-pressed", String(isDark()));
     });
+    syncToggleButtons();
   }
 
-  // Apply preference as early as possible. The pre-paint snippet inlined in
-  // <head> handles this before first paint to avoid FOUC; this is the
-  // post-load safety net that also wires up the toggle button.
+  // Apply the saved/preferred theme synchronously so the dark-theme class is
+  // set before first paint. Buttons may not exist yet — `wireToggleButtons`
+  // re-syncs after DOMContentLoaded.
   applyTheme(readPreference());
 
   if (document.readyState === "loading") {
@@ -50,7 +56,7 @@
     wireToggleButtons();
   }
 
-  // Sync with system preference if the user has not made an explicit choice.
+  // Follow the OS theme as long as the user has not made an explicit choice.
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   media.addEventListener("change", (e) => {
     let saved = null;
