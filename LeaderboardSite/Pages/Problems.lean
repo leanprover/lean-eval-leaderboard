@@ -119,7 +119,7 @@ private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
     ]),
     ← `(paragraph #[
       textInline "Authors are encouraged to submit new problems via PRs to that repository, for inclusion in future benchmark releases. See ",
-      linkInline "Submit" "/submit",
+      linkInline "Submit" "../submit/",
       textInline " for details on submitting solutions."
     ])
   ]
