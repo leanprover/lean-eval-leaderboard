@@ -28,6 +28,23 @@ jobs:
       - name: Checkout leaderboard repo
         uses: actions/checkout@v4
 
+      - name: Checkout benchmark repo at the snapshot's pinned commit
+        # site-data/leaderboard.json is regenerated each deploy from results/.
+        # The generator needs the benchmark repo for problem metadata. We pin
+        # to the same commit benchmark-snapshot/ was built from so the
+        # snapshot's catalog and the regenerated site-data stay in lockstep.
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover/lean-eval
+          path: lean-eval-benchmark
+          fetch-depth: 0
+
+      - name: Pin benchmark checkout to snapshot commit
+        run: |
+          pin=$(cat benchmark-snapshot/.benchmark-commit)
+          echo "Pinning benchmark to $pin"
+          git -C lean-eval-benchmark checkout "$pin"
+
       - name: Set up elan
         shell: bash
         run: |
@@ -62,6 +79,15 @@ jobs:
           cd benchmark-snapshot
           lake update
           lake build BenchmarkProblems BenchmarkProblems.Catalog subverso-extract-mod +BenchmarkProblems.Catalog:highlighted
+
+      - name: Regenerate site-data from results/ and the pinned benchmark
+        # site-data/ is .gitignored — regenerated here so every record: push
+        # to results/ shows up on the next deploy. --no-write-snapshot keeps
+        # benchmark-snapshot/ untouched so its Lake cache stays warm.
+        run: |
+          python3 scripts/generate_site_data.py \
+            --no-write-snapshot \
+            --benchmark-repo lean-eval-benchmark
 
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site

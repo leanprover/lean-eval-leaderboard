@@ -20,7 +20,7 @@ RESULTS_ROOT = REPO_ROOT / "results"
 SITE_DATA_ROOT = REPO_ROOT / "site-data"
 BENCHMARK_SNAPSHOT_ROOT = REPO_ROOT / "benchmark-snapshot"
 DEFAULT_BENCHMARK_REPO = pathlib.Path(
-    os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-evals"))
+    os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-eval"))
 )
 
 
@@ -401,6 +401,10 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     catalog_path = BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems" / "Catalog.lean"
     write_text(catalog_path, "\n".join(module_imports + [""] + module_lines).rstrip() + "\n")
     write_text(BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems.lean", "import BenchmarkProblems.Catalog\n")
+    # Pin file: the deploy workflow checks this out and regenerates site-data
+    # against the same benchmark commit the snapshot was built from, so the
+    # snapshot's catalog and site-data/problems.json stay in lockstep.
+    write_text(BENCHMARK_SNAPSHOT_ROOT / ".benchmark-commit", git_head(benchmark_repo) + "\n")
 
 
 def public_solution_url(repo: str, ref: str, problem_id: str, public: bool) -> str | None:
@@ -624,6 +628,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--benchmark-repo", default=str(DEFAULT_BENCHMARK_REPO))
     parser.add_argument("--results-root", default=str(RESULTS_ROOT))
     parser.add_argument("--output-dir", default=str(SITE_DATA_ROOT))
+    parser.add_argument(
+        "--no-write-snapshot",
+        action="store_true",
+        help="Regenerate site-data/ only; leave benchmark-snapshot/ untouched. "
+             "Used by the deploy workflow, which reads the snapshot's pinned "
+             "benchmark commit and never wants to mutate the snapshot itself.",
+    )
     return parser.parse_args()
 
 
@@ -645,7 +656,8 @@ def main() -> int:
         output_dir / "leaderboard.json",
         build_leaderboard_payload(REPO_ROOT, benchmark_repo, problems, raw_results),
     )
-    write_benchmark_snapshot(benchmark_repo, problems)
+    if not args.no_write_snapshot:
+        write_benchmark_snapshot(benchmark_repo, problems)
     return 0
 
 

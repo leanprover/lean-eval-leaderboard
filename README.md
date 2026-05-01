@@ -40,7 +40,14 @@ case-insensitive.
 
 The `site-data/` directory is generated from the raw `results/` files together
 with benchmark metadata imported from the benchmark repository. Its schema is
-documented in [docs/site-data-schema.md](docs/site-data-schema.md).
+documented in [docs/site-data-schema.md](docs/site-data-schema.md). Its files
+are derived (`.gitignore`d) and produced by `scripts/generate_site_data.py`,
+which the deploy workflow runs before every site build, and which local
+developers invoke via `lake script run generate` (the `generate` script in
+`lakefile.lean` runs the generator and then builds the site). The deploy pins
+the benchmark sibling clone to the commit recorded in
+`benchmark-snapshot/.benchmark-commit`, so the regenerated site-data and the
+checked-in snapshot's catalog stay in lockstep.
 
 ## Record schema (v2)
 
