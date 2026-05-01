@@ -55,6 +55,17 @@
         "submission_ref": "813801e70c6b76749fcb636a8f4b3a0d06f5b6e2",
         "submission_repo": "kim-em/a571fe19cb7a77a48fffe941dc970577"
       }
+    },
+    "Qwen3.6 Max": {
+      "two_plus_two": {
+        "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
+        "issue_number": 47,
+        "production_description": "Seed submission to populate the leaderboard. Solved by Qwen3.6 Max via the Pi coding agent (badlogic/pi-mono) on OpenRouter, driven by Kim Morrison. Test submission, not affiliated with the model creators.",
+        "solved_at": "2026-05-01T03:55:01Z",
+        "submission_public": true,
+        "submission_ref": "62b7a0a44e4ac9c67be030ce2c382fee10209e11",
+        "submission_repo": "kim-em/399479d951188afdbc6ad90c25f7cddb"
+      }
     }
   },
   "user": "kim-em"
