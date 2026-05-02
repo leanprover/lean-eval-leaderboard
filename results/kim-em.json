@@ -2,6 +2,16 @@
   "schema_version": 1,
   "solved": {
     "Aristotle (Harmonic)": {
+      "bvp_comparison": {
+        "benchmark_commit": "852c67d442ce24ac7e8db16d6c17d7e9c72c6756",
+        "issue_number": 90,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI v1.0.1, with submission orchestration by Kim Morrison. The proof was generated against Aristotle's default Lean v4.28.0 / Mathlib v4.28.0 target; submitted here against the benchmark's pinned Lean v4.30.0-rc2 + pinned Mathlib commit. Comparator's verdict applies \u2014 proofs that exploit features added to Mathlib after v4.28.0 will compile; those that rely on tactic behaviour that changed are at the mercy of forward compatibility.",
+        "solved_at": "2026-05-02T10:53:04Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "83181e9586a8fe41e7fa7168047271add60789bb",
+        "submission_repo": "kim-em/e63b6679f735afd3ba4d5945a83a810d"
+      },
       "ci_regenerate_main_check": {
         "benchmark_commit": "c9c95847698c275591233dd487ac44e199f7b248",
         "issue_number": 58,
