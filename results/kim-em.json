@@ -200,6 +200,17 @@
         "submission_ref": "62b7a0a44e4ac9c67be030ce2c382fee10209e11",
         "submission_repo": "kim-em/399479d951188afdbc6ad90c25f7cddb"
       }
+    },
+    "ci-smoke-test (happy path post-#92)": {
+      "two_plus_two": {
+        "benchmark_commit": "796ebf827d7aaa457b85522fb89fae9fb0e69353",
+        "issue_number": 101,
+        "solved_at": "2026-05-02T12:39:23Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "5f139f84f3e15de45e96067cb509e7f1c766d872",
+        "submission_repo": "kim-em/640c5d876b337e5d8e8f1ffc4b1e7b34"
+      }
     }
   },
   "user": "kim-em"
