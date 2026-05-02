@@ -248,21 +248,22 @@ theorem finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow {G : Type*} [
 
 end ProblemFiniteGroupIsSolvableOfCardEqPrimePowMulPrimePow
 
-namespace ProblemRoucheLogCountingZeroEq
+namespace ProblemRoucheZeroCountEq
 
-open ValueDistribution
+open MeromorphicOn
 
--- ANCHOR: rouche_logCounting_zero_eq__rouche_logCounting_zero_eq
-theorem rouche_logCounting_zero_eq {f g : ℂ → ℂ} {R : ℝ}
-    (hR : 1 ≤ R)
-    (hf : Meromorphic f)
+-- ANCHOR: rouche_zero_count_eq__rouche_zero_count_eq
+theorem rouche_zero_count_eq {f g : ℂ → ℂ} {R : ℝ}
+    (hR : 0 < R)
+    (hf : MeromorphicOn f Set.univ)
     (hg : AnalyticOn ℂ g Set.univ)
     (hbound : ∀ z : ℂ, ‖z‖ = R → ‖g z‖ < ‖f z‖) :
-    logCounting (f + g) 0 R = logCounting f 0 R := by
+    (∑ᶠ z, ((divisor (f + g) (Metric.closedBall 0 R))⁺) z) =
+      (∑ᶠ z, ((divisor f (Metric.closedBall 0 R))⁺) z) := by
   sorry
--- ANCHOR_END: rouche_logCounting_zero_eq__rouche_logCounting_zero_eq
+-- ANCHOR_END: rouche_zero_count_eq__rouche_zero_count_eq
 
-end ProblemRoucheLogCountingZeroEq
+end ProblemRoucheZeroCountEq
 
 namespace ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
 
@@ -307,16 +308,12 @@ open Polynomial
 theorem exists_complementary_polynomial_on_unit_circle (P : ℂ[X])
     (hP : ∀ z : Circle, ‖P.eval (z : ℂ)‖ ≤ 1) :
     ∃ Q : ℂ[X],
-      Q.natDegree = P.natDegree ∧
+      Q.natDegree ≤ P.natDegree ∧
         ∀ z : Circle, ‖P.eval (z : ℂ)‖ ^ 2 + ‖Q.eval (z : ℂ)‖ ^ 2 = 1 := by
   sorry
 -- ANCHOR_END: exists_complementary_polynomial_on_unit_circle__exists_complementary_polynomial_on_unit_circle
 
 end ProblemExistsComplementaryPolynomialOnUnitCircle
-
-namespace ProblemIsStarNormalMulOfCommute
-
-end ProblemIsStarNormalMulOfCommute
 
 namespace ProblemPosSemidefMapExp
 
@@ -1208,3 +1205,703 @@ def WidgetCarrier : Type := sorry
 -- ANCHOR: instance_hole_example__instInhabitedWidget
 instance instInhabitedWidget : Inhabited WidgetCarrier := sorry
 -- ANCHOR_END: instance_hole_example__instInhabitedWidget
+
+namespace ProblemExistsNonisotopicLink
+
+namespace LeanEval
+namespace KnotTheory
+
+/-!
+# Smooth knots, links, ambient isotopy, and chirality
+
+Minimal definitions to support the three knot-theory benchmark problems
+(`Linking`, `NonIsotopicKnots`, `Chiral`). Mathlib has essentially no knot
+theory, so we set up just enough infrastructure to state the questions
+faithfully in terms of smooth maps `S¹ → ℝ³` and ambient isotopies of `ℝ³`.
+
+A *knot* is a smooth, 2π-periodic, injective immersion `ℝ → ℝ³`. A
+*two-component link* is a pair of knots with disjoint images. An *ambient
+isotopy* is a smooth one-parameter family of diffeomorphisms of `ℝ³`
+starting at the identity, presented here as a forward map and an inverse
+map jointly smooth in `(t, x)`.
+
+The parametrization is part of the data, so each knot or link component
+comes with an orientation induced from the standard orientation on `S¹`.
+Accordingly, isotopy is understood in the oriented sense: an ambient isotopy
+must carry the parametrized components of the source to those of the target,
+up to orientation-preserving reparametrization of the source circle. A knot
+is *chiral* here in this same orientation-sensitive sense: it is not isotopic
+to its mirror image (under reflection through the `xy`-plane).
+
+These definitions trade some Mathlib idiomaticity for being self-contained
+and easy to read; in particular, we do not go through `Diffeomorph` or
+`ContMDiff` on a manifold structure for `ℝ³`, since `ContDiff ℝ ⊤` over the
+ambient normed space says exactly what we need.
+-/
+
+/-- The ambient space `ℝ³`, as a Euclidean inner-product space. -/
+abbrev R3 : Type := EuclideanSpace ℝ (Fin 3)
+
+/-- An oriented smooth knot in `ℝ³`: a 2π-periodic, smooth, injective immersion.
+The orientation is the one induced by the parametrization. -/
+structure Knot where
+  /-- The parametrizing map. -/
+  curve : ℝ → R3
+  /-- The map is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) curve
+  /-- The map has period `2π`. -/
+  periodic : ∀ t, curve (t + 2 * Real.pi) = curve t
+  /-- The map is injective on a fundamental period. -/
+  injOn : Set.InjOn curve (Set.Ico 0 (2 * Real.pi))
+  /-- The map is an immersion (its derivative is everywhere nonzero). -/
+  immersion : ∀ t, deriv curve t ≠ 0
+
+/-- An oriented two-component smooth link in `ℝ³`: a pair of oriented knots
+with disjoint images. -/
+structure TwoLink where
+  /-- The first component. -/
+  K : Knot
+  /-- The second component. -/
+  L : Knot
+  /-- The two components have disjoint images in `ℝ³`. -/
+  disjoint : Disjoint (Set.range K.curve) (Set.range L.curve)
+
+/-- A smooth ambient isotopy of `ℝ³`: a one-parameter family `H t : ℝ³ → ℝ³`
+of diffeomorphisms, jointly smooth in `(t, x)`, starting at the identity.
+The inverse family `Hinv` is also jointly smooth. -/
+structure AmbientIsotopy where
+  /-- The forward family. -/
+  H : ℝ → R3 → R3
+  /-- The inverse family. -/
+  Hinv : ℝ → R3 → R3
+  /-- The forward family is jointly smooth in `(t, x)`. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry H)
+  /-- The inverse family is jointly smooth in `(t, x)`. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry Hinv)
+  /-- `Hinv t` is a left inverse of `H t`. -/
+  inv_left : ∀ t x, Hinv t (H t x) = x
+  /-- `Hinv t` is a right inverse of `H t`. -/
+  inv_right : ∀ t x, H t (Hinv t x) = x
+  /-- The isotopy starts at the identity. -/
+  start : H 0 = id
+
+structure CircleReparam where
+  /-- A lift `ℝ → ℝ` of a circle self-map. -/
+  f : ℝ → ℝ
+  /-- A lifted inverse. -/
+  finv : ℝ → ℝ
+  /-- The lift is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) f
+  /-- The inverse lift is smooth. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) finv
+  /-- `finv` is a left inverse to `f`. -/
+  left_inv : ∀ t, finv (f t) = t
+  /-- `finv` is a right inverse to `f`. -/
+  right_inv : ∀ t, f (finv t) = t
+  /-- The lift descends to a map of `S¹ = ℝ / 2πℤ`. -/
+  periodic : ∀ t, f (t + 2 * Real.pi) = f t + 2 * Real.pi
+  /-- The inverse lift also descends to `S¹`. -/
+  periodic_inv : ∀ t, finv (t + 2 * Real.pi) = finv t + 2 * Real.pi
+  /-- The induced circle map preserves orientation. -/
+  mono : StrictMono f
+
+/-- Two oriented knots are ambient-isotopic if some ambient isotopy of `ℝ³`
+carries the parametrized knot `K₁` to the parametrized knot `K₂`, up to an
+orientation-preserving smooth reparametrization of the source circle. -/
+def Knot.Isotopic (K₁ K₂ : Knot) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam, ∀ t, Φ.H 1 (K₁.curve t) = K₂.curve (σ.f t)
+
+/-- Two oriented two-component links are ambient-isotopic if a single ambient
+isotopy carries each oriented component of the first link to the
+corresponding oriented component of the second. -/
+def TwoLink.Isotopic (L₁ L₂ : TwoLink) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ τ : CircleReparam,
+    (∀ t, Φ.H 1 (L₁.K.curve t) = L₂.K.curve (σ.f t)) ∧
+    (∀ t, Φ.H 1 (L₁.L.curve t) = L₂.L.curve (τ.f t))
+
+/-- Reflection through the `xy`-plane in `ℝ³`: `(x, y, z) ↦ (x, y, -z)`. -/
+def reflectZ (p : R3) : R3 :=
+  WithLp.toLp 2 (fun i : Fin 3 => if i = 2 then -p.ofLp i else p.ofLp i)
+
+/-- A knot is *chiral* if it is not ambient-isotopic, in the
+orientation-sensitive sense used in this benchmark, to its mirror image (the
+reflection of the image through the `xy`-plane). -/
+def Knot.Chiral (K : Knot) : Prop :=
+  ¬ ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam,
+    ∀ t, Φ.H 1 (K.curve t) = reflectZ (K.curve (σ.f t))
+
+end KnotTheory
+end LeanEval
+
+open LeanEval.KnotTheory
+
+-- ANCHOR: exists_nonisotopic_link__exists_nonisotopic_link
+theorem exists_nonisotopic_link : ∃ L₁ L₂ : LeanEval.KnotTheory.TwoLink, ¬ L₁.Isotopic L₂ := by
+  sorry
+-- ANCHOR_END: exists_nonisotopic_link__exists_nonisotopic_link
+
+end ProblemExistsNonisotopicLink
+
+namespace ProblemExistsNonisotopicKnots
+
+namespace LeanEval
+namespace KnotTheory
+
+/-!
+# Smooth knots, links, ambient isotopy, and chirality
+
+Minimal definitions to support the three knot-theory benchmark problems
+(`Linking`, `NonIsotopicKnots`, `Chiral`). Mathlib has essentially no knot
+theory, so we set up just enough infrastructure to state the questions
+faithfully in terms of smooth maps `S¹ → ℝ³` and ambient isotopies of `ℝ³`.
+
+A *knot* is a smooth, 2π-periodic, injective immersion `ℝ → ℝ³`. A
+*two-component link* is a pair of knots with disjoint images. An *ambient
+isotopy* is a smooth one-parameter family of diffeomorphisms of `ℝ³`
+starting at the identity, presented here as a forward map and an inverse
+map jointly smooth in `(t, x)`.
+
+The parametrization is part of the data, so each knot or link component
+comes with an orientation induced from the standard orientation on `S¹`.
+Accordingly, isotopy is understood in the oriented sense: an ambient isotopy
+must carry the parametrized components of the source to those of the target,
+up to orientation-preserving reparametrization of the source circle. A knot
+is *chiral* here in this same orientation-sensitive sense: it is not isotopic
+to its mirror image (under reflection through the `xy`-plane).
+
+These definitions trade some Mathlib idiomaticity for being self-contained
+and easy to read; in particular, we do not go through `Diffeomorph` or
+`ContMDiff` on a manifold structure for `ℝ³`, since `ContDiff ℝ ⊤` over the
+ambient normed space says exactly what we need.
+-/
+
+/-- The ambient space `ℝ³`, as a Euclidean inner-product space. -/
+abbrev R3 : Type := EuclideanSpace ℝ (Fin 3)
+
+/-- An oriented smooth knot in `ℝ³`: a 2π-periodic, smooth, injective immersion.
+The orientation is the one induced by the parametrization. -/
+structure Knot where
+  /-- The parametrizing map. -/
+  curve : ℝ → R3
+  /-- The map is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) curve
+  /-- The map has period `2π`. -/
+  periodic : ∀ t, curve (t + 2 * Real.pi) = curve t
+  /-- The map is injective on a fundamental period. -/
+  injOn : Set.InjOn curve (Set.Ico 0 (2 * Real.pi))
+  /-- The map is an immersion (its derivative is everywhere nonzero). -/
+  immersion : ∀ t, deriv curve t ≠ 0
+
+/-- An oriented two-component smooth link in `ℝ³`: a pair of oriented knots
+with disjoint images. -/
+structure TwoLink where
+  /-- The first component. -/
+  K : Knot
+  /-- The second component. -/
+  L : Knot
+  /-- The two components have disjoint images in `ℝ³`. -/
+  disjoint : Disjoint (Set.range K.curve) (Set.range L.curve)
+
+/-- A smooth ambient isotopy of `ℝ³`: a one-parameter family `H t : ℝ³ → ℝ³`
+of diffeomorphisms, jointly smooth in `(t, x)`, starting at the identity.
+The inverse family `Hinv` is also jointly smooth. -/
+structure AmbientIsotopy where
+  /-- The forward family. -/
+  H : ℝ → R3 → R3
+  /-- The inverse family. -/
+  Hinv : ℝ → R3 → R3
+  /-- The forward family is jointly smooth in `(t, x)`. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry H)
+  /-- The inverse family is jointly smooth in `(t, x)`. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry Hinv)
+  /-- `Hinv t` is a left inverse of `H t`. -/
+  inv_left : ∀ t x, Hinv t (H t x) = x
+  /-- `Hinv t` is a right inverse of `H t`. -/
+  inv_right : ∀ t x, H t (Hinv t x) = x
+  /-- The isotopy starts at the identity. -/
+  start : H 0 = id
+
+structure CircleReparam where
+  /-- A lift `ℝ → ℝ` of a circle self-map. -/
+  f : ℝ → ℝ
+  /-- A lifted inverse. -/
+  finv : ℝ → ℝ
+  /-- The lift is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) f
+  /-- The inverse lift is smooth. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) finv
+  /-- `finv` is a left inverse to `f`. -/
+  left_inv : ∀ t, finv (f t) = t
+  /-- `finv` is a right inverse to `f`. -/
+  right_inv : ∀ t, f (finv t) = t
+  /-- The lift descends to a map of `S¹ = ℝ / 2πℤ`. -/
+  periodic : ∀ t, f (t + 2 * Real.pi) = f t + 2 * Real.pi
+  /-- The inverse lift also descends to `S¹`. -/
+  periodic_inv : ∀ t, finv (t + 2 * Real.pi) = finv t + 2 * Real.pi
+  /-- The induced circle map preserves orientation. -/
+  mono : StrictMono f
+
+/-- Two oriented knots are ambient-isotopic if some ambient isotopy of `ℝ³`
+carries the parametrized knot `K₁` to the parametrized knot `K₂`, up to an
+orientation-preserving smooth reparametrization of the source circle. -/
+def Knot.Isotopic (K₁ K₂ : Knot) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam, ∀ t, Φ.H 1 (K₁.curve t) = K₂.curve (σ.f t)
+
+/-- Two oriented two-component links are ambient-isotopic if a single ambient
+isotopy carries each oriented component of the first link to the
+corresponding oriented component of the second. -/
+def TwoLink.Isotopic (L₁ L₂ : TwoLink) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ τ : CircleReparam,
+    (∀ t, Φ.H 1 (L₁.K.curve t) = L₂.K.curve (σ.f t)) ∧
+    (∀ t, Φ.H 1 (L₁.L.curve t) = L₂.L.curve (τ.f t))
+
+/-- Reflection through the `xy`-plane in `ℝ³`: `(x, y, z) ↦ (x, y, -z)`. -/
+def reflectZ (p : R3) : R3 :=
+  WithLp.toLp 2 (fun i : Fin 3 => if i = 2 then -p.ofLp i else p.ofLp i)
+
+/-- A knot is *chiral* if it is not ambient-isotopic, in the
+orientation-sensitive sense used in this benchmark, to its mirror image (the
+reflection of the image through the `xy`-plane). -/
+def Knot.Chiral (K : Knot) : Prop :=
+  ¬ ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam,
+    ∀ t, Φ.H 1 (K.curve t) = reflectZ (K.curve (σ.f t))
+
+end KnotTheory
+end LeanEval
+
+open LeanEval.KnotTheory
+
+-- ANCHOR: exists_nonisotopic_knots__exists_nonisotopic_knots
+theorem exists_nonisotopic_knots : ∃ K₁ K₂ : LeanEval.KnotTheory.Knot, ¬ K₁.Isotopic K₂ := by
+  sorry
+-- ANCHOR_END: exists_nonisotopic_knots__exists_nonisotopic_knots
+
+end ProblemExistsNonisotopicKnots
+
+namespace ProblemExistsChiralKnot
+
+namespace LeanEval
+namespace KnotTheory
+
+/-!
+# Smooth knots, links, ambient isotopy, and chirality
+
+Minimal definitions to support the three knot-theory benchmark problems
+(`Linking`, `NonIsotopicKnots`, `Chiral`). Mathlib has essentially no knot
+theory, so we set up just enough infrastructure to state the questions
+faithfully in terms of smooth maps `S¹ → ℝ³` and ambient isotopies of `ℝ³`.
+
+A *knot* is a smooth, 2π-periodic, injective immersion `ℝ → ℝ³`. A
+*two-component link* is a pair of knots with disjoint images. An *ambient
+isotopy* is a smooth one-parameter family of diffeomorphisms of `ℝ³`
+starting at the identity, presented here as a forward map and an inverse
+map jointly smooth in `(t, x)`.
+
+The parametrization is part of the data, so each knot or link component
+comes with an orientation induced from the standard orientation on `S¹`.
+Accordingly, isotopy is understood in the oriented sense: an ambient isotopy
+must carry the parametrized components of the source to those of the target,
+up to orientation-preserving reparametrization of the source circle. A knot
+is *chiral* here in this same orientation-sensitive sense: it is not isotopic
+to its mirror image (under reflection through the `xy`-plane).
+
+These definitions trade some Mathlib idiomaticity for being self-contained
+and easy to read; in particular, we do not go through `Diffeomorph` or
+`ContMDiff` on a manifold structure for `ℝ³`, since `ContDiff ℝ ⊤` over the
+ambient normed space says exactly what we need.
+-/
+
+/-- The ambient space `ℝ³`, as a Euclidean inner-product space. -/
+abbrev R3 : Type := EuclideanSpace ℝ (Fin 3)
+
+/-- An oriented smooth knot in `ℝ³`: a 2π-periodic, smooth, injective immersion.
+The orientation is the one induced by the parametrization. -/
+structure Knot where
+  /-- The parametrizing map. -/
+  curve : ℝ → R3
+  /-- The map is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) curve
+  /-- The map has period `2π`. -/
+  periodic : ∀ t, curve (t + 2 * Real.pi) = curve t
+  /-- The map is injective on a fundamental period. -/
+  injOn : Set.InjOn curve (Set.Ico 0 (2 * Real.pi))
+  /-- The map is an immersion (its derivative is everywhere nonzero). -/
+  immersion : ∀ t, deriv curve t ≠ 0
+
+/-- An oriented two-component smooth link in `ℝ³`: a pair of oriented knots
+with disjoint images. -/
+structure TwoLink where
+  /-- The first component. -/
+  K : Knot
+  /-- The second component. -/
+  L : Knot
+  /-- The two components have disjoint images in `ℝ³`. -/
+  disjoint : Disjoint (Set.range K.curve) (Set.range L.curve)
+
+/-- A smooth ambient isotopy of `ℝ³`: a one-parameter family `H t : ℝ³ → ℝ³`
+of diffeomorphisms, jointly smooth in `(t, x)`, starting at the identity.
+The inverse family `Hinv` is also jointly smooth. -/
+structure AmbientIsotopy where
+  /-- The forward family. -/
+  H : ℝ → R3 → R3
+  /-- The inverse family. -/
+  Hinv : ℝ → R3 → R3
+  /-- The forward family is jointly smooth in `(t, x)`. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry H)
+  /-- The inverse family is jointly smooth in `(t, x)`. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) (Function.uncurry Hinv)
+  /-- `Hinv t` is a left inverse of `H t`. -/
+  inv_left : ∀ t x, Hinv t (H t x) = x
+  /-- `Hinv t` is a right inverse of `H t`. -/
+  inv_right : ∀ t x, H t (Hinv t x) = x
+  /-- The isotopy starts at the identity. -/
+  start : H 0 = id
+
+structure CircleReparam where
+  /-- A lift `ℝ → ℝ` of a circle self-map. -/
+  f : ℝ → ℝ
+  /-- A lifted inverse. -/
+  finv : ℝ → ℝ
+  /-- The lift is smooth. -/
+  smooth : ContDiff ℝ (⊤ : ℕ∞) f
+  /-- The inverse lift is smooth. -/
+  smooth_inv : ContDiff ℝ (⊤ : ℕ∞) finv
+  /-- `finv` is a left inverse to `f`. -/
+  left_inv : ∀ t, finv (f t) = t
+  /-- `finv` is a right inverse to `f`. -/
+  right_inv : ∀ t, f (finv t) = t
+  /-- The lift descends to a map of `S¹ = ℝ / 2πℤ`. -/
+  periodic : ∀ t, f (t + 2 * Real.pi) = f t + 2 * Real.pi
+  /-- The inverse lift also descends to `S¹`. -/
+  periodic_inv : ∀ t, finv (t + 2 * Real.pi) = finv t + 2 * Real.pi
+  /-- The induced circle map preserves orientation. -/
+  mono : StrictMono f
+
+/-- Two oriented knots are ambient-isotopic if some ambient isotopy of `ℝ³`
+carries the parametrized knot `K₁` to the parametrized knot `K₂`, up to an
+orientation-preserving smooth reparametrization of the source circle. -/
+def Knot.Isotopic (K₁ K₂ : Knot) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam, ∀ t, Φ.H 1 (K₁.curve t) = K₂.curve (σ.f t)
+
+/-- Two oriented two-component links are ambient-isotopic if a single ambient
+isotopy carries each oriented component of the first link to the
+corresponding oriented component of the second. -/
+def TwoLink.Isotopic (L₁ L₂ : TwoLink) : Prop :=
+  ∃ Φ : AmbientIsotopy, ∃ σ τ : CircleReparam,
+    (∀ t, Φ.H 1 (L₁.K.curve t) = L₂.K.curve (σ.f t)) ∧
+    (∀ t, Φ.H 1 (L₁.L.curve t) = L₂.L.curve (τ.f t))
+
+/-- Reflection through the `xy`-plane in `ℝ³`: `(x, y, z) ↦ (x, y, -z)`. -/
+def reflectZ (p : R3) : R3 :=
+  WithLp.toLp 2 (fun i : Fin 3 => if i = 2 then -p.ofLp i else p.ofLp i)
+
+/-- A knot is *chiral* if it is not ambient-isotopic, in the
+orientation-sensitive sense used in this benchmark, to its mirror image (the
+reflection of the image through the `xy`-plane). -/
+def Knot.Chiral (K : Knot) : Prop :=
+  ¬ ∃ Φ : AmbientIsotopy, ∃ σ : CircleReparam,
+    ∀ t, Φ.H 1 (K.curve t) = reflectZ (K.curve (σ.f t))
+
+end KnotTheory
+end LeanEval
+
+open LeanEval.KnotTheory
+
+-- ANCHOR: exists_chiral_knot__exists_chiral_knot
+theorem exists_chiral_knot : ∃ K : LeanEval.KnotTheory.Knot, K.Chiral := by
+  sorry
+-- ANCHOR_END: exists_chiral_knot__exists_chiral_knot
+
+end ProblemExistsChiralKnot
+
+namespace ProblemBrauerCharacterInCyclotomic
+
+-- ANCHOR: brauer_character_in_cyclotomic__brauer_character_in_cyclotomic
+theorem brauer_character_in_cyclotomic (G : Type) [Group G] [Fintype G] :
+    ∃ φ : CyclotomicField (Monoid.exponent G) ℚ →+* ℂ,
+      ∀ (V : Type) (_ : AddCommGroup V) (_ : Module ℂ V) (_ : FiniteDimensional ℂ V)
+        (ρ : Representation ℂ G V) (g : G),
+        LinearMap.trace ℂ V (ρ g) ∈ φ.range := by
+  sorry
+-- ANCHOR_END: brauer_character_in_cyclotomic__brauer_character_in_cyclotomic
+
+end ProblemBrauerCharacterInCyclotomic
+
+namespace ProblemM23IrrepTensorSquareDecomp
+
+open scoped TensorProduct
+
+-- ANCHOR: m23_irrep_tensor_square_decomp__m23_irrep_tensor_square_decomp
+theorem m23_irrep_tensor_square_decomp :
+    ∃ (G : Type) (_ : Group G) (_ : Fintype G),
+      Fintype.card G = 10200960 ∧
+      ∃ (V : Type) (_ : AddCommGroup V) (_ : Module ℂ V)
+        (_ : Module (MonoidAlgebra ℂ G) V)
+        (_ : IsScalarTower ℂ (MonoidAlgebra ℂ G) V)
+        (_ : Module (MonoidAlgebra ℂ G) (V ⊗[ℂ] V))
+        (_ : IsScalarTower ℂ (MonoidAlgebra ℂ G) (V ⊗[ℂ] V)),
+        Module.finrank ℂ V = 22 ∧
+        IsSimpleModule (MonoidAlgebra ℂ G) V ∧
+        (∀ (g : G) (v w : V),
+          (MonoidAlgebra.of ℂ G g : MonoidAlgebra ℂ G) • (v ⊗ₜ[ℂ] w) =
+            ((MonoidAlgebra.of ℂ G g : MonoidAlgebra ℂ G) • v) ⊗ₜ[ℂ]
+              ((MonoidAlgebra.of ℂ G g : MonoidAlgebra ℂ G) • w)) ∧
+        (isotypicComponents (MonoidAlgebra ℂ G) (V ⊗[ℂ] V)).ncard = 4 := by
+  sorry
+-- ANCHOR_END: m23_irrep_tensor_square_decomp__m23_irrep_tensor_square_decomp
+
+end ProblemM23IrrepTensorSquareDecomp
+
+namespace ProblemFrobeniusKernelIsNormal
+
+-- ANCHOR: frobenius_kernel_isNormal__frobenius_kernel_isNormal
+theorem frobenius_kernel_isNormal (G X : Type) [Group G] [Fintype G] [Fintype X]
+    [MulAction G X] [FaithfulSMul G X]
+    (hcard : 2 ≤ Fintype.card X)
+    (htrans : ∀ x y : X, ∃ g : G, g • x = y)
+    (hstab : ∀ x : X, MulAction.stabilizer G x ≠ ⊥)
+    (hfrob : ∀ g : G, g ≠ 1 → ∀ x y : X, g • x = x → g • y = y → x = y) :
+    ∃ N : Subgroup G, N.Normal ∧
+      (N : Set G) = {1} ∪ {g : G | ∀ x : X, g • x ≠ x} := by
+  sorry
+-- ANCHOR_END: frobenius_kernel_isNormal__frobenius_kernel_isNormal
+
+end ProblemFrobeniusKernelIsNormal
+
+namespace ProblemGlaubermanZStar
+
+-- ANCHOR: glauberman_zStar__glauberman_zStar
+theorem glauberman_zStar (G : Type) [Group G] [Fintype G]
+    (t : G) (ht1 : t ≠ 1) (ht2 : t * t = 1)
+    (hisolated : ∀ g : G, (g * t * g⁻¹) * t = t * (g * t * g⁻¹) →
+      g * t * g⁻¹ = t) :
+    ∃ N : Subgroup G, N.Normal ∧ Odd (Nat.card N) ∧
+      ∀ g : G, g * t * g⁻¹ * t⁻¹ ∈ N := by
+  sorry
+-- ANCHOR_END: glauberman_zStar__glauberman_zStar
+
+end ProblemGlaubermanZStar
+
+namespace ProblemSchreierConjecture
+
+namespace LeanEval
+namespace GroupTheory
+
+/-!
+Schreier's conjecture (theorem, modulo CFSG).
+
+For every finite non-abelian simple group `S`, the outer automorphism group
+`Out(S) := Aut(S) / Inn(S)` is solvable.
+
+This was conjectured by Schreier in the 1920s. It is verified case-by-case
+through the classification of finite simple groups: for each family
+(alternating, classical, exceptional Lie type, sporadic) one inspects `Out(S)`
+and observes solvability. No CFSG-free proof is known.
+
+`MulAut.conj : S →* MulAut S` sends `s ↦ (conjugation by s)`; its range is
+`Inn(S)`. The instance below records that `Inn(S)` is normal in `Aut(S)`,
+which is needed to form the quotient.
+-/
+
+/-- `Inn(S)` is a normal subgroup of `Aut(S)`: the conjugate of `conj s` by an
+automorphism `α` is `conj (α s)`. -/
+instance innNormal (S : Type*) [Group S] :
+    ((MulAut.conj : S →* MulAut S).range).Normal where
+  conj_mem := by
+    rintro _ ⟨s, rfl⟩ α
+    refine ⟨α s, ?_⟩
+    ext x
+    simp [MulAut.conj_apply, map_mul, map_inv, MulEquiv.apply_symm_apply]
+
+
+
+end GroupTheory
+end LeanEval
+
+open LeanEval.GroupTheory
+
+-- ANCHOR: schreier_conjecture__schreier_conjecture
+theorem schreier_conjecture (S : Type) [Group S] [Fintype S] [IsSimpleGroup S]
+    (hS : ∃ a b : S, ¬ Commute a b) :
+    IsSolvable (MulAut S ⧸ (MulAut.conj : S →* MulAut S).range) := by
+  sorry
+-- ANCHOR_END: schreier_conjecture__schreier_conjecture
+
+end ProblemSchreierConjecture
+
+namespace ProblemFiveTransitiveCardClassification
+
+-- ANCHOR: five_transitive_card_classification__five_transitive_card_classification
+theorem five_transitive_card_classification (G X : Type) [Group G] [Fintype G] [Fintype X]
+    [MulAction G X] [FaithfulSMul G X]
+    (hcard : 5 ≤ Fintype.card X)
+    (h5 : ∀ a b : Fin 5 → X, Function.Injective a → Function.Injective b →
+      ∃ g : G, ∀ i, g • a i = b i) :
+    let n := Fintype.card X
+    Fintype.card G = n.factorial ∨
+    (7 ≤ n ∧ Fintype.card G = n.factorial / 2) ∨
+    (n = 12 ∧ Fintype.card G = 95040) ∨
+    (n = 24 ∧ Fintype.card G = 244823040) := by
+  sorry
+-- ANCHOR_END: five_transitive_card_classification__five_transitive_card_classification
+
+end ProblemFiveTransitiveCardClassification
+
+namespace ProblemDeBrangesTheorem
+
+open Metric
+
+-- ANCHOR: deBranges_theorem__deBranges
+theorem deBranges (f : ℂ → ℂ) (diff : DifferentiableOn ℂ f (ball 0 1)) (inj : (ball 0 1).InjOn f)
+    (h0 : f 0 = 0) (h1 : deriv f 0 = 1) (n : ℕ) : ‖iteratedDeriv n f 0 / n.factorial‖ ≤ n := by
+  sorry
+-- ANCHOR_END: deBranges_theorem__deBranges
+
+end ProblemDeBrangesTheorem
+
+namespace ProblemCubicDecayAsymptotic
+
+open Filter Topology
+
+-- ANCHOR: cubic_decay_asymptotic__cubic_decay_asymptotic
+theorem cubic_decay_asymptotic (y : ℝ → ℝ) (hy_diff : ∀ t : ℝ, 0 < t → HasDerivAt y (-(y t) ^ 3) t)
+    (hy_cont : ContinuousWithinAt y (Set.Ici 0) 0)
+    (hy0 : y 0 = 1) :
+    Tendsto (fun t : ℝ => y t * Real.sqrt t) atTop (𝓝 (1 / Real.sqrt 2)) := by
+  sorry
+-- ANCHOR_END: cubic_decay_asymptotic__cubic_decay_asymptotic
+
+end ProblemCubicDecayAsymptotic
+
+namespace ProblemSturmSeparation
+
+-- ANCHOR: sturm_separation__sturm_separation
+theorem sturm_separation (p q y₁ y₂ : ℝ → ℝ) (a b : ℝ) (hab : a < b)
+    (J : Set ℝ) (hJ_open : IsOpen J) (hJ_sub : Set.Icc a b ⊆ J)
+    (hp : ContinuousOn p J) (hq : ContinuousOn q J)
+    (hy₁ : ∀ x ∈ J, HasDerivAt y₁ (deriv y₁ x) x)
+    (hy₁' : ∀ x ∈ J, HasDerivAt (deriv y₁) (-(p x * deriv y₁ x + q x * y₁ x)) x)
+    (hy₂ : ∀ x ∈ J, HasDerivAt y₂ (deriv y₂ x) x)
+    (hy₂' : ∀ x ∈ J, HasDerivAt (deriv y₂) (-(p x * deriv y₂ x + q x * y₂ x)) x)
+    (hW : ∃ x₀ ∈ J, y₁ x₀ * deriv y₂ x₀ - y₂ x₀ * deriv y₁ x₀ ≠ 0)
+    (hza : y₁ a = 0) (hzb : y₁ b = 0)
+    (hne : ∀ x ∈ Set.Ioo a b, y₁ x ≠ 0) :
+    ∃! c, c ∈ Set.Ioo a b ∧ y₂ c = 0 := by
+  sorry
+-- ANCHOR_END: sturm_separation__sturm_separation
+
+end ProblemSturmSeparation
+
+namespace ProblemDirichletEigenvaluesEqNatSq
+
+open scoped Real
+
+-- ANCHOR: dirichlet_eigenvalues_eq_nat_sq__dirichlet_eigenvalues_eq_nat_sq
+theorem dirichlet_eigenvalues_eq_nat_sq (lam : ℝ) :
+    (∃ (y : ℝ → ℝ) (J : Set ℝ),
+        IsOpen J ∧ Set.Icc (0 : ℝ) Real.pi ⊆ J ∧
+        (∀ x ∈ J, HasDerivAt y (deriv y x) x) ∧
+        (∀ x ∈ J, HasDerivAt (deriv y) (-(lam * y x)) x) ∧
+        y 0 = 0 ∧ y Real.pi = 0 ∧
+        ∃ x ∈ Set.Ioo (0 : ℝ) Real.pi, y x ≠ 0) ↔
+      ∃ n : ℕ, 0 < n ∧ lam = (n : ℝ) ^ 2 := by
+  sorry
+-- ANCHOR_END: dirichlet_eigenvalues_eq_nat_sq__dirichlet_eigenvalues_eq_nat_sq
+
+end ProblemDirichletEigenvaluesEqNatSq
+
+namespace ProblemLinearOdeAsymptoticStability
+
+open scoped Matrix
+
+-- ANCHOR: linear_ode_asymptotic_stability__linear_ode_asymptotic_stability
+theorem linear_ode_asymptotic_stability (n : ℕ) (A : Matrix (Fin n) (Fin n) ℝ)
+    (hA : ∀ μ : ℂ,
+        Module.End.HasEigenvalue
+          (Matrix.toLin' (A.map (algebraMap ℝ ℂ))) μ → μ.re < 0)
+    (x : ℝ → (Fin n → ℝ))
+    (hx : ∀ t : ℝ, 0 < t → HasDerivAt x (A.mulVec (x t)) t) :
+    Filter.Tendsto (fun t : ℝ => ‖x t‖) Filter.atTop (nhds 0) := by
+  sorry
+-- ANCHOR_END: linear_ode_asymptotic_stability__linear_ode_asymptotic_stability
+
+end ProblemLinearOdeAsymptoticStability
+
+namespace ProblemBvpComparison
+
+-- ANCHOR: bvp_comparison__bvp_comparison
+theorem bvp_comparison (J : Set ℝ) (hJ_open : IsOpen J) (hJ_sub : Set.Icc (0 : ℝ) 1 ⊆ J)
+    (u v : ℝ → ℝ)
+    (hu : ∀ x ∈ J, HasDerivAt u (deriv u x) x)
+    (hu' : ∀ x ∈ J, HasDerivAt (deriv u) (deriv (deriv u) x) x)
+    (hv : ∀ x ∈ J, HasDerivAt v (deriv v x) x)
+    (hv' : ∀ x ∈ J, HasDerivAt (deriv v) (deriv (deriv v) x) x)
+    (hineq : ∀ x ∈ Set.Ioo (0 : ℝ) 1, -deriv (deriv u) x ≤ -deriv (deriv v) x)
+    (hu0 : u 0 ≤ v 0) (hu1 : u 1 ≤ v 1) :
+    ∀ x ∈ Set.Icc (0 : ℝ) 1, u x ≤ v x := by
+  sorry
+-- ANCHOR_END: bvp_comparison__bvp_comparison
+
+end ProblemBvpComparison
+
+namespace ProblemHeatKernelSolvesHeatEquation
+
+namespace LeanEval
+namespace Analysis
+namespace ODE
+
+/-!
+The Gaussian heat kernel solves the 1D heat equation.
+
+Define
+  `u(t, x) = (4 π t)^(-1/2) · ∫_ℝ exp(-(x - y)² / (4 t)) · f(y) dy`
+for `t > 0`, and extend by `u(t, x) := f x` for `t ≤ 0`. Then on `(0, ∞) × ℝ` we have
+  `∂_t u = ∂_x² u`,
+and `u(t, x) → f x` as `t ↓ 0` for every `x`.
+
+This is a substantial benchmark because it exercises differentiation under the integral
+sign, the explicit Gaussian integral evaluation, approximate-identity arguments for the
+initial trace, and the heat-PDE identity satisfied by the kernel itself.
+
+The PDE statement asserts the existence of the spatial first and second derivatives at
+each `(t, x)` with `t > 0`, and equates the time derivative of `u` to the spatial second
+derivative. Stating things via `HasDerivAt` (rather than relying on `deriv` returning `0`
+silently when the derivative does not exist) ensures the Lean statement matches the
+intended PDE.
+-/
+
+open Real MeasureTheory
+
+/-- The 1D Gaussian heat kernel. Extended by `f x` for `t ≤ 0` so that it is a global
+function `ℝ × ℝ → ℝ`; the PDE statement only constrains its behaviour on `t > 0`. -/
+noncomputable def heatSolution (f : ℝ → ℝ) (t x : ℝ) : ℝ :=
+  if 0 < t then
+    (4 * Real.pi * t)⁻¹ ^ ((1 : ℝ) / 2) *
+      ∫ y : ℝ, Real.exp (-((x - y) ^ 2) / (4 * t)) * f y
+  else
+    f x
+
+
+
+end ODE
+end Analysis
+end LeanEval
+
+open LeanEval.Analysis.ODE
+open Real MeasureTheory
+
+-- ANCHOR: heat_kernel_solves_heat_equation__heat_kernel_solves_heat_equation
+theorem heat_kernel_solves_heat_equation (f : ℝ → ℝ) (hf_cont : Continuous f) (hf_bdd : ∃ M : ℝ, ∀ x, |f x| ≤ M) :
+    -- The PDE on (0, ∞) × ℝ.
+    (∀ t : ℝ, 0 < t → ∀ x : ℝ, ∃ ux : ℝ → ℝ, ∃ uxx : ℝ,
+        (∀ y : ℝ, HasDerivAt (fun z => heatSolution f t z) (ux y) y) ∧
+        HasDerivAt ux uxx x ∧
+        HasDerivAt (fun s => heatSolution f s x) uxx t) ∧
+    -- Initial condition recovered as a one-sided limit at t = 0.
+    (∀ x : ℝ,
+        Filter.Tendsto (fun t : ℝ => heatSolution f t x)
+          (nhdsWithin (0 : ℝ) (Set.Ioi 0)) (nhds (f x))) := by
+  sorry
+-- ANCHOR_END: heat_kernel_solves_heat_equation__heat_kernel_solves_heat_equation
+
+end ProblemHeatKernelSolvesHeatEquation
