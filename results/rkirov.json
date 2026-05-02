@@ -100,6 +100,15 @@
         "submission_ref": "69e24b6b1a18117485ef55663d4773900655e033",
         "submission_repo": "rkirov/lean-eval"
       },
+      "posSemidef_map_exp": {
+        "benchmark_commit": "ce95f00abb6d84e2ca465e6ec7bb5e12f82cd427",
+        "issue_number": 82,
+        "solved_at": "2026-05-02T04:15:12Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "17568cfb74a1f49b2aacc5fbfab52bfa90c33cbb",
+        "submission_repo": "rkirov/lean-eval"
+      },
       "substInv_X_sub_X_sq_eq_catalan": {
         "benchmark_commit": "6543eeb833db70365fd2c24aae32731207f2ec05",
         "issue_number": 78,
