@@ -5,6 +5,25 @@ open Verso.Genre Blog Theme Template
 open Verso.Genre.Blog.Site.Syntax
 open Verso.Output Html
 
+/--
+Copied from VersoManual.Html. `addSlashJs` should likely be added to the
+`Verso.Genre.Blog.Template.builtinHeader`, which would allow this to be
+removed.
+
+If the current address has no trailing slash, then add it. Otherwise, relative URLs don't work right
+on servers that don't do this step.
+
+This is a hack - it only helps clients with JS enabled, and should really be fixed in the server
+configuration. But not all hosts allow this to happen, and most clients have JS enabled.
+-/
+def addSlashJs : String :=
+r#"(function(){
+  const {protocol:proto, host:hostName, pathname:path, search:srch, hash:hsh} = window.location;
+  if (!(path.endsWith("/") || path.endsWith(".html"))) {
+    window.location.replace(`${proto}//${hostName}${path}/${srch}${hsh}`);
+  }
+})()"#
+
 def theme (name : String) (siteName : String) : Theme := {
   Theme.default with
   primaryTemplate := do
@@ -37,6 +56,9 @@ def theme (name : String) (siteName : String) : Theme := {
     return {{
       <html lang="en">
         <head>
+          <script>
+            {{addSlashJs}}
+          </script>
           <meta charset="UTF-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
           <title>{{ title }} s!" | {siteName}"</title>
