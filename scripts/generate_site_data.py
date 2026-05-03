@@ -310,6 +310,50 @@ def is_legacy_single_theorem(problem: Problem) -> bool:
     return len(problem.holes) == 1 and problem.holes[0].kind == "theorem"
 
 
+def module_to_source_path(module: str) -> pathlib.PurePath:
+    """Map a `LeanEval.X.Y` module name to its source-file path."""
+    return pathlib.PurePath(*module.split(".")).with_suffix(".lean")
+
+
+def source_file_imports(benchmark_repo: pathlib.Path, module: str) -> list[str]:
+    """Return the original source file's imports, filtered to be safe to
+    re-emit at the snapshot catalog's top.
+
+    The benchmark repo's `generate_projects.py` rewrites every emitted
+    `Challenge.lean` (and `ChallengeDeps.lean`) to start with
+    `import Mathlib`, which is fine for a per-problem submission
+    workspace but breaks once we aggregate every problem's body into a
+    single `BenchmarkProblems/Catalog.lean`: the blanket import pulls in
+    Mathlib notations that turn perfectly-valid identifiers in the body
+    (notably `μ`) into reserved tokens at parse time. Reading from the
+    *source* gives us back the specific submodules the author intended.
+
+    Filters:
+    - drop `import EvalTools.*` — the snapshot strips `@[eval_problem]`
+      from bodies, so the marker module is unused;
+    - drop `import LeanEval.*` — local helper modules' bodies are
+      already inlined into `ChallengeDeps.lean` (legacy) or reproduced
+      verbatim in `Challenge.lean` (multi-hole)."""
+    src = benchmark_repo / module_to_source_path(module)
+    if not src.is_file():
+        return []
+    imports, _ = strip_imports(src.read_text(encoding="utf-8"))
+    # Also drop the blanket `import Mathlib`. Some source files use it
+    # instead of specific submodules; if even one survives into the
+    # catalog, the parser activates every Mathlib `notation` and reserves
+    # tokens like `μ` across the whole file. The union of other
+    # problems' specific imports almost always covers what the
+    # blanket-import sources need; if not, a CI build failure will
+    # surface the shortfall and the source can be edited to import
+    # specifics.
+    return [
+        line for line in imports
+        if not line.startswith("import EvalTools")
+        and not line.startswith("import LeanEval.")
+        and line.strip() != "import Mathlib"
+    ]
+
+
 def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tuple[list[str], list[str]]:
     """Build a per-problem catalog fragment.
 
@@ -321,8 +365,13 @@ def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tu
     challenge_path = root / "Challenge.lean"
     deps_path = root / "ChallengeDeps.lean"
 
-    challenge_imports, challenge_body = strip_imports(challenge_path.read_text(encoding="utf-8"))
-    imports = [line for line in challenge_imports if line.strip() != "import ChallengeDeps"]
+    _, challenge_body = strip_imports(challenge_path.read_text(encoding="utf-8"))
+    # Imports come from the original source file (specific submodules),
+    # not from the blanket `import Mathlib` that Challenge.lean uses.
+    # Falls back to the empty list if the source isn't accessible (the
+    # generator then emits no imports for that problem, and any required
+    # ones get pulled in by other problems' source imports).
+    imports = list(source_file_imports(benchmark_repo, problem.module))
     body_parts: list[str] = []
 
     if is_legacy_single_theorem(problem):
@@ -332,10 +381,12 @@ def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tu
         # cleanly.
         local_declarations: dict[str, str] = {}
         if deps_path.is_file():
-            deps_imports, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
-            for line in deps_imports:
-                if line not in imports:
-                    imports.append(line)
+            # Drop ChallengeDeps's `import Mathlib` header — its imports
+            # are also rewritten by generate_projects.py and would
+            # reintroduce the blanket import we just avoided. The deps
+            # body (helper definitions extracted from the source) is what
+            # we actually need.
+            _, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
             body_parts.append("\n".join(deps_body).strip())
             local_declarations = collect_local_declarations(deps_body)
         hole = problem.holes[0]
