@@ -1,0 +1,21 @@
+import Mathlib.Analysis.Convex.Caratheodory
+import Mathlib.Analysis.Convex.KreinMilman
+
+namespace ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex
+
+open Set
+
+-- ANCHOR: mem_convexHull_finset_extremePoints_of_mem_compact_convex__mem_convexHull_finset_extremePoints_of_mem_compact_convex
+theorem mem_convexHull_finset_extremePoints_of_mem_compact_convex {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    {s : Set E} {x : E}
+    (hscomp : IsCompact s)
+    (hsconv : Convex ℝ s)
+    (hx : x ∈ s) :
+    ∃ t : Finset E,
+      (↑t : Set E) ⊆ s.extremePoints ℝ ∧
+      t.card ≤ Module.finrank ℝ E + 1 ∧
+      x ∈ convexHull ℝ (↑t : Set E) := by
+  sorry
+-- ANCHOR_END: mem_convexHull_finset_extremePoints_of_mem_compact_convex__mem_convexHull_finset_extremePoints_of_mem_compact_convex
+
+end ProblemMemConvexHullFinsetExtremePointsOfMemCompactConvex

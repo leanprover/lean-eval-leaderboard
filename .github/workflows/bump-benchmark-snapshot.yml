@@ -1,0 +1,111 @@
+name: Advance benchmark-snapshot
+
+# Keeps benchmark-snapshot/ in lockstep with leanprover/lean-eval main.
+# Triggered by repository_dispatch from lean-eval's notify-leaderboard.yml
+# whenever a problem-affecting change lands. The dispatched SHA is
+# advisory only — this workflow re-resolves origin/main itself for
+# latest-wins semantics.
+
+on:
+  repository_dispatch:
+    types: [lean-eval-main-advanced]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bump-benchmark-snapshot
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout leaderboard repo
+        uses: actions/checkout@v4
+        with:
+          # Use LEADERBOARD_WRITE_TOKEN so the final push back to main
+          # bypasses branch protection the same way submission.yml's
+          # `record:` pushes do.
+          token: ${{ secrets.LEADERBOARD_WRITE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Resolve latest lean-eval main HEAD
+        id: target
+        run: |
+          set -euo pipefail
+          target=$(git ls-remote https://github.com/leanprover/lean-eval.git refs/heads/main | awk '{print $1}')
+          pinned=$(tr -d '\n' < benchmark-snapshot/.benchmark-commit)
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "Pinned: $pinned"
+          echo "Target: $target"
+          if [ "$pinned" = "$target" ]; then
+            echo "Snapshot already at latest main; exiting."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout lean-eval at target SHA
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover/lean-eval
+          ref: ${{ steps.target.outputs.target }}
+          path: lean-eval-benchmark
+          fetch-depth: 0
+
+      - name: Set up elan
+        if: steps.target.outputs.skip != 'true'
+        shell: bash
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Regenerate benchmark-snapshot from target lean-eval
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          python3 scripts/generate_site_data.py --benchmark-repo lean-eval-benchmark
+
+      - name: Verify the new snapshot compiles
+        # In-workflow `lake build` replaces the build-check we'd otherwise
+        # rely on a PR for. If this fails, we never push, and the live
+        # site stays on the previous good snapshot. Building the umbrella
+        # `BenchmarkProblems` module pulls in every per-problem
+        # `BenchmarkProblems/Problem<CamelId>.lean` transitively.
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          cd benchmark-snapshot
+          lake update
+          lake build BenchmarkProblems
+
+      - name: Commit and push if snapshot changed
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          # Only ever stage the snapshot directory — never sweep up
+          # anything else into this auto-commit.
+          if git diff --quiet -- benchmark-snapshot/; then
+            echo "No snapshot diff after regen; nothing to commit."
+            exit 0
+          fi
+          short_old=$(echo "${{ steps.target.outputs.pinned }}" | cut -c1-7)
+          short_new=$(echo "${{ steps.target.outputs.target }}" | cut -c1-7)
+          git config user.name  "lean-eval-bot"
+          git config user.email "lean-eval-bot@users.noreply.github.com"
+          git add benchmark-snapshot/
+          git commit -m "chore: advance benchmark-snapshot from $short_old to $short_new" \
+                     -m "Pinned to leanprover/lean-eval commit ${{ steps.target.outputs.target }}."
+          # Retry once if a sibling submission.yml `record:` push lands
+          # between regeneration and our push. The two never touch the
+          # same files (results/ vs benchmark-snapshot/), so the rebase
+          # should be conflict-free.
+          if ! git push origin HEAD:main; then
+            echo "push rejected; rebasing onto latest main and retrying"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
