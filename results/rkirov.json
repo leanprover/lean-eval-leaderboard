@@ -118,6 +118,15 @@
         "submission_ref": "469356690df9b9bcc7751388474ab1268c32c00e",
         "submission_repo": "rkirov/lean-eval"
       },
+      "pi1_circle_mulEquiv_int": {
+        "benchmark_commit": "2b5dc0fcf5def1fc2a605b785c307f858a0d98b6",
+        "issue_number": 117,
+        "solved_at": "2026-05-03T19:44:59Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "0913f09053f62427808102039c0b7f7764633291",
+        "submission_repo": "rkirov/lean-eval"
+      },
       "posSemidef_map_exp": {
         "benchmark_commit": "ce95f00abb6d84e2ca465e6ec7bb5e12f82cd427",
         "issue_number": 82,
