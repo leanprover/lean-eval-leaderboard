@@ -45,6 +45,13 @@ structure ProblemEntry where
   test : Bool
   submitter : String
   moduleName : String
+  /-- Snapshot-side module name (e.g. `BenchmarkProblems.ProblemTwoPlusTwo`).
+  Each problem now lives in its own per-problem `.lean` file under
+  `benchmark-snapshot/BenchmarkProblems/`, so each one's `import` lines are
+  scoped to that file alone. This is what we pass to Verso's anchor
+  expander, and it tells us which file `loadSnapshotProblemFile` should
+  read for this problem's anchor body lookups. -/
+  snapshotModule : String
   holes : Array Hole
   notesText : Option String
   sourceText : Option String
@@ -60,6 +67,7 @@ instance : FromJson ProblemEntry where
       test := ← json.getObjValAs? Bool "test"
       submitter := ← json.getObjValAs? String "submitter"
       moduleName := ← json.getObjValAs? String "module"
+      snapshotModule := ← json.getObjValAs? String "snapshot_module"
       holes := ← json.getObjValAs? (Array Hole) "holes"
       notesText := (json.getObjValAs? String "notes").toOption
       sourceText := (json.getObjValAs? String "source").toOption
@@ -228,8 +236,18 @@ def problemsJsonPath : System.FilePath :=
 def leaderboardJsonPath : System.FilePath :=
   "site-data/leaderboard.json"
 
-def snapshotCatalogPath : System.FilePath :=
-  "benchmark-snapshot/BenchmarkProblems/Catalog.lean"
+/-- Per-problem snapshot file under `benchmark-snapshot/BenchmarkProblems/`.
+The snapshot generator emits one Lean module per problem, with the
+source author's exact `import` lines at the top of that file. The
+module name is `BenchmarkProblems.Problem<CamelId>`; we strip the
+`BenchmarkProblems.` prefix to derive the on-disk basename. -/
+def snapshotProblemFilePath (snapshotModule : String) : System.FilePath :=
+  let basename :=
+    if snapshotModule.startsWith "BenchmarkProblems." then
+      snapshotModule.drop "BenchmarkProblems.".length
+    else
+      snapshotModule
+  s!"benchmark-snapshot/BenchmarkProblems/{basename}.lean"
 
 def parseProblemsPayload : TermElabM ProblemsPayload := do
   let raw ← IO.FS.readFile problemsJsonPath
@@ -251,8 +269,8 @@ def parseLeaderboardPayload : TermElabM LeaderboardPayload := do
   | .ok payload => pure payload
   | .error err => throwError "Failed to decode {leaderboardJsonPath}: {err}"
 
-def loadSnapshotCatalog : TermElabM String :=
-  IO.FS.readFile snapshotCatalogPath
+def loadSnapshotProblemFile (snapshotModule : String) : TermElabM String :=
+  IO.FS.readFile (snapshotProblemFilePath snapshotModule)
 
 def validateProblems (payload : ProblemsPayload) : TermElabM (Array ProblemEntry) := do
   if payload.schemaVersion != 3 then
@@ -273,26 +291,28 @@ def validateProblems (payload : ProblemsPayload) : TermElabM (Array ProblemEntry
 def holeAnchorId (problemId : String) (hole : Hole) : String :=
   s!"{problemId}__{hole.basename}"
 
-/-- Look up one hole's anchor body in the snapshot catalog. The anchor name
-is `<problem-id>__<basename>`. Returns the trimmed body so callers can use
-it for plain-text fallbacks. -/
-def anchorSourceText (catalog : String) (problemId : String) (hole : Hole) : TermElabM String := do
+/-- Look up one hole's anchor body in the per-problem snapshot file's
+contents. The anchor name is `<problem-id>__<basename>`. Returns the
+trimmed body so callers can use it for plain-text fallbacks. -/
+def anchorSourceText (snapshotModule : String) (fileText : String)
+    (problemId : String) (hole : Hole) : TermElabM String := do
   let anchorId := holeAnchorId problemId hole
+  let path := snapshotProblemFilePath snapshotModule
   -- Trailing newline pins the match to the full anchor line; without it,
   -- a basename like `genus` would prefix-match `genus_eq_zero_iff_homeo`.
   let startMarker := s!"-- ANCHOR: {anchorId}\n"
   let endMarker := s!"-- ANCHOR_END: {anchorId}\n"
-  let parts := catalog.splitOn startMarker
+  let parts := fileText.splitOn startMarker
   let some rest := parts[1]?
-    | throwError "Anchor '{anchorId}' not found in {snapshotCatalogPath}"
+    | throwError "Anchor '{anchorId}' not found in {path}"
   if parts.length != 2 then
-    throwError "Anchor '{anchorId}' appears multiple times in {snapshotCatalogPath}"
+    throwError "Anchor '{anchorId}' appears multiple times in {path}"
   let rest := rest.dropWhile (· == '\n') |>.toString
   let bodyParts := rest.splitOn endMarker
   let some body := bodyParts[0]?
-    | throwError "Anchor '{anchorId}' is missing its body in {snapshotCatalogPath}"
+    | throwError "Anchor '{anchorId}' is missing its body in {path}"
   if bodyParts.length < 2 then
-    throwError "Anchor '{anchorId}' is missing its closing marker in {snapshotCatalogPath}"
+    throwError "Anchor '{anchorId}' is missing its closing marker in {path}"
   pure body.trimAscii.toString
 
 def runPageDocElab (act : DocElabM α) : TermElabM α := do
@@ -305,16 +325,20 @@ def runPageDocElab (act : DocElabM α) : TermElabM α := do
 /-- Build a `TSyntax \`term` for one hole's Verso anchor. When elaborated,
 this expands into a deeply-nested `Block Page` value carrying the
 highlighted source. Each call yields a fresh expression tree. -/
-def inlineAnchorTerm (catalog : String) (problem : ProblemEntry) (hole : Hole) :
+def inlineAnchorTerm (fileText : String) (problem : ProblemEntry) (hole : Hole) :
     TermElabM (TSyntax `term) := do
-  let moduleName := Lean.mkIdent `BenchmarkProblems.Catalog
+  -- Use the per-problem module name from problems.json so Verso's
+  -- anchor expander reads from the right `Problem<CamelId>:highlighted`
+  -- artifact.
+  let moduleName := Lean.mkIdent problem.snapshotModule.toName
   let anchorId := holeAnchorId problem.id hole
   let anchorName := Lean.mkIdent <| Lean.Name.mkSimple anchorId
   let args : Array Verso.Doc.Arg := #[
     .anon (.name anchorName),
     .named .missing (Lean.mkIdent `module) (.name moduleName)
   ]
-  let expected := Syntax.mkStrLit (← anchorSourceText catalog problem.id hole)
+  let expected := Syntax.mkStrLit
+    (← anchorSourceText problem.snapshotModule fileText problem.id hole)
   let terms ← runPageDocElab <| Verso.Code.External.anchor args expected
   match terms[0]? with
   | some term => pure term

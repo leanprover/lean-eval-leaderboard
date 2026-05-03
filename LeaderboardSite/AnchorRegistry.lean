@@ -27,18 +27,23 @@ syntax "register_problem_anchors" : command
 
 elab_rules : command
   | `(register_problem_anchors) => do
-      let (catalog, problems) ← Lean.Elab.Command.runTermElabM fun _ => do
+      let problems ← Lean.Elab.Command.runTermElabM fun _ => do
         let payload ← parseProblemsPayload
-        let catalog ← loadSnapshotCatalog
-        let problems ← validateProblems payload
-        pure (catalog, problems)
+        validateProblems payload
       for problem in problems do
+        -- Load this problem's snapshot file once, then synthesize a
+        -- `def` per hole. Per-problem files keep each problem's
+        -- `import` lines scoped to that file alone, which prevents one
+        -- source's `import Mathlib` from turning identifiers like `μ`
+        -- in another problem's body into reserved notation tokens.
+        let fileText ← Lean.Elab.Command.runTermElabM fun _ =>
+          loadSnapshotProblemFile problem.snapshotModule
         for hole in problem.holes do
           let constName := anchorConstName problem.id hole
           if (← Lean.getEnv).contains constName then
             continue
           let anchorTerm ← Lean.Elab.Command.runTermElabM fun _ =>
-            inlineAnchorTerm catalog problem hole
+            inlineAnchorTerm fileText problem hole
           let constIdent := Lean.mkIdent constName
           let cmd ← `(def $constIdent : Block Page := $anchorTerm)
           Lean.Elab.Command.elabCommand cmd

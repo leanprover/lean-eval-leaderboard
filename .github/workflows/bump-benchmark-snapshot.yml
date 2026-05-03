@@ -73,13 +73,15 @@ jobs:
       - name: Verify the new snapshot compiles
         # In-workflow `lake build` replaces the build-check we'd otherwise
         # rely on a PR for. If this fails, we never push, and the live
-        # site stays on the previous good snapshot.
+        # site stays on the previous good snapshot. Building the umbrella
+        # `BenchmarkProblems` module pulls in every per-problem
+        # `BenchmarkProblems/Problem<CamelId>.lean` transitively.
         if: steps.target.outputs.skip != 'true'
         run: |
           set -euo pipefail
           cd benchmark-snapshot
           lake update
-          lake build BenchmarkProblems BenchmarkProblems.Catalog
+          lake build BenchmarkProblems
 
       - name: Commit and push if snapshot changed
         if: steps.target.outputs.skip != 'true'

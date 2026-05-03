@@ -74,11 +74,22 @@ jobs:
         run: lake update
 
       - name: Prebuild benchmark snapshot
+        # Each problem now lives in its own per-problem
+        # `BenchmarkProblems/Problem<CamelId>.lean` so `import` lines
+        # stay scoped to one problem at a time. We need a `:highlighted`
+        # facet for every such module, so enumerate them from disk
+        # rather than hard-coding a single Catalog target.
         shell: bash
         run: |
+          set -euo pipefail
           cd benchmark-snapshot
           lake update
-          lake build BenchmarkProblems BenchmarkProblems.Catalog subverso-extract-mod +BenchmarkProblems.Catalog:highlighted
+          highlighted_targets=$(
+            find BenchmarkProblems -maxdepth 1 -name 'Problem*.lean' -print \
+              | sed 's|^BenchmarkProblems/||;s|\.lean$||' \
+              | awk '{printf "+BenchmarkProblems.%s:highlighted ", $1}'
+          )
+          lake build BenchmarkProblems subverso-extract-mod $highlighted_targets
 
       - name: Regenerate site-data from results/ and the pinned benchmark
         # site-data/ is .gitignored — regenerated here so every record: push

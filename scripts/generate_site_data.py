@@ -317,16 +317,14 @@ def module_to_source_path(module: str) -> pathlib.PurePath:
 
 def source_file_imports(benchmark_repo: pathlib.Path, module: str) -> list[str]:
     """Return the original source file's imports, filtered to be safe to
-    re-emit at the snapshot catalog's top.
+    re-emit at the top of the per-problem snapshot file.
 
     The benchmark repo's `generate_projects.py` rewrites every emitted
     `Challenge.lean` (and `ChallengeDeps.lean`) to start with
-    `import Mathlib`, which is fine for a per-problem submission
-    workspace but breaks once we aggregate every problem's body into a
-    single `BenchmarkProblems/Catalog.lean`: the blanket import pulls in
-    Mathlib notations that turn perfectly-valid identifiers in the body
-    (notably `μ`) into reserved tokens at parse time. Reading from the
-    *source* gives us back the specific submodules the author intended.
+    `import Mathlib`. We instead read from the source so the snapshot
+    file uses whatever the author actually wrote — typically specific
+    Mathlib submodules, occasionally bare `import Mathlib`. Either is
+    fine because each problem now lives in its own snapshot file.
 
     Filters:
     - drop `import EvalTools.*` — the snapshot strips `@[eval_problem]`
@@ -338,19 +336,10 @@ def source_file_imports(benchmark_repo: pathlib.Path, module: str) -> list[str]:
     if not src.is_file():
         return []
     imports, _ = strip_imports(src.read_text(encoding="utf-8"))
-    # Also drop the blanket `import Mathlib`. Some source files use it
-    # instead of specific submodules; if even one survives into the
-    # catalog, the parser activates every Mathlib `notation` and reserves
-    # tokens like `μ` across the whole file. The union of other
-    # problems' specific imports almost always covers what the
-    # blanket-import sources need; if not, a CI build failure will
-    # surface the shortfall and the source can be edited to import
-    # specifics.
     return [
         line for line in imports
         if not line.startswith("import EvalTools")
         and not line.startswith("import LeanEval.")
-        and line.strip() != "import Mathlib"
     ]
 
 
@@ -407,6 +396,10 @@ def snapshot_namespace(problem: Problem) -> str:
     return f"Problem{camel_case(problem.id)}"
 
 
+def snapshot_module_name(problem: Problem) -> str:
+    return f"BenchmarkProblems.{snapshot_namespace(problem)}"
+
+
 def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Problem]) -> None:
     if BENCHMARK_SNAPSHOT_ROOT.exists():
         shutil.rmtree(BENCHMARK_SNAPSHOT_ROOT)
@@ -417,44 +410,54 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
         benchmark_snapshot_lakefile(benchmark_repo),
     )
     shutil.copy2(benchmark_repo / "lean-toolchain", BENCHMARK_SNAPSHOT_ROOT / "lean-toolchain")
-    module_imports: list[str] = []
-    module_lines: list[str] = []
-    for problem in sorted(problems, key=lambda p: p.sort_index):
-        imports, fragments = build_problem_fragment(problem, benchmark_repo)
-        for line in imports:
-            if line not in module_imports:
-                module_imports.append(line)
-        # Legacy single-theorem problems get a per-problem `namespace
-        # Problem<CamelId>` wrap so their `ChallengeDeps`-derived helpers
-        # (often in shared namespaces like `Foo.bar`) don't collide
-        # across problems. Multi-hole problems instead reproduce the
-        # source module's full namespace structure verbatim, which both
-        # gives the bodies the original namespace context they need to
-        # type-check (e.g. references to `Spec` inside `namespace
-        # AlgebraicGeometry`) and isolates each problem under its
-        # original module's logical namespace path.
-        if is_legacy_single_theorem(problem):
-            namespace = snapshot_namespace(problem)
-            module_lines.append(f"namespace {namespace}")
-            module_lines.append("")
-            for fragment in fragments:
-                if fragment:
-                    module_lines.append(fragment)
-                    module_lines.append("")
-            module_lines.append(f"end {namespace}")
-            module_lines.append("")
-        else:
-            for fragment in fragments:
-                if fragment:
-                    module_lines.append(fragment)
-                    module_lines.append("")
 
-    catalog_path = BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems" / "Catalog.lean"
-    write_text(catalog_path, "\n".join(module_imports + [""] + module_lines).rstrip() + "\n")
-    write_text(BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems.lean", "import BenchmarkProblems.Catalog\n")
+    # One file per problem, with the source author's exact imports at
+    # the top of each file. Lean's `import` directives are file-scoped,
+    # so giving each problem its own file means a source that uses
+    # blanket `import Mathlib` (and the all-Mathlib notation table that
+    # comes with it) cannot pollute another problem whose body uses
+    # identifiers like `μ` that Mathlib reserves as notation tokens.
+    sorted_problems = sorted(problems, key=lambda p: p.sort_index)
+    umbrella_imports: list[str] = []
+    for problem in sorted_problems:
+        imports, fragments = build_problem_fragment(problem, benchmark_repo)
+        namespace = snapshot_namespace(problem)
+        body_lines: list[str] = []
+        if is_legacy_single_theorem(problem):
+            # Legacy single-theorem problems wrap their helpers and
+            # theorem in a per-problem `Problem<CamelId>` namespace so
+            # any short helper names from `ChallengeDeps` don't collide
+            # with the same name in another problem.
+            body_lines.append(f"namespace {namespace}")
+            body_lines.append("")
+            for fragment in fragments:
+                if fragment:
+                    body_lines.append(fragment)
+                    body_lines.append("")
+            body_lines.append(f"end {namespace}")
+        else:
+            # Multi-hole problems reproduce the source module's full
+            # namespace structure verbatim, which gives the body the
+            # original namespace context it needs to type-check.
+            for fragment in fragments:
+                if fragment:
+                    body_lines.append(fragment)
+                    body_lines.append("")
+
+        problem_path = BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems" / f"{namespace}.lean"
+        write_text(
+            problem_path,
+            "\n".join(imports + [""] + body_lines).rstrip() + "\n",
+        )
+        umbrella_imports.append(f"import {snapshot_module_name(problem)}")
+
+    write_text(
+        BENCHMARK_SNAPSHOT_ROOT / "BenchmarkProblems.lean",
+        "\n".join(umbrella_imports) + "\n",
+    )
     # Pin file: the deploy workflow checks this out and regenerates site-data
     # against the same benchmark commit the snapshot was built from, so the
-    # snapshot's catalog and site-data/problems.json stay in lockstep.
+    # snapshot's per-problem files and site-data/problems.json stay in lockstep.
     write_text(BENCHMARK_SNAPSHOT_ROOT / ".benchmark-commit", git_head(benchmark_repo) + "\n")
 
 
@@ -487,6 +490,7 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
                 "test": problem.test,
                 "submitter": problem.submitter,
                 "module": problem.module,
+                "snapshot_module": snapshot_module_name(problem),
                 "holes": [
                     {
                         "name": hole.name,

@@ -1,0 +1,21 @@
+import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.Calculus.FDeriv.Basic
+import Mathlib.Analysis.Normed.Algebra.MatrixExponential
+import Mathlib.LinearAlgebra.Eigenspace.Basic
+
+namespace ProblemLinearOdeAsymptoticStability
+
+open scoped Matrix
+
+-- ANCHOR: linear_ode_asymptotic_stability__linear_ode_asymptotic_stability
+theorem linear_ode_asymptotic_stability (n : ℕ) (A : Matrix (Fin n) (Fin n) ℝ)
+    (hA : ∀ μ : ℂ,
+        Module.End.HasEigenvalue
+          (Matrix.toLin' (A.map (algebraMap ℝ ℂ))) μ → μ.re < 0)
+    (x : ℝ → (Fin n → ℝ))
+    (hx : ∀ t : ℝ, 0 < t → HasDerivAt x (A.mulVec (x t)) t) :
+    Filter.Tendsto (fun t : ℝ => ‖x t‖) Filter.atTop (nhds 0) := by
+  sorry
+-- ANCHOR_END: linear_ode_asymptotic_stability__linear_ode_asymptotic_stability
+
+end ProblemLinearOdeAsymptoticStability
