@@ -22,6 +22,12 @@ BENCHMARK_SNAPSHOT_ROOT = REPO_ROOT / "benchmark-snapshot"
 DEFAULT_BENCHMARK_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-eval"))
 )
+# Path to the SHA pin file. Single line, 40 hex chars + trailing newline.
+# See SECURITY.md (in lean-eval) > "Bumping pinned dependencies" for the
+# bump procedure. Bumping this file is the recorded act of advancing the
+# benchmark commit the leaderboard was built against.
+BENCHMARK_COMMIT_FILE = REPO_ROOT / ".benchmark-commit"
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 @dataclass(frozen=True)
@@ -705,6 +711,24 @@ def build_leaderboard_payload(
     }
 
 
+def _read_pinned_sha() -> str:
+    if not BENCHMARK_COMMIT_FILE.is_file():
+        raise SystemExit(
+            f"{BENCHMARK_COMMIT_FILE} is missing. The leaderboard build "
+            "requires a pinned benchmark commit so it cannot drift to an "
+            "unverified leanprover/lean-eval state. Create the file with a "
+            "single 40-char hex SHA + newline. Bump procedure: SECURITY.md "
+            "> 'Bumping pinned dependencies'."
+        )
+    raw = BENCHMARK_COMMIT_FILE.read_text(encoding="utf-8").strip()
+    if not SHA_RE.fullmatch(raw):
+        raise SystemExit(
+            f"{BENCHMARK_COMMIT_FILE} must contain exactly a 40-char hex SHA. "
+            f"Found: {raw!r}."
+        )
+    return raw
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark-repo", default=str(DEFAULT_BENCHMARK_REPO))
@@ -717,6 +741,14 @@ def parse_args() -> argparse.Namespace:
              "Used by the deploy workflow, which reads the snapshot's pinned "
              "benchmark commit and never wants to mutate the snapshot itself.",
     )
+    parser.add_argument(
+        "--lean-eval-expected-sha",
+        default=None,
+        help="Override the expected lean-eval SHA. Defaults to the contents "
+        "of `.benchmark-commit`. Pass an explicit SHA only for local "
+        "development against an unmerged benchmark branch; CI must use "
+        "the file.",
+    )
     return parser.parse_args()
 
 
@@ -725,6 +757,22 @@ def main() -> int:
     benchmark_repo = pathlib.Path(args.benchmark_repo).resolve()
     results_root = pathlib.Path(args.results_root).resolve()
     output_dir = pathlib.Path(args.output_dir).resolve()
+
+    expected_sha = args.lean_eval_expected_sha or _read_pinned_sha()
+    if not SHA_RE.fullmatch(expected_sha):
+        raise SystemExit(
+            f"--lean-eval-expected-sha must be a 40-char hex SHA, got {expected_sha!r}"
+        )
+    actual_sha = git_head(benchmark_repo)
+    if actual_sha != expected_sha:
+        raise SystemExit(
+            "Benchmark commit mismatch — refusing to build the leaderboard "
+            "against an unexpected leanprover/lean-eval revision.\n"
+            f"  expected: {expected_sha} (from {BENCHMARK_COMMIT_FILE} or --lean-eval-expected-sha)\n"
+            f"  actual:   {actual_sha} (HEAD of {benchmark_repo})\n"
+            "If the bump is intentional, update .benchmark-commit and resubmit "
+            "the change. See SECURITY.md > 'Bumping pinned dependencies'."
+        )
 
     manifest_path = benchmark_repo / "manifests" / "problems.toml"
     if not manifest_path.is_file():
