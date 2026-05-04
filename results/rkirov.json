@@ -99,6 +99,15 @@
         "submission_ref": "69e24b6b1a18117485ef55663d4773900655e033",
         "submission_repo": "rkirov/lean-eval"
       },
+      "mem_convexHull_finset_extremePoints_of_mem_compact_convex": {
+        "benchmark_commit": "e61a234f0de8502377ba8820257d97cee349f727",
+        "issue_number": 121,
+        "solved_at": "2026-05-04T06:51:42Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "5b65a4366f1ef11184c71f4d3eec5c6a6065e4a6",
+        "submission_repo": "rkirov/lean-eval"
+      },
       "mulCayley_connected_iff_closure_eq_top": {
         "benchmark_commit": "6543eeb833db70365fd2c24aae32731207f2ec05",
         "issue_number": 78,
