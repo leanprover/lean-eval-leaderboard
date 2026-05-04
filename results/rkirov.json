@@ -69,6 +69,15 @@
         "submission_ref": "69e24b6b1a18117485ef55663d4773900655e033",
         "submission_repo": "rkirov/lean-eval"
       },
+      "dirichlet_eigenvalues_eq_nat_sq": {
+        "benchmark_commit": "3f035efb4e5cac1277ae89582902897d96b0b95b",
+        "issue_number": 124,
+        "solved_at": "2026-05-04T14:36:57Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "7b1bb00700c3b9271df041f37e26a5cc5e656251",
+        "submission_repo": "rkirov/lean-eval"
+      },
       "finite_graph_ramsey_theorem": {
         "benchmark_commit": "6543eeb833db70365fd2c24aae32731207f2ec05",
         "issue_number": 78,
