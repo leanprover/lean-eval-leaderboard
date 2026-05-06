@@ -2,6 +2,7 @@ import Lean.Data.Json
 import VersoBlog
 import LeaderboardSite.Data
 import LeaderboardSite.AnchorRegistry
+import LeaderboardSite.Copy
 
 open Lean
 open Lean.Elab Term
@@ -12,6 +13,7 @@ open Verso.Output Html
 namespace LeaderboardSite.Leaderboard
 
 open LeaderboardSite.Data
+open LeaderboardSite.Copy
 
 /-! ## Helpers for building Verso `Block Page` / `Inline Page` values via syntax.
 
@@ -78,8 +80,6 @@ private def formatDate (iso : String) : String :=
   | date :: _ =>
     match date.splitOn "-" with
     | [yyyy, mm, dd] =>
-      let monthNames := #["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       match mm.toNat? with
       | some m =>
         if 1 ≤ m ∧ m ≤ 12 then
@@ -92,12 +92,12 @@ private def formatDate (iso : String) : String :=
   | [] => iso
 
 private def scoreLineHtml (score : LeaderboardScore) : Html :=
-  let solved : String := s!"{score.display} solved"
+  let solved : String := s!"{score.display}{scoreSolvedSuffix}"
   {{
     <span class="entry-score-line">
       <span class="entry-score-primary">{{textHtml solved}}</span>
-      <span class="entry-score-pill entry-score-pill--main">{{textHtml s!"{score.solvedMain} main"}}</span>
-      <span class="entry-score-pill entry-score-pill--test">{{textHtml s!"{score.solvedTest} test"}}</span>
+      <span class="entry-score-pill entry-score-pill--main">{{textHtml s!"{score.solvedMain}{scoreMainSuffix}"}}</span>
+      <span class="entry-score-pill entry-score-pill--test">{{textHtml s!"{score.solvedTest}{scoreTestSuffix}"}}</span>
     </span>
   }}
 
@@ -128,35 +128,28 @@ private def heroBlock (summary : LeaderboardSummary) : Block Page :=
   let problemsHref := "problems/"
   let mainProblemsHref := s!"{problemsHref}#main-problems"
   let testProblemsHref := s!"{problemsHref}#test-problems"
-  let heroCopy :=
-    "Public results on a benchmark of hard Lean formalization problems. "
-    ++ "Expand any row to inspect solved theorems, extracted statements, and "
-    ++ "links to public proofs when available."
-  let heroSideCopy :=
-    "Problem statements and leaderboard results are generated from public "
-    ++ "benchmark data and submission artifacts."
   let heroMain := divBlock "hero-main" #[
-    divBlock "hero-kicker" #[paragraph #[textInline "lean-eval"]],
-    htmlBlobBlock {{ <h1 class="hero-title">"Lean AI formalization leaderboard"</h1> }},
+    divBlock "hero-kicker" #[paragraph #[textInline heroKicker]],
+    htmlBlobBlock {{ <h1 class="hero-title">{{textHtml heroTitle}}</h1> }},
     htmlBlobBlock {{ <p class="hero-copy">{{textHtml heroCopy}}</p> }},
     divBlock "hero-stats hero-stat-strip" #[
-      heroStat summary.models "models",
-      heroStat summary.submitters (pluralize summary.submitters "submitter" "submitters"),
+      heroStat summary.models heroModelsLabel,
+      heroStat summary.submitters (pluralize summary.submitters heroSubmitterSingular heroSubmitterPlural),
       heroStat summary.problemAuthors
-        (pluralize summary.problemAuthors "problem author" "problem authors"),
-      heroStatLink summary.problems "problems" problemsHref
+        (pluralize summary.problemAuthors heroProblemAuthorSingular heroProblemAuthorPlural),
+      heroStatLink summary.problems heroProblemsLabel problemsHref
     ]
   ]
-  let heroSide := htmlWrapperBlock "aside" #[("class", "hero-side")] #[
-    sectionLabel "Benchmark breakdown",
+  let heroSideAside := htmlWrapperBlock "aside" #[("class", "hero-side")] #[
+    sectionLabel heroBenchmarkBreakdownLabel,
     divBlock "hero-side-metrics" #[
-      statPairLink "Main problems" mainProblemsHref summary.mainProblems,
-      statPairLink "Test problems" testProblemsHref summary.testProblems
+      statPairLink heroMainProblemsLabel mainProblemsHref summary.mainProblems,
+      statPairLink heroTestProblemsLabel testProblemsHref summary.testProblems
     ],
-    htmlBlobBlock {{ <p class="hero-side-copy">{{textHtml heroSideCopy}}</p> }}
+    htmlBlobBlock {{ <p class="hero-side-copy">{{textHtml heroSide}}</p> }}
   ]
   sectionBlock "hero-panel" #[
-    divBlock "hero-grid" #[heroMain, heroSide]
+    divBlock "hero-grid" #[heroMain, heroSideAside]
   ]
 
 /-! ## Problem rows inside an entry -/
@@ -174,11 +167,11 @@ private def theoremCard
     let holeBlocks : Array (Block Page) :=
       rendered.map fun blk => divBlock "hole" #[blk]
     divBlock "theorem-card theorem-card-rendered" <|
-      #[divBlock "theorem-card-label" #[paragraph #[textInline "Verso theorem preview"]]]
+      #[divBlock "theorem-card-label" #[paragraph #[textInline versoTheoremPreviewLabel]]]
       ++ holeBlocks
   | none =>
     divBlock "theorem-card theorem-card-static" #[
-      divBlock "theorem-card-label" #[paragraph #[textInline "Lean theorem statement"]],
+      divBlock "theorem-card-label" #[paragraph #[textInline leanTheoremStatementLabel]],
       htmlBlobBlock {{ <pre>{{textHtml statement}}</pre> }}
     ]
 
@@ -200,7 +193,7 @@ private def problemItem
   let proofLink := match proofUrl? with
     | some url => htmlBlobBlock {{
         <a class="problem-proof-link" href={{url}}>
-          <span>"proof"</span>
+          <span>{{textHtml proofWord}}</span>
           <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M9 1v1.5h3.44L6.97 7.97l1.06 1.06L13.5 3.56V7H15V1H9zM2 3v11h11V8.5h-1.5V12.5h-8v-8H6.5V3H2z"/>
           </svg>
@@ -220,7 +213,7 @@ private def problemItem
       else
         htmlBlobBlock {{
           <details class="production-note">
-            <summary>"How produced"</summary>
+            <summary>{{textHtml howProducedSummary}}</summary>
             <p>{{textHtml trimmed.toString}}</p>
           </details>
         }}
@@ -232,7 +225,7 @@ private def problemItem
         htmlBlobBlock {{
           <span class="problem-id-trigger" role="button" tabindex="0"
                 aria-haspopup="true"
-                aria-label={{s!"Show theorem statement for {problemId}"}}>
+                aria-label={{theoremDisclosureAria problemId}}>
             {{textHtml problemId}}
           </span>
         }},
@@ -250,7 +243,7 @@ private def problemItem
 private def problemTitleAndStatement
     (problems : Std.HashMap String (String × String))
     (problemId : String) : (String × String) :=
-  problems.getD problemId (problemId, "Theorem statement unavailable.")
+  problems.getD problemId (problemId, theoremStatementUnavailable)
 
 /-- Render the `<summary>` row for an entry. -/
 private def entrySummary (entry : LeaderboardEntry) : Html :=
@@ -283,28 +276,28 @@ private def entryBody
   let uniqueIds : Std.HashSet String :=
     entry.uniqueProblemIds.foldl (init := ({} : Std.HashSet String)) (·.insert ·)
   let shared := entry.solvedProblems.filter fun s => ! uniqueIds.contains s.problemId
-  let uniqueSection := renderSection "Problems uniquely solved by this model" unique
-  let sharedSection := renderSection "Other solved problems" shared
+  let uniqueSection := renderSection uniqueSolvesLabel unique
+  let sharedSection := renderSection otherSolvesLabel shared
   let submitters : Html :=
     if entry.submitters.isEmpty then
-      {{ <span class="empty-inline">"None"</span> }}
+      {{ <span class="empty-inline">{{textHtml submittersEmpty}}</span> }}
     else
       Html.fromArray (entry.submitters.map fun s =>
         {{ <span class="submitter-chip">{{textHtml s.user}} <span>{{textHtml (toString s.solvedTotal)}}</span></span> }})
   let provenanceSection : Block Page :=
     divBlock "entry-section entry-side" #[
-      sectionLabel "Submission history",
+      sectionLabel submissionHistoryLabel,
       htmlBlobBlock {{
         <div class="stat-pair">
-          <span>"First submission"</span>
+          <span>{{textHtml firstSubmissionLabel}}</span>
           <span>{{textHtml (formatDate entry.firstSolvedAt)}}</span>
         </div>
         <div class="stat-pair">
-          <span>"Last submission"</span>
+          <span>{{textHtml lastSubmissionLabel}}</span>
           <span>{{textHtml (formatDate entry.lastSolvedAt)}}</span>
         </div>
       }},
-      sectionLabel "Contributors",
+      sectionLabel contributorsLabel,
       htmlBlobBlock {{ <div class="submitter-list">{{submitters}}</div> }}
     ]
   uniqueSection ++ sharedSection |>.push provenanceSection
@@ -318,11 +311,10 @@ private def entryBlock
 private def panelHeader : Block Page :=
   divBlock "panel-header" #[
     divBlock "" #[
-      divBlock "panel-kicker" #[paragraph #[textInline "Leaderboard"]],
-      htmlBlobBlock {{ <h2>"Model rankings"</h2> }}
+      divBlock "panel-kicker" #[paragraph #[textInline panelKicker]],
+      htmlBlobBlock {{ <h2>{{textHtml panelHeading}}</h2> }}
     ],
-    divBlock "panel-note" #[paragraph #[textInline
-      "Ranked by solved problems, with main benchmark problems weighted first."]]
+    divBlock "panel-note" #[paragraph #[textInline panelNote]]
   ]
 
 /-! ## Empty / placeholder leaderboard panel
@@ -340,12 +332,8 @@ private def emptyShowcase
     problemItem anchorMap id title statement none none none
   divBlock "empty-showcase" #[
     divBlock "empty-copy" #[
-      sectionLabel "No public solves yet",
-      htmlBlobBlock {{
-        <p class="empty-lead">{{textHtml
-          ("The benchmark catalog is public, and leaderboard rows will appear "
-          ++ "here as successful submissions are recorded.")}}</p>
-      }}
+      sectionLabel emptyShowcaseLabel,
+      htmlBlobBlock {{ <p class="empty-lead">{{textHtml emptyShowcaseCopy}}</p> }}
     ],
     divBlock "empty-problem-list" previewItems
   ]
@@ -365,19 +353,19 @@ private def coverageMatrix
       e.solvedProblems.foldl (init := ({} : Std.HashSet String))
         (fun s p => s.insert p.problemId)
   let headerCells : Html := Html.fromArray <|
-    #[{{ <th scope="col">"Problem"</th> }}] ++
+    #[{{ <th scope="col">{{textHtml coverageHeaderProblem}}</th> }}] ++
     entries.map (fun e =>
       {{ <th scope="col">{{textHtml e.modelName}}</th> }})
   let rows : Array Html := problemMeta.map fun (id, title, isTest) =>
     let kindClass := if isTest then "coverage-kind coverage-kind--test"
                                 else "coverage-kind coverage-kind--main"
-    let kindLabel := if isTest then "test" else "main"
+    let kindLabel := if isTest then coverageKindTest else coverageKindMain
     let cells : Array Html := entries.zipIdx.map fun (_, i) =>
       let solved := (solverSets[i]!).contains id
       if solved then
-        {{ <td class="coverage-cell coverage-cell--solved" aria-label={{s!"{title}: solved"}}>"✓"</td> }}
+        {{ <td class="coverage-cell coverage-cell--solved" aria-label={{coverageCellAria title true}}>{{textHtml coverageCellSolved}}</td> }}
       else
-        {{ <td class="coverage-cell coverage-cell--unsolved" aria-label={{s!"{title}: not solved"}}>"—"</td> }}
+        {{ <td class="coverage-cell coverage-cell--unsolved" aria-label={{coverageCellAria title false}}>{{textHtml coverageCellUnsolved}}</td> }}
     let cellsHtml : Html := Html.fromArray cells
     {{
       <tr>
@@ -391,9 +379,9 @@ private def coverageMatrix
   let body : Html := Html.fromArray rows
   htmlBlobBlock {{
     <section class="coverage-panel" aria-labelledby="coverage-heading">
-      <div class="panel-kicker">"Coverage"</div>
-      <h2 id="coverage-heading">"Per-problem coverage"</h2>
-      <p class="panel-note">"Which problems each model has solved. Hidden on narrow screens."</p>
+      <div class="panel-kicker">{{textHtml coverageKicker}}</div>
+      <h2 id="coverage-heading">{{textHtml coverageHeading}}</h2>
+      <p class="panel-note">{{textHtml coverageNote}}</p>
       <div class="coverage-table-wrap">
         <table class="coverage-table">
           <thead>

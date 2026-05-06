@@ -1,6 +1,7 @@
 import VersoBlog
 import LeaderboardSite.Data
 import LeaderboardSite.AnchorRegistry
+import LeaderboardSite.Copy
 
 open Lean
 open Lean.Elab Term
@@ -15,6 +16,7 @@ set_option maxHeartbeats 1000000
 namespace LeaderboardSite.Pages.ProblemDetail
 
 open LeaderboardSite.Data
+open LeaderboardSite.Copy
 
 private def textInline (text : String) : Inline Page :=
   .text text
@@ -37,18 +39,16 @@ private def holeWrap (child : Block Page) : Block Page :=
 private def headingBlock (text : String) : Block Page :=
   .other (BlockExt.blob {{ <h2>{{Html.text true text}}</h2> }}) #[]
 
-/-- "2026-04-30T10:05:19Z" → "Apr 30, 2026". Matches `Leaderboard.formatDate`'s
-formatting; duplicated here to keep the module dependency local. -/
+/-- "2026-04-30T10:05:19Z" → "Apr 30, 2026". Mirrors
+`Leaderboard.formatDate`. -/
 private def formatDate (iso : String) : String :=
   match iso.splitOn "T" with
   | date :: _ =>
     match date.splitOn "-" with
     | [yyyy, mm, dd] =>
-      let monthNames := #["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       match mm.toNat? with
       | some m =>
-        if h : 1 ≤ m ∧ m ≤ 12 then
+        if 1 ≤ m ∧ m ≤ 12 then
           let name := monthNames[m - 1]!
           let dayNum := dd.toNat?.getD 0
           s!"{name} {dayNum}, {yyyy}"
@@ -87,48 +87,46 @@ private def solverParagraph (s : SolverRecord) : Block Page :=
   let baseInlines : Array (Inline Page) := #[
     textInline "• ",
     linkInline s!"@{s.user}" s!"https://github.com/{s.user}",
-    textInline s!" with {s.modelName} on {formatDate s.solvedAt}"
+    textInline (solverWithModelOnDate s.modelName (formatDate s.solvedAt))
   ]
   let inlines := match s.publicSolutionUrl with
     | some url =>
-      baseInlines ++ #[textInline " (", linkInline "proof" url, textInline ")"]
+      baseInlines ++ #[textInline " (", linkInline proofWord url, textInline ")"]
     | none => baseInlines
   paragraph inlines
 
 private def solversSection (solvers : Array SolverRecord) : Array (Block Page) :=
   if solvers.isEmpty then
-    #[headingBlock "Solved by", paragraph #[textInline "Not yet solved."]]
+    #[headingBlock solvedByLabel, paragraph #[textInline notYetSolvedText]]
   else
-    #[headingBlock "Solved by"] ++ solvers.map solverParagraph
+    #[headingBlock solvedByLabel] ++ solvers.map solverParagraph
 
 private def isUrl (text : String) : Bool :=
   text.startsWith "http://" || text.startsWith "https://"
 
-private def unavailableText : String := "Unavailable."
-
 private def optionalParagraph (label : String) (value : Option String) : Block Page :=
   let body :=
     match value.map (·.trimAscii.toString) with
-    | some s => if s.isEmpty then unavailableText else s
-    | none => unavailableText
+    | some s => if s.isEmpty then unavailable else s
+    | none => unavailable
   paragraph #[textInline s!"{label}: {body}"]
 
 private def sourceParagraph (value : Option String) : Block Page :=
   match value.map (·.trimAscii.toString) with
   | some s =>
     if s.isEmpty then
-      paragraph #[textInline s!"Source: {unavailableText}"]
+      paragraph #[textInline s!"{problemsSourcePrefix}{unavailable}"]
     else if isUrl s then
-      paragraph #[textInline "Source: ", linkInline s s]
+      paragraph #[textInline problemsSourcePrefix, linkInline s s]
     else
-      paragraph #[textInline s!"Source: {s}"]
-  | none => paragraph #[textInline s!"Source: {unavailableText}"]
+      paragraph #[textInline s!"{problemsSourcePrefix}{s}"]
+  | none => paragraph #[textInline s!"{problemsSourcePrefix}{unavailable}"]
 
 private def backLink : Block Page :=
   -- Verso emits a `<base href>` pointing at the site root, so a plain
   -- `problems/` href resolves to `<root>/problems/` rather than back up
   -- past the GitHub Pages base path.
-  paragraph #[linkInline "← All problems" "problems/"]
+  paragraph #[linkInline backToProblems "problems/"]
 
 /-- Assemble one detail page's `Part Page` at runtime from spliced anchor
 blocks plus the (already-flattened) solver list. Routing assembly through a
@@ -143,9 +141,9 @@ private def assembleDetailPart
     backLink,
     paragraph #[codeInline id],
     paragraph #[textInline submitterText],
-    optionalParagraph "Notes" notesText,
+    optionalParagraph problemsNotesLabel notesText,
     sourceParagraph sourceText,
-    optionalParagraph "Informal solution" informalSolution
+    optionalParagraph problemsInformalSolutionLabel informalSolution
   ]
   let body :=
     prelude
@@ -178,7 +176,7 @@ elab_rules : term
         let partTerm ← `(assembleDetailPart
             $(quote problem.title)
             $(quote problem.id)
-            $(quote s!"Submitter: {problem.submitter}.")
+            $(quote (problemsSubmitterSentence problem.submitter))
             $(quote problem.notesText)
             $(quote problem.sourceText)
             $(quote problem.informalSolution)
