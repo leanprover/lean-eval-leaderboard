@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "GPT-5.5 Codex": {
+      "two_plus_two": {
+        "benchmark_commit": "d4e22effc049893c0cf62a4c6819a0585ff7ee60",
+        "issue_number": 138,
+        "solved_at": "2026-05-06T08:47:12Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "454e6d3d30f84ca63b50e3b2e8aad58ae04cf999",
+        "submission_repo": "A-M-Berns/lean-eval-submissions"
+      }
+    }
+  },
+  "user": "A-M-Berns"
+}
