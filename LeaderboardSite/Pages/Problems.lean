@@ -1,6 +1,7 @@
 import VersoBlog
 import LeaderboardSite.Data
 import LeaderboardSite.AnchorRegistry
+import LeaderboardSite.Copy
 
 open Lean
 open Lean.Elab Term
@@ -14,6 +15,7 @@ set_option maxHeartbeats 1000000
 namespace LeaderboardSite.Pages
 
 open LeaderboardSite.Data
+open LeaderboardSite.Copy
 
 private def textInline (text : String) : Inline Page :=
   .text text
@@ -30,13 +32,10 @@ private def codeLinkInline (id url : String) : Inline Page :=
 private def paragraph (contents : Array (Inline Page)) : Block Page :=
   .para contents
 
-private def unavailableText : String :=
-  "Unavailable."
-
 private def valueOrUnavailable (value : Option String) : String :=
   match value.map (·.trimAscii.toString) with
-  | some text => if text.isEmpty then unavailableText else text
-  | none => unavailableText
+  | some text => if text.isEmpty then unavailable else text
+  | none => unavailable
 
 private def pageMeta (htmlId? : Option String := none) : Option Page.Meta :=
   htmlId?.map fun htmlId => { htmlId }
@@ -63,13 +62,13 @@ private def sourceParagraphTerm (problem : ProblemEntry) : TermElabM (TSyntax `t
   | some source =>
       if isUrl source then
         `(paragraph #[
-          textInline "Source: ",
+          textInline problemsSourcePrefix,
           linkInline $(quote source) $(quote source)
         ])
       else
-        `(paragraph #[textInline $(quote s!"Source: {source}")])
+        `(paragraph #[textInline $(quote s!"{problemsSourcePrefix}{source}")])
   | none =>
-      `(paragraph #[textInline $(quote s!"Source: {unavailableText}")])
+      `(paragraph #[textInline $(quote s!"{problemsSourcePrefix}{unavailable}")])
 
 private def holeWrap (child : Block Page) : Block Page :=
   .other (BlockExt.htmlDiv "hole") #[child]
@@ -83,11 +82,11 @@ private def filterBlock : Block Page :=
   let html : Verso.Output.Html := {{
     <div class="problems-filter" data-problems-filter="true">
       <label class="problems-filter-label" for="problems-filter-input">
-        <span class="problems-filter-icon" aria-hidden="true">"⌕"</span>
-        <span class="problems-filter-label-text">"Filter problems"</span>
+        <span class="problems-filter-icon" aria-hidden="true">{{Verso.Output.Html.text true filterBoxIcon}}</span>
+        <span class="problems-filter-label-text">{{Verso.Output.Html.text true filterBoxLabel}}</span>
       </label>
       <input id="problems-filter-input" type="search" class="problems-filter-input"
-             placeholder="title, id, notes, source, or Lean source"
+             placeholder={{filterBoxPlaceholder}}
              aria-describedby="problems-filter-count"
              autocomplete="off" spellcheck="false"/>
       <span id="problems-filter-count"
@@ -111,7 +110,7 @@ private def tocBlock (items : Array (String × String)) : Block Page :=
       {{ <li><a href={{href}}>{{Verso.Output.Html.text true title}}</a></li> }}
   let html : Verso.Output.Html := {{
     <details class="problems-toc">
-      <summary>"All problems"</summary>
+      <summary>{{Verso.Output.Html.text true tocAllProblemsLabel}}</summary>
       <ul class="problems-toc-list">{{lis}}</ul>
     </details>
   }}
@@ -169,14 +168,14 @@ private def filterHaystackText (problem : ProblemEntry) : String :=
   (String.intercalate " " parts.toList).toLower
 
 private def problemPartTerm (problem : ProblemEntry) : TermElabM (TSyntax `term) := do
-  let notesBlock ← optionalParagraphTerm "Notes" problem.notesText
+  let notesBlock ← optionalParagraphTerm problemsNotesLabel problem.notesText
   let sourceBlock ← sourceParagraphTerm problem
-  let solutionBlock ← optionalParagraphTerm "Informal solution" problem.informalSolution
+  let solutionBlock ← optionalParagraphTerm problemsInformalSolutionLabel problem.informalSolution
   let anchorsArr : TSyntaxArray `term := anchorBlockTerms problem
   `(assembleProblemPart
       $(quote problem.title)
       $(quote problem.id)
-      $(quote s!"Submitter: {problem.submitter}.")
+      $(quote (problemsSubmitterSentence problem.submitter))
       $(quote (filterHaystackText problem))
       $notesBlock
       $sourceBlock
@@ -201,42 +200,29 @@ private def sectionPartTerm (title : String) (htmlId : String)
   let subParts : TSyntaxArray `term := subParts
   `(pagePart $(quote title) #[groupHaystack] #[$subParts,*] (some $(quote htmlId)))
 
-private def introParagraphTerms : TermElabM (Array (TSyntax `term)) := do
-  pure #[
-    ← `(paragraph #[textInline "The benchmark catalog consists of carefully curated problems across mathematics, chosen so that their statements are mostly accessible using existing Mathlib definitions, but their solutions are difficult for current publicly available frontier models."]),
-    ← `(paragraph #[
-      textInline "The problem statements below are automatically extracted from the ",
-      linkInline "lean-eval" "https://github.com/leanprover/lean-eval",
-      textInline " repository."
-    ]),
-    ← `(paragraph #[
-      textInline "Authors are encouraged to submit new problems via PRs to that repository, for inclusion in future benchmark releases. See ",
-      linkInline "Submit" "submit/",
-      textInline " for details on submitting solutions."
-    ])
-  ]
-
 scoped syntax "problems_page%" : term
 
 elab_rules : term
   | `(problems_page%) => do
       let payload ← parseProblemsPayload
       let problems ← validateProblems payload
-      let introBlocks ← introParagraphTerms
       let mainProblems := Array.filter (fun problem => !problem.test) problems
       let starterProblems := Array.filter (·.test) problems
-      let mainSection ← sectionPartTerm "Main benchmark problems" "main-problems" mainProblems
+      let mainSection ← sectionPartTerm mainBenchmarkSection "main-problems" mainProblems
       let mut subParts := #[mainSection]
       if !starterProblems.isEmpty then
-        subParts := subParts.push (← sectionPartTerm "Test problems" "test-problems" starterProblems)
+        subParts := subParts.push (← sectionPartTerm testProblemsSection "test-problems" starterProblems)
       let tocItems : Array (String × String) :=
         (mainProblems ++ starterProblems).map fun p => (p.id, p.title)
       let tocTerm ← `(tocBlock $(quote tocItems))
       let filterTerm ← `(filterBlock)
-      let introBlocks' : TSyntaxArray `term :=
-        (introBlocks.push filterTerm).push tocTerm
       let subParts' : TSyntaxArray `term := subParts
-      let pageTerm ← `(pagePart "Problems" #[$introBlocks',*] #[$subParts',*])
+      -- Intro prose blocks come from `Copy.problemsIntro` (a Verso markdown
+      -- body). They're spliced as a runtime expression, then concatenated
+      -- with the elaborator-built filter and TOC blocks.
+      let pageTerm ← `(pagePart problemsTitle
+        (problemsIntro.toPart.content ++ #[$filterTerm, $tocTerm])
+        #[$subParts',*])
       let expectedType ← Lean.Elab.Term.elabTerm (← `(Part Page)) none
       Lean.Elab.Term.elabTerm pageTerm (some expectedType)
 

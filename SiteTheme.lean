@@ -1,9 +1,13 @@
 import Verso.Doc.Html
 import VersoBlog
+import LeaderboardSite.Copy
 
 open Verso.Genre Blog Theme Template
 open Verso.Genre.Blog.Site.Syntax
 open Verso.Output Html
+open LeaderboardSite.Copy
+
+private def textHtml (s : String) : Html := Html.text true s
 
 /--
 Copied from VersoManual.Html. `addSlashJs` should likely be added to the
@@ -61,7 +65,7 @@ def theme (name : String) (siteName : String) : Theme := {
           </script>
           <meta charset="UTF-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1"/>
-          <title>{{ title }} s!" | {siteName}"</title>
+          <title>{{ title }}{{textHtml pageTitleSeparator}}{{textHtml siteName}}</title>
           <link rel="preconnect" href="https://fonts.googleapis.com"/>
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"/>
@@ -77,22 +81,22 @@ def theme (name : String) (siteName : String) : Theme := {
             <header class="topbar">
               <div class="wrap topbar-inner">
                 <a class="wordmark" href=".">
-                  <span class="wordmark-mark">"⊢"</span>
-                  <span class="wordmark-text">"lean-eval"</span>
+                  <span class="wordmark-mark">{{textHtml wordmarkMark}}</span>
+                  <span class="wordmark-text">{{textHtml wordmarkText}}</span>
                 </a>
                 <div class="topbar-actions">
                   <nav class="top">
                     <ol>
-                      <li><a href="problems/">"Problems"</a></li>
-                      <li><a href="submit/">"Submit"</a></li>
+                      <li><a href="problems/">{{textHtml navProblems}}</a></li>
+                      <li><a href="submit/">{{textHtml navSubmit}}</a></li>
                     </ol>
                   </nav>
                   <a class="topbar-github" href="https://github.com/leanprover/lean-eval-leaderboard"
-                     aria-label="View source on GitHub"
+                     aria-label={{topbarGithubAria}}
                      target="_blank" rel="noopener">{{githubIcon}}</a>
-                  <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
-                    <span class="icon-sun" aria-hidden="true">"☀"</span>
-                    <span class="icon-moon" aria-hidden="true">"☾"</span>
+                  <button class="theme-toggle" type="button" aria-label={{themeToggleAria}}>
+                    <span class="icon-sun" aria-hidden="true">{{textHtml themeToggleSunGlyph}}</span>
+                    <span class="icon-moon" aria-hidden="true">{{textHtml themeToggleMoonGlyph}}</span>
                   </button>
                 </div>
               </div>
@@ -103,15 +107,15 @@ def theme (name : String) (siteName : String) : Theme := {
             <footer class="footer">
               <div class="wrap footer-inner">
                 <div class="footer-row footer-row--repos">
-                  <span>"Public results for lean-eval."</span>
-                  <a href="https://github.com/leanprover/lean-eval">{{githubIcon}}<span>"Benchmark repo"</span></a>
-                  <a href="https://github.com/leanprover/lean-eval-leaderboard">{{githubIcon}}<span>"Results repo"</span></a>
+                  <span>{{textHtml footerTagline}}</span>
+                  <a href="https://github.com/leanprover/lean-eval">{{githubIcon}}<span>{{textHtml footerBenchmarkRepo}}</span></a>
+                  <a href="https://github.com/leanprover/lean-eval-leaderboard">{{githubIcon}}<span>{{textHtml footerResultsRepo}}</span></a>
                 </div>
                 <div class="footer-row footer-row--community">
-                  <span>"Community"</span>
-                  <a href="https://lean-lang.org/">"Lean"</a>
-                  <a href="https://mathlib-initiative.org/">"Mathlib Initiative"</a>
-                  <a href="https://leanprover.zulipchat.com/">"Zulip"</a>
+                  <span>{{textHtml footerCommunityHeading}}</span>
+                  <a href="https://lean-lang.org/">{{textHtml footerLinkLean}}</a>
+                  <a href="https://mathlib-initiative.org/">{{textHtml footerLinkMathlibInitiative}}</a>
+                  <a href="https://leanprover.zulipchat.com/">{{textHtml footerLinkZulip}}</a>
                 </div>
               </div>
             </footer>

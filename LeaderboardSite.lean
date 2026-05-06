@@ -1,6 +1,7 @@
 import VersoBlog
 
 import SiteTheme
+import LeaderboardSite.Copy
 import LeaderboardSite.Pages.Front
 import LeaderboardSite.Pages.Problems
 import LeaderboardSite.Pages.ProblemDetail
@@ -31,4 +32,5 @@ def leaderboardSite : Site :=
   ]
 
 def main (args : List String) : IO UInt32 :=
-  blogMain (theme "Leaderboard" "Lean AI formalization leaderboard") leaderboardSite {} args
+  blogMain (theme LeaderboardSite.Copy.siteThemeName LeaderboardSite.Copy.siteTitle)
+    leaderboardSite {} args
