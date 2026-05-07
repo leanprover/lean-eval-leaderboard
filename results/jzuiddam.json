@@ -2,6 +2,16 @@
   "schema_version": 1,
   "solved": {
     "Claude Opus 4.7 (1M context)": {
+      "glAction_range_eq_centralizer_symAction": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 147,
+        "production_description": "Claude Opus 4.7 (1M context) with human (Jeroen Zuiddam) direction.",
+        "solved_at": "2026-05-07T12:41:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "dcc426f3608e2b031ad5e648d3e738cd35d8b321",
+        "submission_repo": "jzuiddam/glAction-eval-submission"
+      },
       "symAction_range_eq_centralizer_glAction": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 146,
