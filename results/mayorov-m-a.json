@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "Aleph Prover(logicalintelligence.com)": {
+      "two_plus_two": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 156,
+        "production_description": "Solved completely autonomously without human intervention.",
+        "solved_at": "2026-05-07T23:46:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "8e7aa68ed38f5cedbdcaf25381ca5c2fa2b2e435",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      }
+    }
+  },
+  "user": "mayorov-m-a"
+}
