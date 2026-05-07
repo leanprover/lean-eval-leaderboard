@@ -10,6 +10,15 @@
         "submission_public": true,
         "submission_ref": "ba6cb1077e2c40321456d212af29de76ec5d31d9",
         "submission_repo": "sqrt-of-2/82ea47d7a24514c05859b5a759a8958a"
+      },
+      "substInv_X_sub_X_sq_eq_catalan": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 149,
+        "solved_at": "2026-05-07T22:11:19Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "ae3d3cad03cd6ab3f03392619b1ae9c3b6d82b78",
+        "submission_repo": "sqrt-of-2/db925d3c572726772a5b9124b39f1e89"
       }
     }
   },
