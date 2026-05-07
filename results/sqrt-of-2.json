@@ -2,6 +2,15 @@
   "schema_version": 1,
   "solved": {
     "GPT-5.5": {
+      "bvp_comparison": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 150,
+        "solved_at": "2026-05-07T22:26:59Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "c1120d2fe1df1749f4a6a4daf660c100bd61701d",
+        "submission_repo": "sqrt-of-2/02d83bfd5ee75e6b12ef00369b6a2f6a"
+      },
       "mulCayley_connected_iff_closure_eq_top": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 148,
