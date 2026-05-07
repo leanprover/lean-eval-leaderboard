@@ -2,6 +2,15 @@
   "schema_version": 1,
   "solved": {
     "GPT-5.5": {
+      "brauer_character_in_cyclotomic": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 154,
+        "solved_at": "2026-05-07T23:34:15Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "4a71ab534eac6a87a54275b9e00a1fc65dc7543a",
+        "submission_repo": "sqrt-of-2/98bbe7aa1b1f90113f3ecd0ee38c724b"
+      },
       "bvp_comparison": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 150,
