@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "GPT-5.5": {
+      "mulCayley_connected_iff_closure_eq_top": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 148,
+        "solved_at": "2026-05-07T21:38:26Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "ba6cb1077e2c40321456d212af29de76ec5d31d9",
+        "submission_repo": "sqrt-of-2/82ea47d7a24514c05859b5a759a8958a"
+      }
+    }
+  },
+  "user": "sqrt-of-2"
+}
