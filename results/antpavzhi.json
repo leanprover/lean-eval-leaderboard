@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "Aleph Prover(logicalintelligence.com)": {
+      "mulCayley_connected_iff_closure_eq_top": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 173,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T21:18:50Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "376445ba39b6db2a92cebe40586fea6268ffe280",
+        "submission_repo": "antpavzhi/lean-eval"
+      },
+      "substInv_X_sub_X_sq_eq_catalan": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 173,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T21:18:50Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "376445ba39b6db2a92cebe40586fea6268ffe280",
+        "submission_repo": "antpavzhi/lean-eval"
+      }
+    }
+  },
+  "user": "antpavzhi"
+}
