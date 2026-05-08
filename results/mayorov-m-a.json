@@ -42,6 +42,16 @@
         "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "cyclotomic_integer_house_le_two": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 164,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T06:54:23Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "9a329ee4f6749414374c24c9227b40a755f7d063",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "def_hole_example": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 157,
