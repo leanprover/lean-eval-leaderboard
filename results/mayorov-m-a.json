@@ -102,6 +102,16 @@
         "submission_ref": "1dfb06b50fdb6efa234c9d279148ff41345d2380",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "glAction_range_eq_centralizer_symAction": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 161,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T05:02:33Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "fbbed83484265f69fc3fb46803200baae5eab9b6",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "heat_kernel_solves_heat_equation": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 157,
