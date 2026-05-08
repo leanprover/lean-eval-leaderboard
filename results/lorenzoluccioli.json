@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "Aristotle (Harmonic)": {
+      "brauer_character_in_cyclotomic": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "def_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "dirichlet_eigenvalues_eq_nat_sq": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "heat_kernel_solves_heat_equation": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "oppenheim_inequality": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "pi1_circle_mulEquiv_int": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 172,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic) via the `aristotle` CLI, with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-08T14:01:48Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      }
+    }
+  },
+  "user": "LorenzoLuccioli"
+}
