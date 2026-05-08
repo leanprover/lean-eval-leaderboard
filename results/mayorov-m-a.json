@@ -2,6 +2,16 @@
   "schema_version": 1,
   "solved": {
     "Aleph Prover(logicalintelligence.com)": {
+      "finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 159,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:16:14Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "1dfb06b50fdb6efa234c9d279148ff41345d2380",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "two_plus_two": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 156,
