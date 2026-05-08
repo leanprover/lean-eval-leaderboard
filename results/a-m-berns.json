@@ -1,6 +1,26 @@
 {
   "schema_version": 1,
   "solved": {
+    "GPT-5.5": {
+      "bvp_comparison": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 158,
+        "solved_at": "2026-05-08T00:13:56Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "f0736a9adf0d663276cfb2d86f622f610a5b5ae0",
+        "submission_repo": "A-M-Berns/lean-eval-submissions"
+      },
+      "sturm_separation": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 158,
+        "solved_at": "2026-05-08T00:13:56Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "f0736a9adf0d663276cfb2d86f622f610a5b5ae0",
+        "submission_repo": "A-M-Berns/lean-eval-submissions"
+      }
+    },
     "GPT-5.5 Codex": {
       "bvp_comparison": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
