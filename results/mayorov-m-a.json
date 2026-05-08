@@ -2,6 +2,86 @@
   "schema_version": 1,
   "solved": {
     "Aleph Prover(logicalintelligence.com)": {
+      "brauer_character_in_cyclotomic": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "bvp_comparison": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "ci_regenerate_main_check": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "cubic_decay_asymptotic": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "def_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "dirichlet_eigenvalues_eq_nat_sq": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "dvd_card_connectedComponent_markoffGraph": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "exists_complementary_polynomial_on_unit_circle": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 159,
@@ -10,6 +90,96 @@
         "submission_kind": "github_repo",
         "submission_public": false,
         "submission_ref": "1dfb06b50fdb6efa234c9d279148ff41345d2380",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "heat_kernel_solves_heat_equation": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "instance_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "linear_ode_asymptotic_stability": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "list_append_singleton_length": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "mem_convexHull_finset_extremePoints_of_mem_compact_convex": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "oppenheim_inequality": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "pi1_circle_mulEquiv_int": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "posSemidef_map_exp": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
+      "sturm_separation": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 157,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-08T00:29:58Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
       "two_plus_two": {
