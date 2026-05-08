@@ -202,6 +202,16 @@
         "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "symAction_range_eq_centralizer_glAction": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 163,
+        "production_description": "Solved without human intervention\nSolution to glAction_range_eq_centralizer_symAction was used for this proof as internally all the benchmark problems were put into a single Lean project. We manually inlined that solution.",
+        "solved_at": "2026-05-08T06:48:07Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "4127187f33df6ef6cbad62e8780866c205b2555b",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "two_plus_two": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 156,
