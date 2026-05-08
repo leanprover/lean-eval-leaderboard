@@ -82,6 +82,16 @@
         "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "finite_graph_ramsey_theorem": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 160,
+        "production_description": "Solved without human intervention.\nThen manual one-line fix applied for 4.30 because, as of now, Aleph only supports lean/mathlib versions up to 4.29.\n\n```\n      34 -  exact \u27e8(SimpleGraph.Embedding.induce S).comp f\u27e9\n      34 +  exact \u27e8(SimpleGraph.Copy.induce G S).comp f\u27e9\n```",
+        "solved_at": "2026-05-08T00:49:34Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "20419e55b5bda21ea26113e612290b573538379d",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 159,
