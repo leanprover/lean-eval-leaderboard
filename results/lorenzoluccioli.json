@@ -12,6 +12,16 @@
         "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       },
+      "cyclotomic_integer_house_le_two": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
       "def_hole_example": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 172,
@@ -32,6 +42,26 @@
         "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       },
+      "exists_complementary_polynomial_on_unit_circle": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "exists_nonisotopic_link": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
       "heat_kernel_solves_heat_equation": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 172,
@@ -40,6 +70,36 @@
         "submission_kind": "github_repo",
         "submission_public": true,
         "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "linear_ode_asymptotic_stability": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "mem_convexHull_finset_extremePoints_of_mem_compact_convex": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       },
       "oppenheim_inequality": {
@@ -60,6 +120,26 @@
         "submission_kind": "github_repo",
         "submission_public": true,
         "submission_ref": "00b32807abe0d286c4638daf888c739e1bb4b90c",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "sturm_separation": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
+      "vonNeumann_doubleCommutant_tfae": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 178,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-09T19:31:38Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       }
     }
