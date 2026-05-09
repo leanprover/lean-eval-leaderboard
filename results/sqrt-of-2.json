@@ -1,6 +1,17 @@
 {
   "schema_version": 1,
   "solved": {
+    "GPT 5.5": {
+      "def_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 174,
+        "solved_at": "2026-05-09T15:56:24Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "6db1429d8ae9398cb5e0f62e991caad9eb848659",
+        "submission_repo": "sqrt-of-2/5f39ad63b2986dc62d49439b38b207fa"
+      }
+    },
     "GPT-5.5": {
       "brauer_character_in_cyclotomic": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
