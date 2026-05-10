@@ -168,6 +168,15 @@
         "submission_ref": "747033990a7955e6fe58ab5984eb19d00d203252",
         "submission_repo": "sqrt-of-2/ef6508b173b17ec172d1ad233604328e"
       },
+      "mulCayley_connected_iff_closure_eq_top": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 190,
+        "solved_at": "2026-05-10T20:03:50Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "75cab7139ace8c092d8d2f0273c4e6c35833f0f6",
+        "submission_repo": "sqrt-of-2/19e53094d302b7c924c62ff55508365e"
+      },
       "two_plus_two": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 187,
