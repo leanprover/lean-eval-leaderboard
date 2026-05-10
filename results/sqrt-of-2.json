@@ -38,6 +38,15 @@
         "submission_ref": "caeeb158f138cb943d2242be623c340ba4658dbc",
         "submission_repo": "sqrt-of-2/406d493eb327dcc604b6f9f7f5d2d98b"
       },
+      "pi1_circle_mulEquiv_int": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 188,
+        "solved_at": "2026-05-10T18:26:02Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "1158fe37c85bb2106ee670349f9148b7feb6d313",
+        "submission_repo": "sqrt-of-2/e19143d1b218b274f5d829d7d274e16b"
+      },
       "two_plus_two": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 177,
