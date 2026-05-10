@@ -131,6 +131,15 @@
         "submission_public": true,
         "submission_ref": "2e355be1db4f0c8ec978bcf1fc51c1e86078ac3e",
         "submission_repo": "sqrt-of-2/d3b2243cdee91633019d74eec5d7fd27"
+      },
+      "instance_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 185,
+        "solved_at": "2026-05-10T18:09:17Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "ba2a368cffd6304f06b7a4cffd913b643f76d144",
+        "submission_repo": "sqrt-of-2/50b365d601731112ae9df083be50048e"
       }
     }
   },
