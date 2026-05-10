@@ -122,6 +122,15 @@
         "submission_public": true,
         "submission_ref": "f501c2eb5a55195e44dae26fda5844593cc9509b",
         "submission_repo": "sqrt-of-2/29946f4cdfa2e145b5aac9bee7f203ea"
+      },
+      "def_hole_example": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 184,
+        "solved_at": "2026-05-10T18:06:49Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "2e355be1db4f0c8ec978bcf1fc51c1e86078ac3e",
+        "submission_repo": "sqrt-of-2/d3b2243cdee91633019d74eec5d7fd27"
       }
     }
   },
