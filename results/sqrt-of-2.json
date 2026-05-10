@@ -112,6 +112,17 @@
         "submission_ref": "ae3d3cad03cd6ab3f03392619b1ae9c3b6d82b78",
         "submission_repo": "sqrt-of-2/db925d3c572726772a5b9124b39f1e89"
       }
+    },
+    "Gemini 3.1 Pro": {
+      "ci_regenerate_main_check": {
+        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
+        "issue_number": 183,
+        "solved_at": "2026-05-10T17:16:02Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "f501c2eb5a55195e44dae26fda5844593cc9509b",
+        "submission_repo": "sqrt-of-2/29946f4cdfa2e145b5aac9bee7f203ea"
+      }
     }
   },
   "user": "sqrt-of-2"
