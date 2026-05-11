@@ -186,6 +186,17 @@
         "submission_ref": "5894ede6ac3a7b4511b9e34b60fed12e83a177d6",
         "submission_repo": "sqrt-of-2/67ffce1cc29749ffb5251191f86bdd7b"
       }
+    },
+    "Leanstral-2603": {
+      "ci_regenerate_main_check": {
+        "benchmark_commit": "f22df521c8a8577d4c4b439c5359931b71f59c33",
+        "issue_number": 201,
+        "solved_at": "2026-05-11T10:12:58Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "aa41f2b7b8a0067b0fb1d194e317d9e671467bec",
+        "submission_repo": "sqrt-of-2/544436c0c82d1f483ec4413883fc9d99"
+      }
     }
   },
   "user": "sqrt-of-2"
