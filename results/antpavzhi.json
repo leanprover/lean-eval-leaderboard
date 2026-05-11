@@ -2,6 +2,16 @@
   "schema_version": 1,
   "solved": {
     "Aleph Prover(logicalintelligence.com)": {
+      "irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius": {
+        "benchmark_commit": "22ed426aa75a262d33937508336e042907886caa",
+        "issue_number": 208,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-11T14:35:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "43289cfb0a6e8c00dcdde62832f9375f30593c4a",
+        "submission_repo": "antpavzhi/lean-eval"
+      },
       "mulCayley_connected_iff_closure_eq_top": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 173,
@@ -20,6 +30,16 @@
         "submission_kind": "github_repo",
         "submission_public": false,
         "submission_ref": "376445ba39b6db2a92cebe40586fea6268ffe280",
+        "submission_repo": "antpavzhi/lean-eval"
+      },
+      "vonNeumann_doubleCommutant_tfae": {
+        "benchmark_commit": "22ed426aa75a262d33937508336e042907886caa",
+        "issue_number": 208,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-11T14:35:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "43289cfb0a6e8c00dcdde62832f9375f30593c4a",
         "submission_repo": "antpavzhi/lean-eval"
       }
     }
