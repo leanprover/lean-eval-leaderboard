@@ -1,0 +1,13 @@
+import Mathlib.Analysis.Complex.Basic
+import Mathlib.Geometry.Manifold.IsManifold.Basic
+
+namespace ProblemRadoRiemannSurface
+
+-- ANCHOR: rado_riemannSurface__rado_riemannSurface
+theorem rado_riemannSurface {X : Type*} [TopologicalSpace X] [T2Space X] [ConnectedSpace X]
+    [ChartedSpace ℂ X] [IsManifold (modelWithCornersSelf ℂ ℂ) 1 X] :
+    SecondCountableTopology X := by
+  sorry
+-- ANCHOR_END: rado_riemannSurface__rado_riemannSurface
+
+end ProblemRadoRiemannSurface
