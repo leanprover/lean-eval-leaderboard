@@ -747,10 +747,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--lean-eval-expected-sha",
         default=None,
-        help="Override the expected lean-eval SHA. Defaults to the contents "
-        "of `.benchmark-commit`. Pass an explicit SHA only for local "
-        "development against an unmerged benchmark branch; CI must use "
-        "the file.",
+        help="Assert the lean-eval clone at --benchmark-repo is at this SHA. "
+        "In --no-write-snapshot mode, defaults to the contents of "
+        "`.benchmark-commit` (the deploy invariant: snapshot files and "
+        "lean-eval revision must agree). In write-snapshot mode there is "
+        "no default — this script will overwrite `.benchmark-commit` to "
+        "the input HEAD anyway. Pass explicitly when you want a sanity "
+        "assertion, or when running locally against an unmerged branch.",
     )
     return parser.parse_args()
 
@@ -761,21 +764,46 @@ def main() -> int:
     results_root = pathlib.Path(args.results_root).resolve()
     output_dir = pathlib.Path(args.output_dir).resolve()
 
-    expected_sha = args.lean_eval_expected_sha or _read_pinned_sha()
-    if not SHA_RE.fullmatch(expected_sha):
-        raise SystemExit(
-            f"--lean-eval-expected-sha must be a 40-char hex SHA, got {expected_sha!r}"
-        )
-    actual_sha = git_head(benchmark_repo)
-    if actual_sha != expected_sha:
-        raise SystemExit(
-            "Benchmark commit mismatch — refusing to build the leaderboard "
-            "against an unexpected leanprover/lean-eval revision.\n"
-            f"  expected: {expected_sha} (from {BENCHMARK_COMMIT_FILE} or --lean-eval-expected-sha)\n"
-            f"  actual:   {actual_sha} (HEAD of {benchmark_repo})\n"
-            "If the bump is intentional, update .benchmark-commit and resubmit "
-            "the change. See SECURITY.md > 'Bumping pinned dependencies'."
-        )
+    # Pin-check: assert that the lean-eval clone we're about to read from
+    # matches the SHA we expected. The *source* of the expected SHA depends
+    # on what we're doing:
+    #   * --no-write-snapshot (deploy): default to the recorded pin in
+    #     .benchmark-commit. The deploy path reads the snapshot off disk
+    #     and the lean-eval clone *must* equal that pin or the generated
+    #     site-data describes problems that don't match the snapshot.
+    #   * write-snapshot (default; bump): no default, because the script's
+    #     last act is to overwrite .benchmark-commit to git_head, so
+    #     defaulting the expected SHA to the *old* pin is incoherent (it
+    #     would refuse the very operation we're performing). Callers can
+    #     still pass --lean-eval-expected-sha as a sanity assertion that
+    #     the clone they handed us is the SHA they meant to snapshot.
+    expected_sha = args.lean_eval_expected_sha
+    if expected_sha is None and args.no_write_snapshot:
+        expected_sha = _read_pinned_sha()
+    if expected_sha is not None:
+        if not SHA_RE.fullmatch(expected_sha):
+            raise SystemExit(
+                f"--lean-eval-expected-sha must be a 40-char hex SHA, got {expected_sha!r}"
+            )
+        actual_sha = git_head(benchmark_repo)
+        if actual_sha != expected_sha:
+            from_flag = args.lean_eval_expected_sha is not None
+            source = "--lean-eval-expected-sha" if from_flag else str(BENCHMARK_COMMIT_FILE)
+            hint = (
+                "The SHA you asserted via --lean-eval-expected-sha does not match "
+                "the lean-eval checkout. Re-resolve the target SHA and re-run."
+                if from_flag
+                else "If you intend to advance the pin, drop --no-write-snapshot so "
+                     "the snapshot (and .benchmark-commit) are regenerated together. "
+                     "See SECURITY.md > 'Bumping pinned dependencies'."
+            )
+            raise SystemExit(
+                "Benchmark commit mismatch — refusing to build the leaderboard "
+                "against an unexpected leanprover/lean-eval revision.\n"
+                f"  expected: {expected_sha} (from {source})\n"
+                f"  actual:   {actual_sha} (HEAD of {benchmark_repo})\n"
+                f"{hint}"
+            )
 
     manifest_path = benchmark_repo / "manifests" / "problems.toml"
     if not manifest_path.is_file():
