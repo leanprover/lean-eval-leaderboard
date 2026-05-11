@@ -28,6 +28,15 @@
         "submission_public": true,
         "submission_ref": "d5bf932c8e8d8ec4dd631143351cb697d7bdf6a3",
         "submission_repo": "sqrt-of-2/26763f96c9cdd419cdf86477c1bdefe5"
+      },
+      "def_hole_example": {
+        "benchmark_commit": "2385cd0654f1cd2bf74efc769265c65bec665cfb",
+        "issue_number": 215,
+        "solved_at": "2026-05-11T17:59:09Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "0a034d4e09490f54f2638baa1bdda8819c25bb3c",
+        "submission_repo": "sqrt-of-2/2c923249e55d2a6046dba41e5d546088"
       }
     },
     "GPT 5.5": {
