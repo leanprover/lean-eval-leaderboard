@@ -1,6 +1,17 @@
 {
   "schema_version": 1,
   "solved": {
+    "Aristotle (Harmonic)": {
+      "bvp_comparison": {
+        "benchmark_commit": "2385cd0654f1cd2bf74efc769265c65bec665cfb",
+        "issue_number": 212,
+        "solved_at": "2026-05-11T16:44:27Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "18c23ec86ba2365a051483b2939ac5c552d7cd5d",
+        "submission_repo": "sqrt-of-2/534cdfddc678ceb3572d69f7bc8e9351"
+      }
+    },
     "GPT 5.5": {
       "ci_regenerate_main_check": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
