@@ -10,6 +10,15 @@
         "submission_public": true,
         "submission_ref": "18c23ec86ba2365a051483b2939ac5c552d7cd5d",
         "submission_repo": "sqrt-of-2/534cdfddc678ceb3572d69f7bc8e9351"
+      },
+      "ci_regenerate_main_check": {
+        "benchmark_commit": "2385cd0654f1cd2bf74efc769265c65bec665cfb",
+        "issue_number": 213,
+        "solved_at": "2026-05-11T16:48:14Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "de1dd322c3e09f734df4eec0aa9eace4293c1846",
+        "submission_repo": "sqrt-of-2/4966c93be1bd30eccba67279e56ac7d3"
       }
     },
     "GPT 5.5": {
