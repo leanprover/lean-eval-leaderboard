@@ -214,6 +214,15 @@
         "submission_public": true,
         "submission_ref": "e24429fdb84b7184095ce5e3a9c5fec0d9ccce5f",
         "submission_repo": "sqrt-of-2/f17c25e2257bc0b3ae8e58f7f10b01a0"
+      },
+      "list_append_singleton_length": {
+        "benchmark_commit": "f22df521c8a8577d4c4b439c5359931b71f59c33",
+        "issue_number": 204,
+        "solved_at": "2026-05-11T10:33:34Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "a0f2969611204747b87ce949bd27f1eb2d48df84",
+        "submission_repo": "sqrt-of-2/5868bf38d79a5d1b758140752d6d7b46"
       }
     }
   },
