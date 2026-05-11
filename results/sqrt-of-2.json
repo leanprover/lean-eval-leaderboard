@@ -2,6 +2,15 @@
   "schema_version": 1,
   "solved": {
     "Aristotle (Harmonic)": {
+      "brauer_character_in_cyclotomic": {
+        "benchmark_commit": "2385cd0654f1cd2bf74efc769265c65bec665cfb",
+        "issue_number": 216,
+        "solved_at": "2026-05-11T20:50:29Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "bd0142e19e36f3a42be5761dc04dc634e88d820e",
+        "submission_repo": "sqrt-of-2/10151d147aef1f8bd884d245442a3a12"
+      },
       "bvp_comparison": {
         "benchmark_commit": "2385cd0654f1cd2bf74efc769265c65bec665cfb",
         "issue_number": 212,
