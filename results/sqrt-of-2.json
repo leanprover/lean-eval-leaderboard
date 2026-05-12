@@ -76,6 +76,15 @@
         "submission_ref": "6db1429d8ae9398cb5e0f62e991caad9eb848659",
         "submission_repo": "sqrt-of-2/5f39ad63b2986dc62d49439b38b207fa"
       },
+      "dirichlet_eigenvalues_eq_nat_sq": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 223,
+        "solved_at": "2026-05-12T13:34:55Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "83414975249f7c62a1e816c2609eb3471635213c",
+        "submission_repo": "sqrt-of-2/5d253653afb78ab2e57ae1446599c9eb"
+      },
       "instance_hole_example": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 175,
