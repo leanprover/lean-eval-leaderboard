@@ -11,6 +11,16 @@
         "submission_ref": "da19ed34ff1271b062d5a1f056b17ab1421e42dc",
         "submission_repo": "rishistyping/autoformalization-machine-intelligence"
       },
+      "cyclotomic_integer_house_le_two": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 235,
+        "production_description": "Corrected model label for the comparator-accepted private submission of cyclotomic_integer_house_le_two. Same verified pinned commit as issue #234; the previous submission used the wrong model label.",
+        "solved_at": "2026-05-12T21:08:50Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      },
       "pi1_circle_mulEquiv_int": {
         "benchmark_commit": "22ed426aa75a262d33937508336e042907886caa",
         "issue_number": 209,
