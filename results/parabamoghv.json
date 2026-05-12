@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "Aristotle (Harmonic)": {
+      "symAction_range_eq_centralizer_glAction": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 220,
+        "solved_at": "2026-05-12T06:38:23Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "08e15387a7d1e8c066ceb916e384d44c5e76296b",
+        "submission_repo": "parabamoghv/lean-eval"
+      }
+    }
+  },
+  "user": "parabamoghv"
+}
