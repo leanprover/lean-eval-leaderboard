@@ -29,6 +29,48 @@
         "submission_ref": "d732ef6dcf75ea68c58e3597ba30c111689612d8",
         "submission_repo": "rishistyping/autoformalization-machine-intelligence"
       }
+    },
+    "[submission] aegis-of-the-unit-circle-logos": {
+      "ci_regenerate_main_check": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 234,
+        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
+        "solved_at": "2026-05-12T20:42:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      },
+      "cyclotomic_integer_house_le_two": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 234,
+        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
+        "solved_at": "2026-05-12T20:42:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      },
+      "pi1_circle_mulEquiv_int": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 234,
+        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
+        "solved_at": "2026-05-12T20:42:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      },
+      "two_plus_two": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 234,
+        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
+        "solved_at": "2026-05-12T20:42:25Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      }
     }
   },
   "user": "rishistyping"
