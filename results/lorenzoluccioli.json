@@ -62,6 +62,16 @@
         "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       },
+      "glAction_range_eq_centralizer_symAction": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 238,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli. No human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-13T10:39:41Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "01c8a3f7fd7d8796a92d1b6978f7cbe8773b7dc6",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
       "heat_kernel_solves_heat_equation": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 172,
