@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "Antigravity (Multi-Model Ensemble: Gemini 3.1 Pro, Gemini 3 Flash, Claude 4.6 Sonnet/Opus)": {
+      "contractibleSpace_houseWithTwoRooms": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 243,
+        "production_description": "POC of how a moderately advanced harness / scaffolding can deliver: antigravity, SKILLS.md / AGENTS.md , MCP server.\n\nThe human in the loop is not a mathematician, nor a software engineer, just someone curious and armed with patience, and acting as a babysitter:\n\nwith simple encouragements like\n\"remember, if we dont have the needed bricks, we build them and lay them\nsearch online for guidance if needed\nstep by step, brick by brick, we are progressing we have time, you are doing great, try to address 1 thing at a time\nthink using sequential thinking tool as needed, take your time and proceed with care\nno shortcuts, no cheating, we have time\nthe sky is the limit, this is not an open problem, you got this ! \"\n\nAI did all the thinking.\n\nNo golfing done.\n\nThis 7,000+ line proof was produced interactively via an AI-driven pair-programming workflow using Antigravity, Google's agentic IDE (a VS Code fork). Due to the massive scale of the deformation retraction, the solution was driven by cycling through the entire suite of available frontier models as quota constraints required.\n\nThe formal verification relied on a specialized scaffolding pipeline:\n\nIterative Prompt Engineering: The task was initialized using structured prompts ([contractibleSpace_houseWithTwoRooms.md](https://github.com/user-attachments/files/27707778/contractibleSpace_houseWithTwoRooms.md) that enforce Mathlib style guides (e.g., \"Rely on existing Mathlib structural lemmas\" and \"Abstract into lemmas parameterized by characteristics\").\n\nFailure Feedback Loop: When intermediate attempts failed (e.g., due to type class synthesis errors or unsolved goals), the raw lake build trace logs and compiler outputs were automatically captured and injected back into the prompt context. This allowed the models to iteratively diagnose and correct their own errors.\n\nModel Context Protocol (MCP): The agents interacted with the Lean 4 compiler in real-time via the lean-lsp MCP server, gaining high-fidelity \"Language Server to Agent\" access:\nProof State Tracking (lean_goal): Real-time extraction of tactic states to track the 24 nested sub-cubes of the retraction.\nDiagnostics (lean_diagnostic_messages): Immediate compiler feedback on type mismatches and syntax errors to keep the massive 7,000-line construction mathematically sound.\n\nStructural Synthesis: The proof was built constructively by the ensemble over multiple sessions. The agents defined the 24 topological spaces (C_1 through C_24), constructed explicit piecewise continuous projections (proj_1 through proj_24), and systematically eliminated sorry placeholders until the full deformation retraction onto the point was rigorously verified by the Lean compiler.",
+        "solved_at": "2026-05-13T12:04:58Z",
+        "submission_kind": "gist",
+        "submission_public": true,
+        "submission_ref": "f3ec57f3111929e08560cc8209d9664b3f17893e",
+        "submission_repo": "daouid/73182095262a4e329bcec8579bdd573a"
+      }
+    }
+  },
+  "user": "daouid"
+}
