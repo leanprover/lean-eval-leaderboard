@@ -3,12 +3,13 @@
   "solved": {
     "Stealth Model": {
       "ci_regenerate_main_check": {
-        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
-        "issue_number": 182,
-        "solved_at": "2026-05-10T09:45:26Z",
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 235,
+        "production_description": "Corrected model label for the comparator-accepted private submission of cyclotomic_integer_house_le_two. Same verified pinned commit as issue #234; the previous submission used the wrong model label.",
+        "solved_at": "2026-05-12T21:08:50Z",
         "submission_kind": "github_repo",
-        "submission_public": true,
-        "submission_ref": "da19ed34ff1271b062d5a1f056b17ab1421e42dc",
+        "submission_public": false,
+        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
         "submission_repo": "rishistyping/autoformalization-machine-intelligence"
       },
       "cyclotomic_integer_house_le_two": {
@@ -22,50 +23,10 @@
         "submission_repo": "rishistyping/autoformalization-machine-intelligence"
       },
       "pi1_circle_mulEquiv_int": {
-        "benchmark_commit": "22ed426aa75a262d33937508336e042907886caa",
-        "issue_number": 209,
-        "solved_at": "2026-05-11T14:42:47Z",
-        "submission_kind": "github_repo",
-        "submission_public": false,
-        "submission_ref": "43b19dd7cadd5d9f6cd9dd6af293b7f773f1b6d7",
-        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
-      },
-      "two_plus_two": {
-        "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
-        "issue_number": 166,
-        "solved_at": "2026-05-08T08:46:12Z",
-        "submission_kind": "github_repo",
-        "submission_public": true,
-        "submission_ref": "d732ef6dcf75ea68c58e3597ba30c111689612d8",
-        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
-      }
-    },
-    "[submission] aegis-of-the-unit-circle-logos": {
-      "ci_regenerate_main_check": {
         "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
-        "issue_number": 234,
-        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
-        "solved_at": "2026-05-12T20:42:25Z",
-        "submission_kind": "github_repo",
-        "submission_public": false,
-        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
-        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
-      },
-      "cyclotomic_integer_house_le_two": {
-        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
-        "issue_number": 234,
-        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
-        "solved_at": "2026-05-12T20:42:25Z",
-        "submission_kind": "github_repo",
-        "submission_public": false,
-        "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
-        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
-      },
-      "pi1_circle_mulEquiv_int": {
-        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
-        "issue_number": 234,
-        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
-        "solved_at": "2026-05-12T20:42:25Z",
+        "issue_number": 235,
+        "production_description": "Corrected model label for the comparator-accepted private submission of cyclotomic_integer_house_le_two. Same verified pinned commit as issue #234; the previous submission used the wrong model label.",
+        "solved_at": "2026-05-12T21:08:50Z",
         "submission_kind": "github_repo",
         "submission_public": false,
         "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
@@ -73,9 +34,9 @@
       },
       "two_plus_two": {
         "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
-        "issue_number": 234,
-        "production_description": "Comparator-accepted Lean Eval solution for cyclotomic_integer_house_le_two. Developed and verified in a private repository. Local checks included direct Lean Eval comparator and CI-equivalent evaluate_submission.py.",
-        "solved_at": "2026-05-12T20:42:25Z",
+        "issue_number": 235,
+        "production_description": "Corrected model label for the comparator-accepted private submission of cyclotomic_integer_house_le_two. Same verified pinned commit as issue #234; the previous submission used the wrong model label.",
+        "solved_at": "2026-05-12T21:08:50Z",
         "submission_kind": "github_repo",
         "submission_public": false,
         "submission_ref": "7a15ec692f8971977605b532e81f43806932c29d",
