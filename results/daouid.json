@@ -122,6 +122,16 @@
         "submission_ref": "be5ca99521362ea9131eca9a2d95d91ec6fff0f4",
         "submission_repo": "daouid/lean-eval"
       },
+      "mem_convexHull_finset_extremePoints_of_mem_compact_convex": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 251,
+        "production_description": "This solution was produced interactively via an AI-driven pair-programming workflow using Antigravity, Google's agentic IDE. The proof was built structurally by cycling through the available ensemble of frontier models over multiple sessions. The formal verification relied on a specialized scaffolding pipeline: (1) Iterative prompt engineering utilizing Mathlib style constraints. (2) A failure feedback loop that injected raw compiler diagnostics back into the prompt context to diagnose errors. (3) Real-time Model Context Protocol (MCP) integration with the lean-lsp server, providing high-fidelity \"Language Server to Agent\" access to lean_goal (tactic state tracking) and lean_diagnostic_messages (immediate compiler feedback).",
+        "solved_at": "2026-05-14T11:27:23Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "46f806927dd92bed763a8bc71fe106a417c66259",
+        "submission_repo": "daouid/lean-eval"
+      },
       "mulCayley_connected_iff_closure_eq_top": {
         "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
         "issue_number": 245,
