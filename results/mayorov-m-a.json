@@ -102,6 +102,16 @@
         "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "exists_nonisotopic_link": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 250,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-14T03:15:54Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "a4d81e601ce22d057863b441465abb0415492e09",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "finite_graph_ramsey_theorem": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 160,
