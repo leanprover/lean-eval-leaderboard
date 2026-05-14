@@ -42,6 +42,16 @@
         "submission_ref": "e6e9f9d6a6fcfdbb50f55c33c77c13e0bd647221",
         "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
       },
+      "contractibleSpace_houseWithTwoRooms": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 252,
+        "production_description": "Solved completely autonomously without human intervention",
+        "solved_at": "2026-05-14T14:08:17Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "af6353296c51c8d06fdee654ac0ff3708d229fec",
+        "submission_repo": "mayorov-m-a/aleph-lean-eval-subm-2026-may-08"
+      },
       "cubic_decay_asymptotic": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 157,
