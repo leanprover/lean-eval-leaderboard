@@ -2,6 +2,15 @@
   "schema_version": 1,
   "solved": {
     "Stealth Model": {
+      "bvp_comparison": {
+        "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
+        "issue_number": 255,
+        "solved_at": "2026-05-15T04:01:41Z",
+        "submission_kind": "github_repo",
+        "submission_public": false,
+        "submission_ref": "ecc4efac57bb03fc5a1231001645f2dd89c0785e",
+        "submission_repo": "rishistyping/autoformalization-machine-intelligence"
+      },
       "ci_regenerate_main_check": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 182,
