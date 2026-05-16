@@ -11,6 +11,15 @@
         "submission_ref": "f0736a9adf0d663276cfb2d86f622f610a5b5ae0",
         "submission_repo": "A-M-Berns/lean-eval-submissions"
       },
+      "irreducible_nonnegative_matrix_has_positive_eigenvector_at_spectralRadius": {
+        "benchmark_commit": "9921ef5c57b8d9eaa31b64a7e2d68cf53a388c66",
+        "issue_number": 259,
+        "solved_at": "2026-05-16T19:40:33Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "c534906eb6f3bde20d1d57e266a8fc6fe5d52b36",
+        "submission_repo": "A-M-Berns/lean-eval-submissions"
+      },
       "sturm_separation": {
         "benchmark_commit": "11081d345a580a0f3c46699240f28e4f41fbf9fe",
         "issue_number": 158,
