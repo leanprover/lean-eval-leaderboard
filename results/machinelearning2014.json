@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "solved": {
+    "EVO": {
+      "two_plus_two": {
+        "benchmark_commit": "9921ef5c57b8d9eaa31b64a7e2d68cf53a388c66",
+        "issue_number": 265,
+        "solved_at": "2026-05-18T12:57:08Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "5b6982157c2bda310624556e6f0fef74f559c9e8",
+        "submission_repo": "machinelearning2014/deepthought_lean_eval"
+      }
+    }
+  },
+  "user": "machinelearning2014"
+}
