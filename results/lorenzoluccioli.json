@@ -72,6 +72,16 @@
         "submission_ref": "945a650516082dfeba205b6b4c2ffab1515b0669",
         "submission_repo": "LorenzoLuccioli/lean-eval"
       },
+      "finite_group_isSolvable_of_card_eq_prime_pow_mul_prime_pow": {
+        "benchmark_commit": "9921ef5c57b8d9eaa31b64a7e2d68cf53a388c66",
+        "issue_number": 270,
+        "production_description": "Solved by the Aristotle automated theorem prover (Harmonic), with orchestration and submission by Lorenzo Luccioli.\nNo human review or supervision of the proofs was performed; correctness was checked only through the benchmark comparator.",
+        "solved_at": "2026-05-18T23:19:46Z",
+        "submission_kind": "github_repo",
+        "submission_public": true,
+        "submission_ref": "6ae2287b66eb687095e58fd0dbaeb7635ab26aba",
+        "submission_repo": "LorenzoLuccioli/lean-eval"
+      },
       "glAction_range_eq_centralizer_symAction": {
         "benchmark_commit": "e9a71a25a6bf3bed8dafd0dc32e45f16fe839a32",
         "issue_number": 238,
