@@ -2,21 +2,18 @@
 
 **[View the leaderboard →](https://lean-lang.org/eval/)**
 
-Results store and public website data source for the
+The public website for the
 [lean-eval](https://github.com/leanprover/lean-eval) benchmark.
 
-This repository holds machine-written artifacts produced by the lean-eval CI
-and by the leaderboard-site build pipeline.
+This repository builds the leaderboard site. It does **not** store the raw
+results: those live in the submissions repository,
+[`leanprover/lean-eval-submissions`](https://github.com/leanprover/lean-eval-submissions),
+under `results/<login>.json` — its README documents the record schema and
+write semantics. The deploy workflow checks that repo out and the site is
+regenerated from it.
 
-- `results/` is the append-only public success log written by lean-eval CI.
-- `site-data/` is the derived, presentation-oriented data consumed by the
-  public website.
-
-**Do not edit generated files here by hand.**
-
-Successes are **sticky**: once a problem is marked solved for a given user,
-that record is never modified or removed, even if a later submission from the
-same user no longer proves it.
+`site-data/` is the derived, presentation-oriented data consumed by the
+public website. **Do not edit generated files here by hand.**
 
 > Submitter-facing instructions live on the Verso website at
 > [`LeaderboardSite/Pages/Submit.lean`](LeaderboardSite/Pages/Submit.lean).
@@ -26,30 +23,42 @@ same user no longer proves it.
 ## File layout
 
 ```
-results/
-  <github-login>.json
-
 site-data/
   problems.json
   leaderboard.json
 ```
 
-One file per submitter. Users without any successful submission have no file.
-Filenames use the user's GitHub login, lowercased, since GitHub logins are
-case-insensitive.
+The `site-data/` directory is generated from the results store
+(`leanprover/lean-eval-submissions/results/`) together with benchmark metadata
+imported from the benchmark repository. Its schema is documented in
+[docs/site-data-schema.md](docs/site-data-schema.md). Its files are derived
+(`.gitignore`d) and produced by `scripts/generate_site_data.py`, which the
+deploy workflow runs before every site build, and which local developers
+invoke via `lake script run generate` (the `generate` script in
+`lakefile.lean` runs the generator and then builds the site).
 
-The `site-data/` directory is generated from the raw `results/` files together
-with benchmark metadata imported from the benchmark repository. Its schema is
-documented in [docs/site-data-schema.md](docs/site-data-schema.md). Its files
-are derived (`.gitignore`d) and produced by `scripts/generate_site_data.py`,
-which the deploy workflow runs before every site build, and which local
-developers invoke via `lake script run generate` (the `generate` script in
-`lakefile.lean` runs the generator and then builds the site). The deploy pins
-the benchmark sibling clone to the commit recorded in
-`benchmark-snapshot/.benchmark-commit`, so the regenerated site-data and the
-checked-in snapshot's catalog stay in lockstep.
+`generate_site_data.py` takes `--benchmark-repo` (a `leanprover/lean-eval`
+checkout) and `--results-repo` (a `leanprover/lean-eval-submissions`
+checkout); both default to sibling clones, or set `LEAN_EVAL_BENCHMARK_REPO` /
+`LEAN_EVAL_RESULTS_REPO`. The deploy pins the benchmark clone to the commit
+recorded in `benchmark-snapshot/.benchmark-commit`, so the regenerated
+site-data and the checked-in snapshot's catalog stay in lockstep; the results
+clone is always read at `main` HEAD.
 
-## Record schema (v2)
+## Results
+
+The results store and its record schema live in
+[`leanprover/lean-eval-submissions`](https://github.com/leanprover/lean-eval-submissions).
+Successes are **sticky**: once a `(user, model, problem)` triple is recorded
+it is never modified or removed.
+
+<details>
+<summary>Historical record-schema notes (superseded — see lean-eval-submissions)</summary>
+
+The text below is retained for reference; the authoritative schema is the
+one in the submissions repo's README.
+
+### Record schema (v2)
 
 ```json
 {
@@ -151,11 +160,13 @@ record: <login> solved <problem_id>[, <problem_id>...] using <model> @ <benchmar
 One commit per submission, grouping all newly-recorded problems for a
 single model together.
 
-## Schema evolution
+### Schema evolution
 
 Breaking changes bump `schema_version`. Consumers should refuse to parse a
 file whose `schema_version` they do not know. Non-breaking additive changes
 (new optional fields) keep the version number stable.
+
+</details>
 
 ## Website build direction
 
