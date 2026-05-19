@@ -91,13 +91,14 @@ private def formatDate (iso : String) : String :=
     | _ => iso
   | [] => iso
 
+/-- The summary-row score: the main-only solved count. Test-problem
+solves are internal fixtures and are reported separately, as a single
+muted line inside the expanded entry body. -/
 private def scoreLineHtml (score : LeaderboardScore) : Html :=
   let solved : String := s!"{score.display}{scoreSolvedSuffix}"
   {{
     <span class="entry-score-line">
       <span class="entry-score-primary">{{textHtml solved}}</span>
-      <span class="entry-score-pill entry-score-pill--main">{{textHtml s!"{score.solvedMain}{scoreMainSuffix}"}}</span>
-      <span class="entry-score-pill entry-score-pill--test">{{textHtml s!"{score.solvedTest}{scoreTestSuffix}"}}</span>
     </span>
   }}
 
@@ -114,20 +115,13 @@ private def heroStatLink (number : Nat) (label href : String) : Block Page :=
     htmlBlobBlock (heroStatBody number label)
   ]
 
-private def statPairLink (label href : String) (value : Nat) : Block Page :=
-  htmlWrapperBlock "a" #[("class", "stat-pair stat-pair-link"), ("href", href)] #[
-    htmlBlobBlock {{
-      <span>{{textHtml label}}</span><span>{{textHtml (toString value)}}</span>
-    }}
-  ]
-
 private def sectionLabel (text : String) : Block Page :=
   divBlock "section-label" #[paragraph #[textInline text]]
 
 private def heroBlock (summary : LeaderboardSummary) : Block Page :=
   let problemsHref := "problems/"
-  let mainProblemsHref := s!"{problemsHref}#main-problems"
-  let testProblemsHref := s!"{problemsHref}#test-problems"
+  -- The headline problem count is main-only; the five internal test
+  -- problems are deliberately not advertised in the hero.
   let heroMain := divBlock "hero-main" #[
     divBlock "hero-kicker" #[paragraph #[textInline heroKicker]],
     htmlBlobBlock {{ <h1 class="hero-title">{{textHtml heroTitle}}</h1> }},
@@ -137,15 +131,10 @@ private def heroBlock (summary : LeaderboardSummary) : Block Page :=
       heroStat summary.submitters (pluralize summary.submitters heroSubmitterSingular heroSubmitterPlural),
       heroStat summary.problemAuthors
         (pluralize summary.problemAuthors heroProblemAuthorSingular heroProblemAuthorPlural),
-      heroStatLink summary.problems heroProblemsLabel problemsHref
+      heroStatLink summary.mainProblems heroProblemsLabel problemsHref
     ]
   ]
   let heroSideAside := htmlWrapperBlock "aside" #[("class", "hero-side")] #[
-    sectionLabel heroBenchmarkBreakdownLabel,
-    divBlock "hero-side-metrics" #[
-      statPairLink heroMainProblemsLabel mainProblemsHref summary.mainProblems,
-      statPairLink heroTestProblemsLabel testProblemsHref summary.testProblems
-    ],
     htmlBlobBlock {{ <p class="hero-side-copy">{{textHtml heroSide}}</p> }}
   ]
   sectionBlock "hero-panel" #[
@@ -255,11 +244,21 @@ private def entrySummary (entry : LeaderboardEntry) : Html :=
     <span class="entry-score">{{scoreLineHtml entry.score}}</span>
   }}
 
-/-- Render the body of a `<details>` row: solved-by-this-model + provenance. -/
+/-- Render the body of a `<details>` row: solved-by-this-model + provenance.
+
+Test-problem solves are kept out of the unique/other problem grids and
+collapsed into a single muted line (`testSolvesLine`) at the end of the
+solve sections — they are internal fixtures and should not compete for
+attention with real benchmark solves. `kindMap` maps a problem id to its
+`test` flag; `testTotal` is the total number of test problems in the
+catalog, used for the `solved / total` count. -/
 private def entryBody
     (problems : Std.HashMap String (String × String))
+    (kindMap : Std.HashMap String Bool)
+    (testTotal : Nat)
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (entry : LeaderboardEntry) : Array (Block Page) :=
+  let isTest := fun (pid : String) => kindMap.getD pid false
   let renderItem (item : SolvedProblem) : Block Page :=
     let (title, statement) := problemTitleAndStatement problems item.problemId
     let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
@@ -271,13 +270,24 @@ private def entryBody
           sectionLabel label,
           divBlock "problem-grid" (items.map renderItem)
         ]]
-  let unique := entry.uniqueProblemIds.filterMap fun pid =>
-    entry.solvedProblems.find? (·.problemId == pid)
+  -- Split the model's solves into real (main) benchmark problems and
+  -- internal test fixtures.
+  let mainSolved := entry.solvedProblems.filter fun s => ! isTest s.problemId
+  let testSolved := entry.solvedProblems.filter fun s => isTest s.problemId
   let uniqueIds : Std.HashSet String :=
-    entry.uniqueProblemIds.foldl (init := ({} : Std.HashSet String)) (·.insert ·)
-  let shared := entry.solvedProblems.filter fun s => ! uniqueIds.contains s.problemId
+    entry.uniqueProblemIds.foldl (init := ({} : Std.HashSet String)) fun s pid =>
+      if isTest pid then s else s.insert pid
+  let unique := entry.uniqueProblemIds.filterMap fun pid =>
+    if isTest pid then none else mainSolved.find? (·.problemId == pid)
+  let shared := mainSolved.filter fun s => ! uniqueIds.contains s.problemId
   let uniqueSection := renderSection uniqueSolvesLabel unique
   let sharedSection := renderSection otherSolvesLabel shared
+  -- One muted line summarising test-problem solves, only when there are any.
+  let testSection : Array (Block Page) :=
+    if testSolved.isEmpty then #[] else
+      let ids := String.intercalate ", " (testSolved.map (·.problemId)).toList
+      #[divBlock "entry-test-note"
+          #[paragraph #[textInline (testSolvesLine ids testSolved.size testTotal)]]]
   let submitters : Html :=
     if entry.submitters.isEmpty then
       {{ <span class="empty-inline">{{textHtml submittersEmpty}}</span> }}
@@ -300,13 +310,16 @@ private def entryBody
       sectionLabel contributorsLabel,
       htmlBlobBlock {{ <div class="submitter-list">{{submitters}}</div> }}
     ]
-  uniqueSection ++ sharedSection |>.push provenanceSection
+  uniqueSection ++ sharedSection ++ testSection |>.push provenanceSection
 
 private def entryBlock
     (problems : Std.HashMap String (String × String))
+    (kindMap : Std.HashMap String Bool)
+    (testTotal : Nat)
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (entry : LeaderboardEntry) : Block Page :=
-  detailsBlock "entry" (entrySummary entry) (entryBody problems anchorMap entry)
+  detailsBlock "entry" (entrySummary entry)
+    (entryBody problems kindMap testTotal anchorMap entry)
 
 private def panelHeader : Block Page :=
   divBlock "panel-header" #[
@@ -348,6 +361,12 @@ mobile/tablet keep the existing list view. -/
 private def coverageMatrix
     (problemMeta : Array (String × String × Bool))
     (entries : Array LeaderboardEntry) : Block Page :=
+  -- Test problems are kept in the matrix but sunk below every main
+  -- benchmark problem; the partition is stable so catalog order is
+  -- preserved within each group.
+  let problemMeta : Array (String × String × Bool) :=
+    problemMeta.filter (fun (_, _, isTest) => ! isTest)
+      ++ problemMeta.filter (fun (_, _, isTest) => isTest)
   let solverSets : Array (Std.HashSet String) :=
     entries.map fun e =>
       e.solvedProblems.foldl (init := ({} : Std.HashSet String))
@@ -397,6 +416,8 @@ private def coverageMatrix
 empty showcase with a 4-problem catalog preview. -/
 private def leaderboardPanel
     (problems : Std.HashMap String (String × String))
+    (kindMap : Std.HashMap String Bool)
+    (testTotal : Nat)
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (preview : Array (String × String × String))
     (entries : Array LeaderboardEntry) : Block Page :=
@@ -404,7 +425,7 @@ private def leaderboardPanel
     if entries.isEmpty then
       #[emptyShowcase anchorMap preview]
     else
-      entries.map (entryBlock problems anchorMap)
+      entries.map (entryBlock problems kindMap testTotal anchorMap)
   sectionBlock "leaderboard-panel" #[
     panelHeader,
     divBlock "entry-list" body
@@ -452,7 +473,10 @@ def leaderboardBlocks
       problemMap[id]?.map fun (title, statement) => (id, title, statement)
   let problemMeta : Array (String × String × Bool) := problemEntries.map
     fun (id, title, _) => (id, title, kindMap.getD id false)
-  let leaderboard := leaderboardPanel problemMap anchorMap preview entries
+  let testTotal : Nat := problemMeta.foldl (init := 0)
+    fun n (_, _, isTest) => if isTest then n + 1 else n
+  let leaderboard :=
+    leaderboardPanel problemMap kindMap testTotal anchorMap preview entries
   let coverage :=
     if entries.isEmpty then htmlBlobBlock {{ <span></span> }}
     else coverageMatrix problemMeta entries
