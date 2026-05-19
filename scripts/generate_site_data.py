@@ -8,6 +8,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tomllib
 from collections import defaultdict
 from dataclasses import dataclass
@@ -16,12 +17,18 @@ from typing import Any
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-RESULTS_ROOT = REPO_ROOT / "results"
 SITE_DATA_ROOT = REPO_ROOT / "site-data"
 BENCHMARK_SNAPSHOT_ROOT = REPO_ROOT / "benchmark-snapshot"
 DEFAULT_BENCHMARK_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_BENCHMARK_REPO", str(REPO_ROOT.parent / "lean-eval"))
 )
+# The results store (`results/<login>.json`) lives in a sibling repo,
+# leanprover/lean-eval-submissions. The deploy workflow checks it out and
+# passes --results-repo; locally it defaults to a sibling clone.
+DEFAULT_RESULTS_REPO = pathlib.Path(
+    os.environ.get("LEAN_EVAL_RESULTS_REPO", str(REPO_ROOT.parent / "lean-eval-submissions"))
+)
+RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
 # Path to the SHA pin file the deploy workflow already uses to know
 # which lean-eval commit benchmark-snapshot/ was built from. Single
 # line, 40 hex chars + trailing newline. Bumping this file is the
@@ -602,6 +609,27 @@ def build_leaderboard_payload(
                 if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(current["solved_at"]):
                     per_model_problem[model_id][problem_id] = candidate
 
+    # Snapshot-race tolerance: a result can be recorded against a
+    # leanprover/lean-eval commit slightly newer than the leaderboard's
+    # benchmark-snapshot, naming a problem the snapshot's catalog does
+    # not yet contain. Such records are kept in the leaderboard payload
+    # but counted only in solved_total (not solved_main/solved_test);
+    # warn so the gap is visible until the snapshot catches up.
+    unknown_problem_ids = sorted(
+        {
+            problem_id
+            for problems_for_model in per_model_problem.values()
+            for problem_id in problems_for_model
+            if problem_id not in problem_map
+        }
+    )
+    if unknown_problem_ids:
+        print(
+            "warning: results reference problem ids absent from the benchmark "
+            f"snapshot catalog: {', '.join(unknown_problem_ids)}",
+            file=sys.stderr,
+        )
+
     solving_model_counts: dict[str, int] = defaultdict(int)
     for problems_for_model in per_model_problem.values():
         for problem_id in problems_for_model:
@@ -698,7 +726,7 @@ def build_leaderboard_payload(
         "schema_version": 1,
         "generated_at": utc_now(),
         "results_repo": {
-            "repo": "leanprover/lean-eval-leaderboard",
+            "repo": RESULTS_REPO_SLUG,
             "commit": git_head(results_repo),
         },
         "benchmark": {
@@ -738,7 +766,17 @@ def _read_pinned_sha() -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark-repo", default=str(DEFAULT_BENCHMARK_REPO))
-    parser.add_argument("--results-root", default=str(RESULTS_ROOT))
+    parser.add_argument(
+        "--results-repo",
+        default=str(DEFAULT_RESULTS_REPO),
+        help="Checkout of leanprover/lean-eval-submissions (the results store).",
+    )
+    parser.add_argument(
+        "--results-root",
+        default=None,
+        help="Directory of <login>.json result files. "
+        "Defaults to <results-repo>/results.",
+    )
     parser.add_argument("--output-dir", default=str(SITE_DATA_ROOT))
     parser.add_argument(
         "--no-write-snapshot",
@@ -764,7 +802,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     benchmark_repo = pathlib.Path(args.benchmark_repo).resolve()
-    results_root = pathlib.Path(args.results_root).resolve()
+    results_repo = pathlib.Path(args.results_repo).resolve()
+    results_root = (
+        pathlib.Path(args.results_root).resolve()
+        if args.results_root
+        else results_repo / "results"
+    )
     output_dir = pathlib.Path(args.output_dir).resolve()
 
     # Pin-check: assert that the lean-eval clone we're about to read from
@@ -818,7 +861,7 @@ def main() -> int:
     write_json(output_dir / "problems.json", build_problem_payload(benchmark_repo, problems))
     write_json(
         output_dir / "leaderboard.json",
-        build_leaderboard_payload(REPO_ROOT, benchmark_repo, problems, raw_results),
+        build_leaderboard_payload(results_repo, benchmark_repo, problems, raw_results),
     )
     if not args.no_write_snapshot:
         write_benchmark_snapshot(benchmark_repo, problems)

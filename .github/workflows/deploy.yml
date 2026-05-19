@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # leanprover/lean-eval-submissions fires this after recording a new
+  # result, so the site redeploys with it. Before the submission
+  # pipeline split out, a record commit landed in this repo and the
+  # `push` trigger covered it; results now live in a separate repo.
+  repository_dispatch:
+    types: [results-advanced]
 
 permissions:
   contents: read
@@ -29,15 +35,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Checkout benchmark repo at the snapshot's pinned commit
-        # site-data/leaderboard.json is regenerated each deploy from results/.
-        # The generator needs the benchmark repo for problem metadata. We pin
-        # to the same commit benchmark-snapshot/ was built from so the
-        # snapshot's catalog and the regenerated site-data stay in lockstep.
+        # site-data/leaderboard.json is regenerated each deploy from the
+        # results store. The generator needs the benchmark repo for problem
+        # metadata. We pin to the same commit benchmark-snapshot/ was built
+        # from so the snapshot's catalog and the regenerated site-data stay
+        # in lockstep.
         uses: actions/checkout@v4
         with:
           repository: leanprover/lean-eval
           path: lean-eval-benchmark
           fetch-depth: 0
+
+      - name: Checkout the results store
+        # leanprover/lean-eval-submissions holds results/<login>.json.
+        # generate_site_data.py reads them via --results-repo. Always main
+        # HEAD: the results store is append-only and the site shows latest.
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover/lean-eval-submissions
+          path: lean-eval-submissions
 
       - name: Pin benchmark checkout to snapshot commit
         run: |
@@ -91,14 +107,16 @@ jobs:
           )
           lake build BenchmarkProblems subverso-extract-mod $highlighted_targets
 
-      - name: Regenerate site-data from results/ and the pinned benchmark
-        # site-data/ is .gitignored — regenerated here so every record: push
-        # to results/ shows up on the next deploy. --no-write-snapshot keeps
-        # benchmark-snapshot/ untouched so its Lake cache stays warm.
+      - name: Regenerate site-data from the results store and the pinned benchmark
+        # site-data/ is .gitignored — regenerated here so every new result
+        # in leanprover/lean-eval-submissions shows up on the next deploy.
+        # --no-write-snapshot keeps benchmark-snapshot/ untouched so its
+        # Lake cache stays warm.
         run: |
           python3 scripts/generate_site_data.py \
             --no-write-snapshot \
-            --benchmark-repo lean-eval-benchmark
+            --benchmark-repo lean-eval-benchmark \
+            --results-repo lean-eval-submissions
 
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
