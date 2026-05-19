@@ -87,9 +87,6 @@ def heroSide   : String :=
    solutions, not an automatic evaluation of every model on every \
    problem by the Lean FRO or benchmark organisers."
 
-def heroBenchmarkBreakdownLabel : String := "Benchmark breakdown"
-def heroMainProblemsLabel       : String := "Main problems"
-def heroTestProblemsLabel       : String := "Test problems"
 def heroModelsLabel             : String := "models"
 def heroProblemsLabel           : String := "problems"
 def heroSubmitterSingular       : String := "submitter"
@@ -102,7 +99,8 @@ def heroProblemAuthorPlural     : String := "problem authors"
 def panelKicker  : String := "Leaderboard"
 def panelHeading : String := "Model rankings"
 def panelNote    : String :=
-  "Ranked by solved problems, with main benchmark problems weighted first."
+  "Ranked by main benchmark problems solved. Internal test problems do \
+   not count toward the score."
 
 /-! ## Empty-showcase state -/
 
@@ -140,11 +138,9 @@ def leanTheoremStatementLabel   : String := "Lean theorem statement"
 def theoremDisclosureAria (problemId : String) : String :=
   s!"Show theorem statement for {problemId}"
 
-/-! ## Score pills -/
+/-! ## Score line -/
 
 def scoreSolvedSuffix : String := " solved"
-def scoreMainSuffix   : String := " main"
-def scoreTestSuffix   : String := " test"
 
 /-! ## Per-row entry section labels -/
 
@@ -155,6 +151,12 @@ def contributorsLabel      : String := "Contributors"
 def uniqueSolvesLabel      : String := "Problems uniquely solved by this model"
 def otherSolvesLabel       : String := "Other solved problems"
 def submittersEmpty        : String := "None"
+
+/-- One muted line summarising test-problem solves inside an expanded
+entry, e.g. `"Test problems: two_plus_two, foo (2 / 5 solved)"`. Test
+problems are internal fixtures and are not counted toward the score. -/
+def testSolvesLine (ids : String) (solved total : Nat) : String :=
+  s!"Test problems: {ids} ({solved} / {total} solved)"
 
 /-! ## Problems page -/
 

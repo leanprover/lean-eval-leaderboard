@@ -945,22 +945,6 @@ nav.top .home { display: none; }
   border-bottom: 1px solid var(--color-border);
 }
 
-.stat-pair-link {
-  text-decoration: none;
-  color: inherit;
-  transition: color var(--transition-fast);
-}
-
-.stat-pair-link:hover,
-.stat-pair-link:focus-visible {
-  color: var(--color-primary);
-}
-
-.stat-pair-link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
 .submitter-list {
   display: flex;
   flex-wrap: wrap;
@@ -1269,7 +1253,7 @@ input.tactic-toggle,
   display: none;
 }
 
-/* Score pills in the leaderboard summary row. */
+/* Score line in the leaderboard summary row. */
 .entry-score-line {
   display: inline-flex;
   align-items: center;
@@ -1285,38 +1269,18 @@ input.tactic-toggle,
   font-weight: 600;
 }
 
-.entry-score-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 9px;
-  border-radius: var(--radius-pill);
+/* Muted single-line summary of test-problem solves inside an expanded
+   entry. Test problems are internal fixtures, so they get one quiet
+   line rather than a grid of problem chips. */
+.entry-test-note {
+  color: var(--color-text-light);
+  font-size: 0.82rem;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
-  border: 1px solid transparent;
+  margin-top: var(--space-2);
 }
 
-.entry-score-pill--main {
-  color: var(--color-primary);
-  border-color: rgba(56, 110, 224, 0.28);
-  background: rgba(56, 110, 224, 0.08);
-}
-
-.entry-score-pill--test {
-  color: #7c4dcc;
-  border-color: rgba(124, 77, 204, 0.28);
-  background: rgba(124, 77, 204, 0.08);
-}
-
-.dark-theme .entry-score-pill--main {
-  color: var(--color-primary);
-  border-color: rgba(59, 148, 255, 0.32);
-  background: rgba(59, 148, 255, 0.10);
-}
-
-.dark-theme .entry-score-pill--test {
-  color: #c5a5ff;
-  border-color: rgba(197, 165, 255, 0.32);
-  background: rgba(197, 165, 255, 0.10);
+.entry-test-note p {
+  margin: 0;
 }
 
 /* Hero stat strip: pill-shaped inline strip wrapping the home-page stats. */

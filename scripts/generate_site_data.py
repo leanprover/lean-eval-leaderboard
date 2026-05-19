@@ -643,7 +643,9 @@ def build_leaderboard_payload(
                     "solved_total": solved_total,
                     "solved_main": solved_main,
                     "solved_test": solved_test,
-                    "display": str(solved_total),
+                    # Headline number is main-only: test problems are
+                    # internal fixtures and must not inflate the score.
+                    "display": str(solved_main),
                 },
                 "first_solved_at": first_solved_at,
                 "last_solved_at": last_solved_at,
@@ -680,9 +682,10 @@ def build_leaderboard_payload(
             }
         )
 
+    # Rank by main benchmark solves only; test-problem solves never move a
+    # model up the board.
     entries.sort(
         key=lambda entry: (
-            -entry["score"]["solved_total"],
             -entry["score"]["solved_main"],
             timestamp_key(entry["last_solved_at"]),
             entry["model_name"].lower(),
