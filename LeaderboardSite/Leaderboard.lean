@@ -174,11 +174,18 @@ private def problemItem
     (problemId : String) (title : String) (statement : String)
     (proofUrl? : Option String)
     (rarityRank? : Option Nat)
-    (productionDescription? : Option String) : Block Page :=
+    (productionDescription? : Option String)
+    (hasProblemPage : Bool := true) : Block Page :=
   let problemHref := s!"problems/{problemId}/"
-  let titleLink := htmlBlobBlock {{
-    <a class="problem-title-link" href={{problemHref}}>{{textHtml title}}</a>
-  }}
+  let titleLink :=
+    if hasProblemPage then
+      htmlBlobBlock {{
+        <a class="problem-title-link" href={{problemHref}}>{{textHtml title}}</a>
+      }}
+    else
+      htmlBlobBlock {{
+        <span class="problem-title-link">{{textHtml title}}</span>
+      }}
   let proofLink := match proofUrl? with
     | some url => htmlBlobBlock {{
         <a class="problem-proof-link" href={{url}}>
@@ -261,9 +268,10 @@ private def entryBody
   let isTest := fun (pid : String) => kindMap.getD pid false
   let renderItem (item : SolvedProblem) : Block Page :=
     let (title, statement) := problemTitleAndStatement problems item.problemId
+    let hasProblemPage := (problems[item.problemId]?).isSome
     let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
     problemItem anchorMap item.problemId title statement proofUrl? (some item.rarityRank)
-      item.productionDescription
+      item.productionDescription hasProblemPage
   let renderSection (label : String) (items : Array SolvedProblem) : Array (Block Page) :=
     if items.isEmpty then #[] else
       #[divBlock "entry-section" #[
