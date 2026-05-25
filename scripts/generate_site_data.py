@@ -111,10 +111,14 @@ def load_holes(benchmark_repo: pathlib.Path, problem_id: str) -> tuple[Hole, ...
     return tuple(holes)
 
 
-def load_manifest(manifest_path: pathlib.Path, benchmark_repo: pathlib.Path) -> list[Problem]:
-    data = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
+def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> list[Problem]:
+    """Load every `manifests/problems/<id>.toml` file as a `Problem`.
+
+    Files are walked in sorted filename order, which becomes `sort_index`.
+    """
     problems: list[Problem] = []
-    for index, raw in enumerate(data["problem"]):
+    for index, path in enumerate(sorted(manifest_dir.glob("*.toml"))):
+        raw = tomllib.loads(path.read_text(encoding="utf-8"))
         problem_id = str(raw["id"])
         holes = load_holes(benchmark_repo, problem_id)
         problems.append(
@@ -851,11 +855,11 @@ def main() -> int:
                 f"{hint}"
             )
 
-    manifest_path = benchmark_repo / "manifests" / "problems.toml"
-    if not manifest_path.is_file():
-        raise SystemExit(f"Benchmark manifest not found: {manifest_path}")
+    manifest_dir = benchmark_repo / "manifests" / "problems"
+    if not manifest_dir.is_dir():
+        raise SystemExit(f"Benchmark manifest directory not found: {manifest_dir}")
 
-    problems = load_manifest(manifest_path, benchmark_repo)
+    problems = load_manifest(manifest_dir, benchmark_repo)
     raw_results = load_results(results_root)
 
     write_json(output_dir / "problems.json", build_problem_payload(benchmark_repo, problems))
