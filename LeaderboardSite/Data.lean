@@ -15,8 +15,8 @@ structure BenchmarkInfo where
 deriving FromJson
 
 /-- One `@[eval_problem]`-annotated declaration. Multiple holes may belong
-to the same `manifests/problems.toml` entry; they are rendered together as
-a stack on the problems page and in home-page popovers. -/
+to the same `manifests/problems/<id>.toml` entry; they are rendered together
+as a stack on the problems page and in home-page popovers. -/
 structure Hole where
   /-- Fully-qualified declaration name (e.g. `LeanEval.Foo.bar`). -/
   name : String
