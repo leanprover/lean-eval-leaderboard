@@ -83,7 +83,9 @@ jobs:
       - name: Regenerate benchmark-snapshot from target lean-eval
         if: steps.target.outputs.skip != 'true'
         run: |
-          python3 scripts/generate_site_data.py --benchmark-repo lean-eval-benchmark
+          python3 scripts/generate_site_data.py \
+            --benchmark-repo lean-eval-benchmark \
+            --results-repo lean-eval-submissions
 
       - name: Verify the new snapshot compiles
         # In-workflow `lake build` replaces the build-check we'd otherwise
