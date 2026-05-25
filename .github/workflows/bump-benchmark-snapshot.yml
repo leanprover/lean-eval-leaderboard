@@ -58,6 +58,21 @@ jobs:
           path: lean-eval-benchmark
           fetch-depth: 0
 
+      - name: Checkout the results store
+        # generate_site_data.py calls build_leaderboard_payload(), which
+        # needs `git rev-parse HEAD` of the results repo even when we are
+        # only regenerating the benchmark-snapshot tree. Previously this
+        # step was missing — the script crashed on a non-existent
+        # `lean-eval-submissions/` path the moment it got past the
+        # manifest-loading stage. Latent bug; surfaced when lean-eval#317
+        # split the manifest and the script started successfully reaching
+        # the leaderboard-payload step.
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover/lean-eval-submissions
+          path: lean-eval-submissions
+
       - name: Set up elan
         if: steps.target.outputs.skip != 'true'
         shell: bash
