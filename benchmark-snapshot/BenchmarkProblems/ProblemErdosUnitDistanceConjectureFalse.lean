@@ -32,16 +32,15 @@ constant-factor improvements.
 
 open scoped Classical
 
-/-- The model space `ℝ²` with its Euclidean norm. We use
-`EuclideanSpace ℝ (Fin 2)` rather than `ℝ × ℝ` so that `dist x y`
-denotes the Euclidean distance `√((x₀ - y₀)² + (x₁ - y₁)²)`, not the
-sup-norm distance carried by the product space. -/
-abbrev E2 : Type := EuclideanSpace ℝ (Fin 2)
-
 /-- For a finite planar set `P ⊆ ℝ²`, `unitDist P` is the number of
-unordered pairs `{x, y} ⊆ P` at Euclidean distance exactly `1`. -/
-noncomputable def unitDist (P : Finset E2) : ℕ :=
-  (P.offDiag.filter (fun pq : E2 × E2 => dist pq.1 pq.2 = 1)).card / 2
+unordered pairs `{x, y} ⊆ P` at Euclidean distance exactly `1`.
+
+Points are modelled as `EuclideanSpace ℝ (Fin 2)` rather than `ℝ × ℝ`
+so that `dist x y = √((x₀ - y₀)² + (x₁ - y₁)²)`; the product space
+`ℝ × ℝ` carries the sup-norm and would give the wrong notion of
+unit-distance pair. -/
+noncomputable def unitDist (P : Finset (EuclideanSpace ℝ (Fin 2))) : ℕ :=
+  (P.offDiag.filter (fun pq => dist pq.1 pq.2 = 1)).card / 2
 
 end Combinatorics
 end LeanEval
@@ -51,7 +50,7 @@ open LeanEval.Combinatorics
 -- ANCHOR: erdos_unit_distance_conjecture_false__erdos_unit_distance_conjecture_false
 theorem erdos_unit_distance_conjecture_false :
     ∃ δ : ℝ, 0 < δ ∧
-      ∀ N : ℕ, ∃ (n : ℕ) (P : Finset LeanEval.Combinatorics.E2),
+      ∀ N : ℕ, ∃ (n : ℕ) (P : Finset (EuclideanSpace ℝ (Fin 2))),
         N ≤ n ∧ P.card = n ∧ (n : ℝ) ^ (1 + δ) ≤ (unitDist P : ℝ) := by
   sorry
 -- ANCHOR_END: erdos_unit_distance_conjecture_false__erdos_unit_distance_conjecture_false
