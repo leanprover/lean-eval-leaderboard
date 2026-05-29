@@ -244,6 +244,14 @@ def frontIntro : VersoDoc Page :=
   follow best practices in Lean. In particular, the only requirement for
   a solution to be accepted is that it is correct and passes the
   comparator tests.
+
+  I'd like to acknowledge the use of Aristotle, Claude Code, and Codex in
+  the preparation of many of the problems here. In particular I should
+  point out that Aristotle has a handicap on the leaderboard: typically,
+  if a single query to Aristotle could resolve a problem, I would deem it
+  too easy and drop it from consideration for the eval set. I think it's a
+  testament to the public service that Aristotle provides that this is
+  both possible, and useful!
   :::
   :::::
 
