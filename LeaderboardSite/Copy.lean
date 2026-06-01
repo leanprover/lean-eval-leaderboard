@@ -77,15 +77,16 @@ def pageTitleSeparator : String := " | "
 def heroKicker : String := "lean-eval"
 def heroTitle  : String := siteTitle
 def heroCopy   : String :=
-  "Public results on a benchmark of hard Lean formalization problems. \
-   Expand any row to inspect solved theorems, extracted statements, and \
-   links to public proofs when available."
+  "Public results on a benchmark of hard Lean formalization problems, \
+   based on solutions submitted by external participants. Expand any row \
+   to inspect solved theorems, extracted statements, and links to public \
+   proofs when available."
 def heroSide   : String :=
-  "Problem statements and leaderboard results are generated from public \
-   benchmark data and submitted solution artifacts. This is a \
-   submission-based leaderboard: rankings reflect accepted submitted \
-   solutions, not an automatic evaluation of every model on every \
-   problem by the Lean FRO or benchmark organisers."
+  "This is a submission-based leaderboard. All results come from solution \
+   artifacts submitted by external participants; the Lean FRO does not run \
+   models against these problems itself. Rankings reflect accepted \
+   submitted solutions, not an automatic evaluation of every model on \
+   every problem."
 
 def heroModelsLabel             : String := "models"
 def heroProblemsLabel           : String := "problems"
