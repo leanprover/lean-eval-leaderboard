@@ -2,8 +2,6 @@ import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Calculus.ContDiff.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
-namespace ProblemConwayKnotNotSmoothlySlice
-
 namespace LeanEval
 namespace KnotTheory
 
@@ -183,11 +181,22 @@ def Set.UnorientedTopAmbIsotopic (A B : Set R3) : Prop :=
 
 /-! ## The closed `2`-disk, unit circle, half-space, and model planes -/
 
-/-- The closed unit `2`-disk, the source of a slicing disk's parametrization. -/
-abbrev disk2 : Set (ℝ × ℝ) := Metric.closedBall (0 : ℝ × ℝ) 1
+/-- The closed unit Euclidean `2`-disk `{(x, y) | x² + y² ≤ 1}`, the source
+of a slicing disk's parametrization.
 
-/-- The unit circle in `ℝ²`, the source of the slicing disk's boundary. -/
-abbrev circle1 : Set (ℝ × ℝ) := Metric.sphere (0 : ℝ × ℝ) 1
+We spell the disk and its boundary out explicitly via `x² + y² ≤ 1` / `= 1`
+rather than as `Metric.closedBall`/`Metric.sphere` on `ℝ × ℝ`: the product
+norm on `ℝ × ℝ` is the *sup* norm, so `Metric.closedBall 0 1` would be the
+*square* `[-1, 1]²` and `Metric.sphere 0 1` its cornered boundary. Smooth
+slice-ness over a cornered domain is vacuously unsatisfiable — at a corner
+no smooth immersion can match a corner-free smooth knot boundary while
+keeping an injective derivative — which would make `Knot.SmoothlySlice`
+false for *every* knot. -/
+abbrev disk2 : Set (ℝ × ℝ) := {p | p.1 ^ 2 + p.2 ^ 2 ≤ 1}
+
+/-- The unit Euclidean circle `{(x, y) | x² + y² = 1}` in `ℝ²`, the source of
+the slicing disk's boundary. -/
+abbrev circle1 : Set (ℝ × ℝ) := {p | p.1 ^ 2 + p.2 ^ 2 = 1}
 
 /-- The closed upper half-space `ℝ³ × [0, ∞)` in `ℝ³ × ℝ`. We identify
 `ℝ³ × [0, ∞)` with `B⁴ ∖ {pt}`, so slice disks live here. -/
@@ -280,26 +289,34 @@ noncomputable def plCurve (vertices : List R3) (t : ℝ) : R3 :=
     (1 - α) • vertices[k % n]'(Nat.mod_lt _ (Nat.pos_of_ne_zero h)) +
       α • vertices[(k + 1) % n]'(Nat.mod_lt _ (Nat.pos_of_ne_zero h))
 
-/-- A piecewise-linear closed knot in `ℝ³`: at least three vertices, traced
-as one polyline, embedded as a simple closed curve. -/
+/-- A piecewise-linear closed polyline in `ℝ³` with at least three vertices.
+
+Simplicity (being an embedded simple closed curve) is *not* bundled into the
+structure; it is expressed separately as `PLKnot.IsSimple`. Keeping it out of
+the structure lets named polylines such as `conwayKnot` be written down as
+trusted, `sorry`-free data, with the finite-but-laborious simplicity proof
+posed as its own benchmark obligation rather than carried as an unchecked
+proof field. -/
 structure PLKnot where
   /-- The ordered list of polyline vertices. -/
   vertices : List R3
   /-- A closed polyline needs at least three vertices to be non-degenerate. -/
   three_le : 3 ≤ vertices.length
-  /-- The polyline is a simple closed curve: injective on a half-open
-  fundamental domain `[0, vertices.length)` for the periodic
-  parametrization. Equivalent to: all vertices distinct, non-adjacent
-  edges disjoint, adjacent edges meet only at the shared vertex. -/
-  isSimple : ∀ s t : ℝ,
-    s ∈ Set.Ico (0 : ℝ) (vertices.length : ℝ) →
-    t ∈ Set.Ico (0 : ℝ) (vertices.length : ℝ) →
-    plCurve vertices s = plCurve vertices t →
-    s = t
 
 /-- The image of the PL knot in `ℝ³` (the trace of the polyline). -/
 def PLKnot.image (K : PLKnot) : Set R3 :=
   plCurve K.vertices '' Set.Ico (0 : ℝ) (K.vertices.length : ℝ)
+
+/-- The polyline is a *simple closed curve*: the periodic parametrization is
+injective on a half-open fundamental domain `[0, vertices.length)`.
+Equivalent to: all vertices distinct, non-adjacent edges disjoint, adjacent
+edges meet only at their shared vertex. -/
+def PLKnot.IsSimple (K : PLKnot) : Prop :=
+  ∀ s t : ℝ,
+    s ∈ Set.Ico (0 : ℝ) (K.vertices.length : ℝ) →
+    t ∈ Set.Ico (0 : ℝ) (K.vertices.length : ℝ) →
+    plCurve K.vertices s = plCurve K.vertices t →
+    s = t
 
 /-! ## Bridge to smooth slice-ness via a smooth knot representative
 
@@ -353,10 +370,10 @@ designed so that the two strands of any crossing are `y`-separated.
 Closure arcs swing through `y = 100`, well outside the braid box.
 
 The layout *intends* to produce a simple polyline, but simplicity is not
-proved here; it is a separate obligation discharged by the user
-constructing a `PLKnot` (which carries an `isSimple` field). The
-function is silent on invalid input — `|w| = 0` or `|w| ≥ n` — and
-produces garbage in those cases.
+proved here; it is a separate obligation, expressed by `PLKnot.IsSimple`
+and discharged where needed (e.g. the `conwayKnot_isSimple` benchmark
+hole). The function is silent on invalid input — `|w| = 0` or `|w| ≥ n`
+— and produces garbage in those cases.
 -/
 
 namespace BraidClosure
@@ -468,10 +485,15 @@ namespace KnotTheory
 The Conway knot has braid index 4 and a standard 4-braid representation in
 KnotInfo. We package the resulting polyline as a `PLKnot`.
 
-Both `three_le` and `isSimple` are auxiliary `sorry`s: discharging them
-amounts to verifying basic combinatorial / geometric facts about a fixed
-finite vertex list, work that is independent of the slice-theoretic
-content of the three problems that use `conwayKnot`.
+`conwayKnot` is now a trusted, `sorry`-free term: its only proof field,
+`three_le`, is discharged by kernel computation of the (78-vertex) list
+length. Simplicity of the polyline — an embedded simple closed curve —
+is a `PLKnot.IsSimple` fact rather than a structure field, and is posed
+as the separate benchmark hole `conwayKnot_isSimple` in `Piccirillo`
+rather than carried here as an unchecked proof field. The topological
+problem `conway_knot_topologically_slice` reuses this same trusted
+`conwayKnot`; a solver there must likewise establish simplicity in order
+to exhibit a smooth representative.
 -/
 
 /-- A braid word for the Conway knot 11n34, on 4 strands, of length 11
@@ -486,21 +508,64 @@ braid length 11, and writhe `-1`. Sliceness is mirror-invariant, so either
 braid word is a valid witness for `conway_knot_not_smoothly_slice`. -/
 def conwayBraidWord : List ℤ := [-1, -1, 2, -1, 2, -1, 3, -2, -2, 3, 3]
 
+set_option maxRecDepth 10000 in
 /-- The Conway knot 11n34 as a piecewise-linear closed polyline in `ℝ³`,
 realized as the braid closure of `conwayBraidWord` on 4 strands. -/
 noncomputable def conwayKnot : PLKnot where
   vertices := braidClosure 4 conwayBraidWord
-  three_le := by sorry
-  isSimple := by sorry
+  three_le := by
+    have h : (braidClosure 4 conwayBraidWord).length = 78 := by rfl
+    omega
 
 end KnotTheory
 end LeanEval
 
-open LeanEval.KnotTheory
+namespace LeanEval
+namespace KnotTheory
+
+/-!
+# The Conway knot is not smoothly slice
+
+Lisa Piccirillo, *The Conway knot is not slice* (Annals of Mathematics,
+2020; arXiv 1808.02923). Piccirillo resolved the last remaining case in
+the classification of slice knots through 12 crossings by showing the
+Conway knot 11n34 is not smoothly slice. Combined with
+`ConwayTopologicallySlice`, this is a celebrated small witness in the
+smooth/topological slice gap (earlier explicit witnesses such as the
+Akbulut–Matveyev positive Whitehead doubles existed; Conway is notable
+for its low crossing number and its history as a long-standing open case).
+
+Piccirillo's strategy: exhibit a knot `K'` having the same `0`-trace as
+the Conway knot. The trace-embedding argument then transfers sliceness:
+if the Conway knot were smoothly slice, `K'` would be smoothly slice as
+well. A direct Khovanov-homological computation shows Rasmussen's
+`s`-invariant satisfies `s(K') ≠ 0`, contradicting smooth sliceness of
+`K'`. Note that for the Conway knot itself the standard smooth slice
+obstructions `s` and `τ` both vanish, which is why this trace-embedding
+detour through `K'` is needed.
+-/
+
+-- ANCHOR: conway_knot_not_smoothly_slice__conwayKnot_isSimple
+/-- **The Conway-knot polyline is a simple closed curve.**
+
+A finite — if laborious — check on the fixed 78-vertex braid-closure
+polyline: all vertices distinct, non-adjacent edges disjoint, adjacent
+edges meeting only at their shared vertex. This certifies that `conwayKnot`
+is a genuine embedded knot — the subject the slice question is about — and
+is posed as its own hole so that the proof lives in the submission rather
+than as an unchecked field of `conwayKnot`. -/
+theorem conwayKnot_isSimple : conwayKnot.IsSimple := by
+  sorry
+-- ANCHOR_END: conway_knot_not_smoothly_slice__conwayKnot_isSimple
 
 -- ANCHOR: conway_knot_not_smoothly_slice__conway_knot_not_smoothly_slice
+/-- **Piccirillo, "The Conway knot is not slice."**
+
+The Conway knot 11n34 does not bound a smoothly properly embedded 2-disk
+in `ℝ³ × [0, ∞)`. -/
 theorem conway_knot_not_smoothly_slice : ¬ conwayKnot.SmoothlySlice := by
   sorry
 -- ANCHOR_END: conway_knot_not_smoothly_slice__conway_knot_not_smoothly_slice
 
-end ProblemConwayKnotNotSmoothlySlice
+end KnotTheory
+end LeanEval
