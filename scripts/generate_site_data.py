@@ -421,9 +421,18 @@ def build_problem_fragment(problem: Problem, benchmark_repo: pathlib.Path) -> tu
         theorem_text = qualify_theorem_text("\n".join(challenge_body).strip(), hole.basename, local_declarations)
         body_parts.append(inject_legacy_theorem_anchor(problem, hole, theorem_text).strip())
     else:
-        # Multi-hole path: the entire source module is reproduced verbatim
-        # in Challenge.lean (with `@[eval_problem]` already stripped).
-        # Inject one anchor block per hole around its `body` substring.
+        # Multi-hole path: helper definitions are extracted into
+        # `ChallengeDeps.lean`, while `Challenge.lean` holds only the
+        # `@[eval_problem]` theorems. Inline the deps body first — both files
+        # reproduce the source module's namespace structure, so the helper
+        # defs and the theorems land in the same namespace and the theorems'
+        # references resolve. Without this the helper names are unbound
+        # (autobound to implicits) and the snapshot fails to compile. Then
+        # inject one anchor block per hole around its `body` substring in the
+        # challenge text.
+        if deps_path.is_file():
+            _, deps_body = strip_imports(deps_path.read_text(encoding="utf-8"))
+            body_parts.append("\n".join(deps_body).strip())
         text = "\n".join(challenge_body).strip()
         for hole in problem.holes:
             text = inject_multi_hole_anchor(problem, hole, text)
