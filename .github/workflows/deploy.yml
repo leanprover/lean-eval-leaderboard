@@ -100,6 +100,23 @@ jobs:
           set -euo pipefail
           cd benchmark-snapshot
           lake update
+          # Fail fast if the snapshot producer and the site decoder resolved
+          # different SubVerso revisions. Otherwise the highlighted JSON this
+          # step emits fails to deserialize later in
+          # LeaderboardSite.AnchorRegistry with a cryptic
+          # "no inductive constructor matched". The snapshot's SubVerso pin is
+          # derived from the site's Verso pin in scripts/generate_site_data.py;
+          # this guard catches a Verso bump that landed without re-pinning the
+          # snapshot. The site manifest is one level up.
+          site_subverso=$(jq -r '.packages[] | select(.name == "subverso") | .rev' ../lake-manifest.json)
+          snap_subverso=$(jq -r '.packages[] | select(.name == "subverso") | .rev' lake-manifest.json)
+          if [ "$site_subverso" != "$snap_subverso" ]; then
+            echo "::error::SubVerso revision mismatch between the site decoder and the snapshot producer."
+            echo "  site (LeaderboardSite, via Verso): ${site_subverso:-<none>}"
+            echo "  snapshot (benchmark-snapshot):     ${snap_subverso:-<none>}"
+            echo "Re-run the 'Advance benchmark-snapshot' workflow to re-pin and rebuild the snapshot."
+            exit 1
+          fi
           highlighted_targets=$(
             find BenchmarkProblems -maxdepth 1 -name 'Problem*.lean' -print \
               | sed 's|^BenchmarkProblems/||;s|\.lean$||' \
