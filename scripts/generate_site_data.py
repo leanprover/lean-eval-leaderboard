@@ -29,6 +29,9 @@ DEFAULT_RESULTS_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_RESULTS_REPO", str(REPO_ROOT.parent / "lean-eval-submissions"))
 )
 RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
+# Keep the snapshot producer's highlighted JSON schema aligned with the
+# site-side SubVerso revision pulled in by the pinned Verso release.
+SNAPSHOT_SUBVERSO_REV = "ce893b9042128037e2d3c0158b9567fab9fae268"
 # Path to the SHA pin file the deploy workflow already uses to know
 # which lean-eval commit benchmark-snapshot/ was built from. Single
 # line, 40 hex chars + trailing newline. Bumping this file is the
@@ -176,7 +179,7 @@ def benchmark_snapshot_lakefile(benchmark_repo: pathlib.Path) -> str:
             "[[require]]",
             'name = "subverso"',
             'git = "https://github.com/leanprover/subverso"',
-            'rev = "main"',
+            f'rev = "{SNAPSHOT_SUBVERSO_REV}"',
             "",
             "[[lean_lib]]",
             'name = "BenchmarkProblems"',

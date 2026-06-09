@@ -9,7 +9,8 @@ rev = "5450b53e5ddc"
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-rev = "main"
+# Must match the site-side SubVerso revision pulled in by Verso.
+rev = "ce893b9042128037e2d3c0158b9567fab9fae268"
 
 [[lean_lib]]
 name = "BenchmarkProblems"
