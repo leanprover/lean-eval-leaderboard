@@ -110,6 +110,12 @@ jobs:
           # snapshot. The site manifest is one level up.
           site_subverso=$(jq -r '.packages[] | select(.name == "subverso") | .rev' ../lake-manifest.json)
           snap_subverso=$(jq -r '.packages[] | select(.name == "subverso") | .rev' lake-manifest.json)
+          if [ -z "$site_subverso" ] || [ -z "$snap_subverso" ]; then
+            echo "::error::Could not read a resolved SubVerso revision from a Lake manifest."
+            echo "  site (../lake-manifest.json):  ${site_subverso:-<none>}"
+            echo "  snapshot (lake-manifest.json): ${snap_subverso:-<none>}"
+            exit 1
+          fi
           if [ "$site_subverso" != "$snap_subverso" ]; then
             echo "::error::SubVerso revision mismatch between the site decoder and the snapshot producer."
             echo "  site (LeaderboardSite, via Verso): ${site_subverso:-<none>}"

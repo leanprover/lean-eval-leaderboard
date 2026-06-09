@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import tomllib
-import urllib.error
 import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
@@ -191,9 +190,9 @@ def consumer_subverso_rev() -> str:
     slug = re.sub(r"\.git$", "", verso_git).rstrip("/").removeprefix("https://github.com/")
     url = f"https://raw.githubusercontent.com/{slug}/{verso_rev}/lake-manifest.json"
     try:
-        with urllib.request.urlopen(url) as response:
+        with urllib.request.urlopen(url, timeout=30) as response:
             manifest = json.loads(response.read().decode("utf-8"))
-    except (urllib.error.URLError, json.JSONDecodeError) as exc:
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise SystemExit(f"Could not fetch Verso's lake-manifest from {url}: {exc}")
     for pkg in manifest.get("packages", []):
         if pkg.get("name") == "subverso":
