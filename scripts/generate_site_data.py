@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -29,9 +30,6 @@ DEFAULT_RESULTS_REPO = pathlib.Path(
     os.environ.get("LEAN_EVAL_RESULTS_REPO", str(REPO_ROOT.parent / "lean-eval-submissions"))
 )
 RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
-# Keep the snapshot producer's highlighted JSON schema aligned with the
-# site-side SubVerso revision pulled in by the pinned Verso release.
-SNAPSHOT_SUBVERSO_REV = "ce893b9042128037e2d3c0158b9567fab9fae268"
 # Path to the SHA pin file the deploy workflow already uses to know
 # which lean-eval commit benchmark-snapshot/ was built from. Single
 # line, 40 hex chars + trailing newline. Bumping this file is the
@@ -164,8 +162,50 @@ def benchmark_mathlib_require(benchmark_repo: pathlib.Path) -> tuple[str, str]:
     raise SystemExit(f"Could not find mathlib requirement in {lakefile}")
 
 
+# `require verso from git "<url>" @ "<rev>"` in the site lakefile. The site
+# decodes the snapshot's highlighted JSON with the SubVerso that this Verso
+# pulls in, so the Verso revision is the source of truth for the snapshot pin.
+VERSO_REQUIRE_RE = re.compile(
+    r'require\s+verso\s+from\s+git\s+"(?P<git>[^"]+)"\s*@\s*"(?P<rev>[^"]+)"'
+)
+
+
+def site_verso_require() -> tuple[str, str]:
+    lakefile = REPO_ROOT / "lakefile.lean"
+    match = VERSO_REQUIRE_RE.search(lakefile.read_text(encoding="utf-8"))
+    if not match:
+        raise SystemExit(f"Could not find a `require verso` line in {lakefile}")
+    return match.group("git"), match.group("rev")
+
+
+def consumer_subverso_rev() -> str:
+    """The SubVerso revision LeaderboardSite decodes highlighted JSON with.
+
+    It is whatever Verso (pinned in the site lakefile) pins SubVerso to in its
+    own lake-manifest, fetched straight from GitHub so this works without a
+    resolved Lake workspace — the bump workflow regenerates the snapshot
+    without ever running the site's `lake update`.
+    """
+    verso_git, verso_rev = site_verso_require()
+    slug = re.sub(r"\.git$", "", verso_git).rstrip("/").removeprefix("https://github.com/")
+    url = f"https://raw.githubusercontent.com/{slug}/{verso_rev}/lake-manifest.json"
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            manifest = json.loads(response.read().decode("utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise SystemExit(f"Could not fetch Verso's lake-manifest from {url}: {exc}")
+    for pkg in manifest.get("packages", []):
+        if pkg.get("name") == "subverso":
+            rev = str(pkg.get("rev", "")).strip()
+            if SHA_RE.fullmatch(rev):
+                return rev
+            raise SystemExit(f"Verso manifest at {url} has a non-SHA subverso rev: {rev!r}")
+    raise SystemExit(f"No subverso package in Verso's lake-manifest at {url}")
+
+
 def benchmark_snapshot_lakefile(benchmark_repo: pathlib.Path) -> str:
     mathlib_git, mathlib_rev = benchmark_mathlib_require(benchmark_repo)
+    subverso_rev = consumer_subverso_rev()
     return "\n".join(
         [
             'name = "benchmark-snapshot"',
@@ -179,7 +219,10 @@ def benchmark_snapshot_lakefile(benchmark_repo: pathlib.Path) -> str:
             "[[require]]",
             'name = "subverso"',
             'git = "https://github.com/leanprover/subverso"',
-            f'rev = "{SNAPSHOT_SUBVERSO_REV}"',
+            "# Pinned to the SubVerso revision Verso pulls into LeaderboardSite, so the",
+            "# highlighted JSON this snapshot emits stays decodable by the site. Derived",
+            "# from the site lakefile's Verso pin by scripts/generate_site_data.py.",
+            f'rev = "{subverso_rev}"',
             "",
             "[[lean_lib]]",
             'name = "BenchmarkProblems"',

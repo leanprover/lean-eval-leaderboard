@@ -9,8 +9,10 @@ rev = "v4.30.0-rc2"
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-# Must match the site-side SubVerso revision pulled in by Verso.
-rev = "ce893b9042128037e2d3c0158b9567fab9fae268"
+# Reference only: scripts/generate_site_data.py writes benchmark-snapshot/
+# lakefile.toml directly and replaces this with the SubVerso revision Verso
+# pulls into LeaderboardSite, so the snapshot stays decodable by the site.
+rev = "main"
 
 [[lean_lib]]
 name = "BenchmarkProblems"

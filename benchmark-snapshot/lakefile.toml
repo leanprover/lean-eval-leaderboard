@@ -9,7 +9,9 @@ rev = "5450b53e5ddc"
 [[require]]
 name = "subverso"
 git = "https://github.com/leanprover/subverso"
-# Must match the site-side SubVerso revision pulled in by Verso.
+# Pinned to the SubVerso revision Verso pulls into LeaderboardSite, so the
+# highlighted JSON this snapshot emits stays decodable by the site. Derived
+# from the site lakefile's Verso pin by scripts/generate_site_data.py.
 rev = "ce893b9042128037e2d3c0158b9567fab9fae268"
 
 [[lean_lib]]
