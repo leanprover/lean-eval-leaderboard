@@ -70,6 +70,7 @@ four failure modes the generator used to have:
 -/
 
 
+
 namespace Helpers
 -- ANCHOR: multi_hole_helpers_example__first
 def first : Nat := sorry

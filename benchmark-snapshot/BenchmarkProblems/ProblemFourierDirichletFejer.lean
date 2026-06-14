@@ -74,6 +74,8 @@ open Filter Topology
 
 
 
+
+
 -- ANCHOR: fourier_dirichlet_fejer__dirichlet_pointwise
 /-- **Dirichlet's pointwise convergence theorem** (§46). For every `C¹`
 2π-periodic complex function `f`, the symmetric Fourier partial sums `S_N(f)(x)`
