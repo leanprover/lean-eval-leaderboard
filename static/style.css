@@ -836,8 +836,7 @@ nav.top .home { display: none; }
   display: inline-flex;
 }
 
-.problem-id-trigger,
-.problem-proof-link {
+.problem-id-trigger {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -855,24 +854,12 @@ nav.top .home { display: none; }
     color var(--transition-fast);
 }
 
-.dark-theme .problem-id-trigger,
-.dark-theme .problem-proof-link {
+.dark-theme .problem-id-trigger {
   background: rgba(59, 148, 255, 0.10);
   border-color: rgba(59, 148, 255, 0.28);
 }
 
 .problem-id-trigger { cursor: default; }
-
-.problem-proof-link:hover {
-  color: var(--color-text-contrast);
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.problem-proof-link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
 
 /* Theorem-statement popover, anchored to the problem-id pill */
 .theorem-card {
