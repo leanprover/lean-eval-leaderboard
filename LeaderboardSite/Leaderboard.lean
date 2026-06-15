@@ -166,29 +166,20 @@ private def theoremCard
 
 /-- Render a single problem chip with a hover-popover theorem card.
 `title` is the human-readable problem title; `statement` is the Lean
-theorem text shown in the static-fallback popover. `proofUrl?`, when
-set, adds a public proof link next to the chip. The `anchorMap` carries
-pre-rendered Verso theorem blocks keyed by problem id. -/
+theorem text shown in the static-fallback popover. The `anchorMap` carries
+pre-rendered Verso theorem blocks keyed by problem id.
+
+Public proof links are intentionally not rendered here; the underlying
+`public_solution` data still lives in `leaderboard.json`. -/
 private def problemItem
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (problemId : String) (title : String) (statement : String)
-    (proofUrl? : Option String)
     (rarityRank? : Option Nat)
     (productionDescription? : Option String) : Block Page :=
   let problemHref := s!"problems/{problemId}/"
   let titleLink := htmlBlobBlock {{
     <a class="problem-title-link" href={{problemHref}}>{{textHtml title}}</a>
   }}
-  let proofLink := match proofUrl? with
-    | some url => htmlBlobBlock {{
-        <a class="problem-proof-link" href={{url}}>
-          <span>{{textHtml proofWord}}</span>
-          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M9 1v1.5h3.44L6.97 7.97l1.06 1.06L13.5 3.56V7H15V1H9zM2 3v11h11V8.5h-1.5V12.5h-8v-8H6.5V3H2z"/>
-          </svg>
-        </a>
-      }}
-    | none => htmlBlobBlock {{ <span></span> }}
   let rarityChip := match rarityRank? with
     | some r => htmlBlobBlock {{
         <span class="problem-meta">{{textHtml s!"#{r}"}}</span>
@@ -220,8 +211,7 @@ private def problemItem
         }},
         theoremCard anchorMap problemId statement
       ],
-      rarityChip,
-      proofLink
+      rarityChip
     ],
     productionNote
   ]
@@ -261,8 +251,7 @@ private def entryBody
   let isTest := fun (pid : String) => kindMap.getD pid false
   let renderItem (item : SolvedProblem) : Block Page :=
     let (title, statement) := problemTitleAndStatement problems item.problemId
-    let proofUrl? := if item.publicSolution.available then item.publicSolution.url else none
-    problemItem anchorMap item.problemId title statement proofUrl? (some item.rarityRank)
+    problemItem anchorMap item.problemId title statement (some item.rarityRank)
       item.productionDescription
   let renderSection (label : String) (items : Array SolvedProblem) : Array (Block Page) :=
     if items.isEmpty then #[] else
@@ -342,7 +331,7 @@ private def emptyShowcase
     (anchorMap : Std.HashMap String (Array (Block Page)))
     (preview : Array (String × String × String)) : Block Page :=
   let previewItems : Array (Block Page) := preview.map fun (id, title, statement) =>
-    problemItem anchorMap id title statement none none none
+    problemItem anchorMap id title statement none none
   divBlock "empty-showcase" #[
     divBlock "empty-copy" #[
       sectionLabel emptyShowcaseLabel,

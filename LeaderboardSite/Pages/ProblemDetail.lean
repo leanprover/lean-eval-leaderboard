@@ -64,7 +64,6 @@ structure SolverRecord where
   user : String
   modelName : String
   solvedAt : String
-  publicSolutionUrl : Option String
 deriving Quote, Inhabited, Repr
 
 /-- Collect all solves of `problemId`, one row per (model, submitter), sorted
@@ -78,22 +77,18 @@ def solversFor (entries : Array LeaderboardEntry) (problemId : String) : Array S
           user := sp.provenance.user
           modelName := entry.modelName
           solvedAt := sp.solvedAt
-          publicSolutionUrl := sp.publicSolution.url
         }
       else none
   rows.qsort (fun a b => a.solvedAt < b.solvedAt)
 
+-- Public proof links are intentionally not rendered here; the underlying
+-- `public_solution` data still lives in `leaderboard.json`.
 private def solverParagraph (s : SolverRecord) : Block Page :=
-  let baseInlines : Array (Inline Page) := #[
+  paragraph #[
     textInline "• ",
     linkInline s!"@{s.user}" s!"https://github.com/{s.user}",
     textInline (solverWithModelOnDate s.modelName (formatDate s.solvedAt))
   ]
-  let inlines := match s.publicSolutionUrl with
-    | some url =>
-      baseInlines ++ #[textInline " (", linkInline proofWord url, textInline ")"]
-    | none => baseInlines
-  paragraph inlines
 
 private def solversSection (solvers : Array SolverRecord) : Array (Block Page) :=
   if solvers.isEmpty then

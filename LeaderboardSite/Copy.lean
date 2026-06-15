@@ -129,7 +129,6 @@ def coverageCellAria (title : String) (solved : Bool) : String :=
 
 /-! ## Problem chips / theorem cards -/
 
-def proofWord                   : String := "proof"
 def howProducedSummary          : String := "How produced"
 def theoremStatementUnavailable : String := "Theorem statement unavailable."
 def versoTheoremPreviewLabel    : String := "Verso theorem preview"
