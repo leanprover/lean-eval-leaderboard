@@ -24,8 +24,9 @@ predicate is decidable by an algorithm, captured by mathlib's
 `ComputablePred`. The hypotheses `hsurj` + `hker` unpack
 `Group.IsFinitelyPresented G` for this particular presentation `φ`.
 
-Mathlib has `Group.IsFinitelyPresented`, `Subgroup.IsNormalClosureFG`,
-`FreeGroup`, `PresentedGroup`, `IsSimpleGroup`, and the
+Mathlib has `Group.IsFinitelyPresented`,
+`Subgroup.IsFinitelyNormallyGenerated`, `FreeGroup`, `PresentedGroup`,
+`IsSimpleGroup`, and the
 `ComputablePred` / `Computable` / `Partrec` stack, but no notion of
 the word problem of a group or the Kuznetsov / Boone–Higman / Novikov
 theorems.
@@ -50,7 +51,7 @@ open LeanEval.GroupTheory.BooneHigmanSimpleProblem
 theorem boone_higman_simple {G : Type*} [Group G] [IsSimpleGroup G]
     {n : ℕ} (φ : FreeGroup (Fin n) →* G)
     (_hsurj : Function.Surjective φ)
-    (_hker : (MonoidHom.ker φ).IsNormalClosureFG) :
+    (_hker : (MonoidHom.ker φ).IsFinitelyNormallyGenerated) :
     LeanEval.GroupTheory.BooneHigmanSimpleProblem.WordProblemSolvable φ := by
   sorry
 -- ANCHOR_END: boone_higman_simple__boone_higman_simple

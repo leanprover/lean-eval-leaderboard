@@ -1,5 +1,7 @@
 import BenchmarkProblems.ProblemH1NotClosedComplemented
 import BenchmarkProblems.ProblemAbelRuffini
+import BenchmarkProblems.ProblemAdoCharZero
+import BenchmarkProblems.ProblemAdoIwasawa
 import BenchmarkProblems.ProblemAlternatingSignMatrixCount
 import BenchmarkProblems.ProblemAnnulusTheoremDimFour
 import BenchmarkProblems.ProblemAnnulusTheoremHighDim

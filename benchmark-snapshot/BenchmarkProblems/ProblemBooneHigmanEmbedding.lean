@@ -39,7 +39,7 @@ theorem boone_higman_embedding {G H K : Type*} [Group G] [Group H] [Group K]
     (g : H →* K) (hg : Function.Injective g)
     {n : ℕ} (φ : FreeGroup (Fin n) →* G)
     (hsurj : Function.Surjective φ)
-    (hker : (MonoidHom.ker φ).IsNormalClosureFG) :
+    (hker : (MonoidHom.ker φ).IsFinitelyNormallyGenerated) :
     LeanEval.GroupTheory.BooneHigmanEmbedding.WordProblemSolvable φ := by
   sorry
 -- ANCHOR_END: boone_higman_embedding__boone_higman_embedding
