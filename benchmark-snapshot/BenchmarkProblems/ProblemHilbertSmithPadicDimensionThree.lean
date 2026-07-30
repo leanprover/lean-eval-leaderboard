@@ -1,0 +1,19 @@
+import Mathlib.Algebra.Group.Action.Faithful
+import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Geometry.Manifold.ChartedSpace
+import Mathlib.NumberTheory.Padics.PadicIntegers
+import Mathlib.Topology.Algebra.MulAction
+
+namespace ProblemHilbertSmithPadicDimensionThree
+
+-- ANCHOR: hilbert_smith_padic_dimension_three__hilbert_smith_padic_dimension_three
+theorem hilbert_smith_padic_dimension_three (p : ℕ) [Fact p.Prime]
+    (M : Type*) [TopologicalSpace M] [T2Space M] [SecondCountableTopology M]
+    [ConnectedSpace M] [ChartedSpace (EuclideanSpace ℝ (Fin 3)) M]
+    [AddAction (PadicInt p) M] [ContinuousVAdd (PadicInt p) M]
+    [FaithfulVAdd (PadicInt p) M] :
+    False := by
+  sorry
+-- ANCHOR_END: hilbert_smith_padic_dimension_three__hilbert_smith_padic_dimension_three
+
+end ProblemHilbertSmithPadicDimensionThree
