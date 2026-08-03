@@ -28,11 +28,6 @@ the symmetric integer matrix `Q` at an integer vector `x`. -/
 def evalQ {n : ℕ} (Q : Matrix (Fin n) (Fin n) ℤ) (x : Fin n → ℤ) : ℤ :=
   ∑ i, ∑ j, Q i j * x i * x j
 
-/-- `Q` is **positive (definite)**: `Q(x) > 0` for every nonzero
-integer vector `x`. -/
-def IsPositiveQ {n : ℕ} (Q : Matrix (Fin n) (Fin n) ℤ) : Prop :=
-  ∀ x : Fin n → ℤ, x ≠ 0 → 0 < evalQ Q x
-
 /-- `Q` **represents** the integer `m` if `m = Q(x)` for some integer
 vector `x`. -/
 def Represents {n : ℕ} (Q : Matrix (Fin n) (Fin n) ℤ) (m : ℤ) : Prop :=
@@ -53,7 +48,7 @@ open LeanEval.NumberTheory.ConwaySchneebergerFifteenProblem
 -- ANCHOR: conway_schneeberger_fifteen__conway_schneeberger_fifteen
 theorem conway_schneeberger_fifteen {n : ℕ}
     (Q : Matrix (Fin n) (Fin n) ℤ)
-    (_hsymm : Q.IsSymm) (_hpos : LeanEval.NumberTheory.ConwaySchneebergerFifteenProblem.IsPositiveQ Q) :
+    (_hpos : Q.PosDef) :
     LeanEval.NumberTheory.ConwaySchneebergerFifteenProblem.IsUniversal Q ↔ ∀ k ∈ Finset.Icc (1 : ℤ) 15, LeanEval.NumberTheory.ConwaySchneebergerFifteenProblem.Represents Q k := by
   sorry
 -- ANCHOR_END: conway_schneeberger_fifteen__conway_schneeberger_fifteen
