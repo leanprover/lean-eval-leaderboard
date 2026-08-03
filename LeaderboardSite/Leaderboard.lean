@@ -483,6 +483,17 @@ sections. Used from `Front.lean` via the `leaderboard%` syntax. -/
 
 scoped syntax "leaderboard%" : term
 
+/-- Build the anchor lookup at runtime from a flat array of bindings.
+
+Keeping the generated term flat matters here: emitting one nested `.insert`
+per notable problem makes elaboration depth grow linearly as the catalog
+grows, eventually exhausting Lean's default recursion budget. -/
+def anchorMapFromBindings
+    (bindings : Array (String × Array (Block Page))) :
+    Std.HashMap String (Array (Block Page)) :=
+  bindings.foldl (init := {}) fun acc (problemId, anchors) =>
+    acc.insert problemId anchors
+
 /-- Build a syntax tree for an `Std.HashMap String (Array (Block Page))`
 whose keys are problem ids and whose values are the spliced per-hole
 anchor terms. -/
@@ -490,9 +501,11 @@ private def anchorMapTerm
     (problems : Array ProblemEntry)
     (neededIds : Array String) : TermElabM (TSyntax `term) := do
   let needed := problems.filter fun p => neededIds.contains p.id
-  needed.foldlM (init := ← `((∅ : Std.HashMap String (Array (Block Page))))) fun acc p => do
+  let bindings ← needed.mapM fun p => do
     let anchorsArr : TSyntaxArray `term := anchorBlockTerms p
-    `(($acc).insert $(quote p.id) #[$anchorsArr,*])
+    `(($(quote p.id), #[$anchorsArr,*]))
+  let bindings : TSyntaxArray `term := bindings
+  `(LeaderboardSite.Leaderboard.anchorMapFromBindings #[$bindings,*])
 
 elab_rules : term
   | `(leaderboard%) => do
