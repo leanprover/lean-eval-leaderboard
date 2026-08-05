@@ -331,7 +331,7 @@ def submitStep3HtmlId : String := "step-3"
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  Click [Submit benchmark solution](https://github.com/leanprover/lean-eval/issues/new?template=submit.yml)
+  Click [Submit benchmark solution](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
   to open a pre-filled issue. The form asks for two things:
 
   - a submission URL in one of the shapes above
