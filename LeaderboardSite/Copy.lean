@@ -270,7 +270,7 @@ def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
   Submissions are made by opening a GitHub issue on the
-  [lean-eval benchmark repository](https://github.com/leanprover/lean-eval).
+  [lean-eval submissions repository](https://github.com/leanprover/lean-eval-submissions).
   :::
 
 def submitStep1Title  : String :=
@@ -331,12 +331,19 @@ def submitStep3HtmlId : String := "step-3"
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  Click [Submit benchmark solution](https://github.com/leanprover/lean-eval/issues/new?template=submit.yml)
-  to open a pre-filled issue. The form asks for two things:
+  Click [Submit benchmark solution](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  to open a pre-filled issue. The form asks for:
 
   - a submission URL in one of the shapes above
   - a free-form model identifier that identifies the model or system that
     produced the proof
+  - whether the exact solutions are public, planned for publication, or
+    private with no current publication plan
+  - an actual or intended publication date in `YYYY-MM-DD` format when
+    applicable
+
+  You can also provide an optional description of how the solution was
+  produced.
 
   When you submit the issue, the lean-eval CI takes over. It clones your
   content, scans for benchmark workspaces, runs comparator on every
@@ -359,11 +366,28 @@ def submitWhatPublicBody : VersoDoc Page :=
   Only the information you enter on the submission form, plus the list of
   problems your submission solved, becomes public. Your proof is never
   copied out of the ephemeral workflow runner into any public artifact.
-  The leaderboard only stores identifiers and timestamps.
+  The public results store records submission provenance, timestamps, and
+  your submission-time publication declaration.
 
   If your submission source was a public repository or a public gist, the
   leaderboard may link to it so that others can inspect your solution. If
   the source was private, no link is published.
+
+  LeanEval supports open science and does not prohibit publishing exact
+  solutions. Making solutions public can help library development and let
+  others study and build on your work. However, it also lets solutions be
+  copied directly and may cause them to enter future model-training data,
+  reducing our ability to treat those problems as unseen evaluation data.
+
+  Please consider these tradeoffs when deciding whether and when to
+  publish. You can freely publish methods, tooling, prompts, aggregate
+  results, and reusable library contributions without publishing the exact
+  benchmark solutions. There is no required embargo: the decision remains
+  yours.
+
+  The intended date requested for planned publication is your current best
+  estimate. It records your intention when you submit and is not a
+  commitment.
   :::
 
 /-! ### Submit-page CTA + TL;DR widgets
@@ -374,7 +398,7 @@ paragraph splices a `<code>` and an `<a>` mid-sentence, so its prose is
 broken into chunks rather than authored as a single string. -/
 
 def submitCtaUrl    : String :=
-  "https://github.com/leanprover/lean-eval/issues/new?template=submit.yml"
+  "https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml"
 def submitCtaLabel  : String := "Submit benchmark solution"
 def submitCtaArrow  : String := " →"
 
