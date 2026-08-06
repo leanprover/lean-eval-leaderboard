@@ -20,9 +20,6 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 concurrency:
   group: github-pages
   cancel-in-progress: true
@@ -32,7 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout leaderboard repo
-        uses: actions/checkout@v4
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-08-06).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Checkout benchmark repo at the snapshot's pinned commit
         # site-data/leaderboard.json is regenerated each deploy from the
@@ -40,7 +38,8 @@ jobs:
         # metadata. We pin to the same commit benchmark-snapshot/ was built
         # from so the snapshot's catalog and the regenerated site-data stay
         # in lockstep.
-        uses: actions/checkout@v4
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-08-06).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: leanprover/lean-eval
           path: lean-eval-benchmark
@@ -50,7 +49,8 @@ jobs:
         # leanprover/lean-eval-submissions holds results/<login>.json.
         # generate_site_data.py reads them via --results-repo. Always main
         # HEAD: the results store is append-only and the site shows latest.
-        uses: actions/checkout@v4
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-08-06).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: leanprover/lean-eval-submissions
           path: lean-eval-submissions
@@ -68,10 +68,12 @@ jobs:
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        # actions/configure-pages pinned to 45bfe019 (= refs/tags/v6.0.0 as of 2026-08-06).
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
 
       - name: Cache site Lake workspace
-        uses: actions/cache@v4
+        # actions/cache pinned to 55cc8345 (= refs/tags/v6.1.0 as of 2026-08-06).
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             .lake/packages
@@ -79,7 +81,8 @@ jobs:
           key: ${{ runner.os }}-site-lake-${{ hashFiles('lean-toolchain', 'lakefile.lean', 'lakefile.toml', 'lake-manifest.json') }}
 
       - name: Cache benchmark snapshot Lake workspace
-        uses: actions/cache@v4
+        # actions/cache pinned to 55cc8345 (= refs/tags/v6.1.0 as of 2026-08-06).
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             benchmark-snapshot/.lake/packages
@@ -123,12 +126,12 @@ jobs:
             echo "Re-run the 'Advance benchmark-snapshot' workflow to re-pin and rebuild the snapshot."
             exit 1
           fi
-          highlighted_targets=$(
+          mapfile -t highlighted_targets < <(
             find BenchmarkProblems -maxdepth 1 -name 'Problem*.lean' -print \
               | sed 's|^BenchmarkProblems/||;s|\.lean$||' \
-              | awk '{printf "+BenchmarkProblems.%s:highlighted ", $1}'
+              | awk '{printf "+BenchmarkProblems.%s:highlighted\n", $1}'
           )
-          lake build BenchmarkProblems subverso-extract-mod $highlighted_targets
+          lake build BenchmarkProblems subverso-extract-mod "${highlighted_targets[@]}"
 
       - name: Regenerate site-data from the results store and the pinned benchmark
         # site-data/ is .gitignored — regenerated here so every new result
@@ -156,7 +159,8 @@ jobs:
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        # actions/upload-pages-artifact pinned to fc324d35 (= refs/tags/v5.0.0 as of 2026-08-06).
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: _site
 
@@ -170,4 +174,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        # actions/deploy-pages pinned to cd2ce8fc (= refs/tags/v5.0.0 as of 2026-08-06).
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
