@@ -20,9 +20,15 @@ permissions:
   pages: write
   id-token: write
 
+# PR validation builds are disposable, so they get a per-PR group and
+# supersede each other freely. Everything that can publish shares the single
+# `github-pages` group and is never cancelled: a cancelled deploy is a lost
+# publication, and GitHub does not retry it. Superseding only establishes that
+# the newer build carries the same data, not that it succeeds, so cancelling a
+# running deploy in favour of one that then fails leaves nothing published.
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || 'github-pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -157,15 +163,17 @@ jobs:
         run: |
           python3 scripts/check_links.py --site-dir _site --prefix lean-eval-leaderboard
 
+      # Publish only from `main`. A positive ref check rather than "not a PR",
+      # so a `workflow_dispatch` aimed at a feature branch cannot publish it.
       - name: Upload Pages artifact
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main'
         # actions/upload-pages-artifact pinned to fc324d35 (= refs/tags/v5.0.0 as of 2026-08-06).
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: _site
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
