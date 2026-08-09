@@ -73,6 +73,10 @@ def HausdorffBounded {d : ℕ} (a : (Fin d → ℕ) → ℝ) : Prop :=
 
 
 
+
+
+
+
 end Analysis
 end LeanEval
 
