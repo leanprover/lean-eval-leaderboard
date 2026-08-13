@@ -11,7 +11,7 @@ set_option maxHeartbeats 1000000
 -- budget of 512 was already exhausted once, at 118 notable problems, which
 -- broke the published site for two days. Raise the ceiling so the next
 -- threshold is far beyond any plausible catalog size.
-set_option maxRecDepth 4000
+set_option maxRecDepth 8000
 
 open Lean
 open Verso Doc
