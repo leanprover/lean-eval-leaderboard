@@ -45,7 +45,7 @@ open LeanEval.GroupTheory
 
 -- ANCHOR: schreier_conjecture__schreier_conjecture
 theorem schreier_conjecture (S : Type) [Group S] [Fintype S] [IsSimpleGroup S] :
-    IsSolvable (MulAut S ⧸ (MulAut.conj : S →* MulAut S).range) := by
+    Group.IsSolvable (MulAut S ⧸ (MulAut.conj : S →* MulAut S).range) := by
   sorry
 -- ANCHOR_END: schreier_conjecture__schreier_conjecture
 
