@@ -1,13 +1,31 @@
 import unittest
+from unittest.mock import MagicMock, patch
 
 from scripts.generate_site_data import (
     dedupe_universe_declarations,
+    fetch_json_url,
     preserve_root_declarations,
     qualify_probability_root_opens,
 )
 
 
 class SnapshotContextTests(unittest.TestCase):
+    @patch("scripts.generate_site_data.time.sleep")
+    @patch("scripts.generate_site_data.urllib.request.urlopen")
+    def test_retries_transient_json_fetches(
+        self, urlopen: MagicMock, sleep: MagicMock
+    ) -> None:
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"ok": true}'
+        urlopen.side_effect = [OSError("rate limited"), response]
+
+        self.assertEqual(
+            fetch_json_url("https://example.test/data.json", retry_delay_seconds=2),
+            {"ok": True},
+        )
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once_with(2)
+
     def test_deduplicates_universes_across_inlined_modules(self) -> None:
         fragments = [
             "universe u v\ndef first := 1",
