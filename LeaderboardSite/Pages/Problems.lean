@@ -11,6 +11,7 @@ open Verso.Code.External
 
 set_option verso.exampleProject "benchmark-snapshot"
 set_option maxHeartbeats 1000000
+set_option maxRecDepth 65536
 
 namespace LeaderboardSite.Pages
 
