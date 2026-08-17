@@ -38,6 +38,12 @@ RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
 # dependencies" for the procedure.
 BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+ROOT_DECLARATIONS_BY_PROBLEM = {
+    "annals_dirichlet_weyl_bound": {"Nat.IsCubeFree"},
+}
+ANNALS_PROBABILITY_NOTATION_IMPORT = (
+    "import LeanEval.Analysis.AnnalsProbabilityNotation"
+)
 
 
 @dataclass(frozen=True)
@@ -494,6 +500,88 @@ def snapshot_module_name(problem: Problem) -> str:
     return f"BenchmarkProblems.{snapshot_namespace(problem)}"
 
 
+def dedupe_universe_declarations(fragments: list[str]) -> list[str]:
+    """Remove repeated universe names when generated modules are inlined.
+
+    `ChallengeDeps.lean` and `Challenge.lean` are separate Lean modules and may
+    legitimately repeat `universe u`. A snapshot file concatenates their bodies,
+    where redeclaring the same universe name is an error. Preserve declaration
+    order while emitting each name only once.
+    """
+    seen: set[str] = set()
+    result: list[str] = []
+    for fragment in fragments:
+        lines: list[str] = []
+        for line in fragment.splitlines():
+            code, separator, comment = line.partition("--")
+            stripped = code.strip()
+            if not stripped.startswith("universe "):
+                lines.append(line)
+                continue
+            names = stripped.removeprefix("universe ").split()
+            fresh = [name for name in names if name not in seen]
+            seen.update(names)
+            if fresh:
+                indent = code[:len(code) - len(code.lstrip())]
+                rebuilt = indent + "universe " + " ".join(fresh)
+                if separator:
+                    rebuilt += " " + separator + comment
+                lines.append(rebuilt)
+            elif separator and comment.strip():
+                indent = code[:len(code) - len(code.lstrip())]
+                lines.append(indent + separator + comment)
+        result.append("\n".join(lines))
+    return result
+
+
+def preserve_root_declarations(fragment: str, names: set[str]) -> str:
+    """Keep selected dotted declaration names rooted inside a wrapper.
+
+    A declaration such as `def Nat.IsCubeFree` intentionally extends an existing
+    root namespace. Snapshot packaging adds a per-problem namespace for isolation;
+    without `_root_.`, Lean instead creates `Problem<Id>.Nat.IsCubeFree`. The
+    allowlist is explicit because other dotted declarations intentionally refer
+    to namespaces created inside the per-problem wrapper.
+    """
+    declaration = re.compile(
+        r"(?m)^(?P<prefix>\s*(?:(?:noncomputable|protected|private)\s+)*"
+        r"(?:abbrev|class|def|inductive|lemma|structure|theorem)\s+)"
+        r"(?P<name>(?!_root_\.)[^\s({\[]+\.[^\s({\[]+)"
+    )
+
+    def replace(match: re.Match[str]) -> str:
+        name = match.group("name")
+        if name not in names:
+            return match.group(0)
+        return match.group("prefix") + "_root_." + name
+
+    return declaration.sub(replace, fragment)
+
+
+def qualify_probability_root_opens(fragment: str) -> str:
+    """Disambiguate Mathlib's root probability namespace under isolation.
+
+    Annals' shared probability-notation helper introduces a sibling
+    `ProbabilityTheory` namespace inside the per-problem wrapper. The problem
+    source also opens Mathlib's root namespace for definitions such as
+    `bernoulliMeasure`; make that open explicit while leaving the isolated
+    notation namespace in place.
+    """
+    lines: list[str] = []
+    for line in fragment.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("open ") and not stripped.startswith("open scoped "):
+            code, separator, comment = line.partition("--")
+            code = re.sub(
+                r"(?<![\w.])ProbabilityTheory(?![\w.])",
+                "_root_.ProbabilityTheory",
+                code,
+            )
+            line = code + separator + comment
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Problem]) -> None:
     if BENCHMARK_SNAPSHOT_ROOT.exists():
         shutil.rmtree(BENCHMARK_SNAPSHOT_ROOT)
@@ -515,9 +603,22 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     umbrella_imports: list[str] = []
     for problem in sorted_problems:
         imports, fragments = build_problem_fragment(problem, benchmark_repo)
+        fragments = dedupe_universe_declarations(fragments)
         namespace = snapshot_namespace(problem)
         body_lines: list[str] = []
         if is_legacy_single_theorem(problem):
+            root_declarations = ROOT_DECLARATIONS_BY_PROBLEM.get(problem.id, set())
+            fragments = [
+                preserve_root_declarations(fragment, root_declarations)
+                for fragment in fragments
+            ]
+            source_imports, _ = strip_imports(
+                (benchmark_repo / module_to_source_path(problem.module)).read_text(
+                    encoding="utf-8"
+                )
+            )
+            if ANNALS_PROBABILITY_NOTATION_IMPORT in source_imports:
+                fragments = [qualify_probability_root_opens(fragment) for fragment in fragments]
             # Legacy single-theorem problems wrap their helpers and
             # theorem in a per-problem `Problem<CamelId>` namespace so
             # any short helper names from `ChallengeDeps` don't collide
