@@ -60,7 +60,6 @@ end LeanEval.AlgebraicGeometry.TopologicalReconstruction
 open LeanEval.AlgebraicGeometry.TopologicalReconstruction
 open CategoryTheory AlgebraicGeometry
 
-universe u
 
 -- ANCHOR: kollar_lieblich_olsson_sawin__kollar_lieblich_olsson_sawin
 theorem kollar_lieblich_olsson_sawin (X Y : Scheme.{u}) (K L : Type u)

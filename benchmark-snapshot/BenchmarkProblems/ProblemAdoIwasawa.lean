@@ -35,7 +35,6 @@ end LeanEval.RepresentationTheory.AdoIwasawa
 
 open LeanEval.RepresentationTheory.AdoIwasawa
 
-universe u v
 
 variable {K L : Type u} [Field K] [LieRing L] [LieAlgebra K L]
 

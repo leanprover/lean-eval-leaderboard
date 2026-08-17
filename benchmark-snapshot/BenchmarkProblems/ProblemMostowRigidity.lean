@@ -128,7 +128,6 @@ end LeanEval.Geometry.MostowRigidity
 
 open LeanEval.Geometry.MostowRigidity
 open MeasureTheory
-open MeasureTheory
 
 -- ANCHOR: mostow_rigidity__mostow_rigidity
 theorem mostow_rigidity (n : ℕ) (hn : 3 ≤ n) (Γ Λ : Subgroup (LeanEval.Geometry.MostowRigidity.PO n 1))
