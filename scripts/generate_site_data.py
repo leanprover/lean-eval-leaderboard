@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 import urllib.request
 from collections import defaultdict
@@ -184,6 +185,29 @@ def site_verso_require() -> tuple[str, str]:
     return match.group("git"), match.group("rev")
 
 
+def fetch_json_url(
+    url: str,
+    *,
+    attempts: int = 5,
+    retry_delay_seconds: float = 5,
+) -> Any:
+    """Fetch JSON with bounded retries for transient hosting failures."""
+    headers = {"User-Agent": "lean-eval-leaderboard-snapshot-generator"}
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if github_token:
+        headers["Authorization"] = f"Bearer {github_token}"
+    request = urllib.request.Request(url, headers=headers)
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            if attempt == attempts:
+                raise
+            time.sleep(retry_delay_seconds * attempt)
+    raise AssertionError("unreachable")
+
+
 def consumer_subverso_rev() -> str:
     """The SubVerso revision LeaderboardSite decodes highlighted JSON with.
 
@@ -196,8 +220,7 @@ def consumer_subverso_rev() -> str:
     slug = re.sub(r"\.git$", "", verso_git).rstrip("/").removeprefix("https://github.com/")
     url = f"https://raw.githubusercontent.com/{slug}/{verso_rev}/lake-manifest.json"
     try:
-        with urllib.request.urlopen(url, timeout=30) as response:
-            manifest = json.loads(response.read().decode("utf-8"))
+        manifest = fetch_json_url(url)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise SystemExit(f"Could not fetch Verso's lake-manifest from {url}: {exc}")
     for pkg in manifest.get("packages", []):

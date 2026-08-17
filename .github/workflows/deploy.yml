@@ -73,7 +73,11 @@ jobs:
       - name: Set up elan
         shell: bash
         run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            --fail --silent --show-error --location \
+            --retry 5 --retry-all-errors --retry-delay 10 \
+            --output "$RUNNER_TEMP/elan-init.sh"
+          sh "$RUNNER_TEMP/elan-init.sh" -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Configure Pages
