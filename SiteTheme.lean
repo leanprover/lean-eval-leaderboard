@@ -28,13 +28,18 @@ r#"(function(){
   }
 })()"#
 
-def theme (name : String) (siteName : String) : Theme := {
+def theme (_name : String) (siteName : String) : Theme := {
   Theme.default with
   primaryTemplate := do
     let title ← param (α := String) "title"
     let path := (← read).path
     let isHome := path.isEmpty
-    let pageClass := if isHome then "home-page" else "inner-page"
+    let isPreview := path[0]? == some "preview"
+    let isWide := isHome || isPreview
+    let pageClass :=
+      if isPreview then "home-page preview-page"
+      else if isHome then "home-page"
+      else "inner-page"
     -- Verso emits a `<base href>` tag pointing at the site root, so all
     -- relative URLs in the page resolve against that base. Asset and nav
     -- hrefs below use plain relative paths (no leading `/` or `../`).
@@ -44,7 +49,7 @@ def theme (name : String) (siteName : String) : Theme := {
     -- renders the content directly. Inner pages get the standard prose
     -- container from the theme.
     let pageCopy ←
-      if isHome then
+      if isWide then
         pure (← param "content")
       else
         pure {{
@@ -75,6 +80,7 @@ def theme (name : String) (siteName : String) : Theme := {
           <script src="static/theme-toggle.js"></script>
           <script defer="true" src="static/background.js"></script>
           <script defer="true" src="static/site.js"></script>
+          <script defer="true" src="static/v2-preview.js"></script>
         </head>
         <body class={{pageClass}}>
           <div class="site-shell">

@@ -482,6 +482,7 @@ Reads `site-data/leaderboard.json` at elaboration time and produces an
 sections. Used from `Front.lean` via the `leaderboard%` syntax. -/
 
 scoped syntax "leaderboard%" : term
+scoped syntax "leaderboardPreview%" : term
 
 /-- Build the anchor lookup at runtime from a flat array of bindings.
 
@@ -507,43 +508,46 @@ private def anchorMapTerm
   let bindings : TSyntaxArray `term := bindings
   `(LeaderboardSite.Leaderboard.anchorMapFromBindings #[$bindings,*])
 
+private def elaborateLeaderboardPayload (payload : LeaderboardPayload) : TermElabM Expr := do
+  let problemsPayload ← parseProblemsPayload
+  let problems ← validateProblems problemsPayload
+  let summary := payload.summary
+  let entries := payload.entries
+  -- Plain-text fallback for the popover when no rendered anchor is
+  -- available: concatenate every hole's body in source order.
+  let problemTriples : Array (String × String × String) :=
+    problems.map fun p =>
+      let joined := String.intercalate "\n\n" (p.holes.map (·.body)).toList
+      (p.id, p.title, joined)
+  let problemKinds : Array (String × Bool) :=
+    problems.map fun p => (p.id, p.test)
+  -- The empty-state preview shows the first four main (non-test)
+  -- problems, mirroring what the JS rendering used to emit.
+  let mainProblems := problems.filter (!·.test)
+  let previewIds : Array String :=
+    (mainProblems.toList.take 4).toArray.map (·.id)
+  -- We pre-render an anchor block for every problem the page might reference:
+  -- anything notable in any entry, plus the catalog preview shown when empty.
+  let neededIds : Array String :=
+    let base := previewIds ++ entries.flatMap (·.notableProblemIds)
+    base.foldl (init := #[]) fun acc id =>
+      if acc.contains id then acc else acc.push id
+  let anchorMap ← anchorMapTerm problems neededIds
+  let term ← `(leaderboardBlocks
+    $(quote summary)
+    $(quote problemTriples)
+    $(quote problemKinds)
+    $(quote entries)
+    $(quote previewIds)
+    $anchorMap)
+  let expectedType ← Lean.Elab.Term.elabTerm
+    (← `(Array (Block Page))) none
+  Lean.Elab.Term.elabTerm term (some expectedType)
+
 elab_rules : term
   | `(leaderboard%) => do
-      let payload ← parseLeaderboardPayload
-      let problemsPayload ← parseProblemsPayload
-      let problems ← validateProblems problemsPayload
-      let summary := payload.summary
-      let entries := payload.entries
-      -- Plain-text fallback for the popover when no rendered anchor is
-      -- available: concatenate every hole's body in source order.
-      let problemTriples : Array (String × String × String) :=
-        problems.map fun p =>
-          let joined := String.intercalate "\n\n" (p.holes.map (·.body)).toList
-          (p.id, p.title, joined)
-      let problemKinds : Array (String × Bool) :=
-        problems.map fun p => (p.id, p.test)
-      -- The empty-state preview shows the first four main (non-test)
-      -- problems, mirroring what the JS rendering used to emit.
-      let mainProblems := problems.filter (!·.test)
-      let previewIds : Array String :=
-        (mainProblems.toList.take 4).toArray.map (·.id)
-      -- We pre-render an anchor block for every problem the home page
-      -- might reference: anything notable in any entry, plus the
-      -- catalog preview shown in the empty state.
-      let neededIds : Array String :=
-        let base := previewIds ++ entries.flatMap (·.notableProblemIds)
-        base.foldl (init := #[]) fun acc id =>
-          if acc.contains id then acc else acc.push id
-      let anchorMap ← anchorMapTerm problems neededIds
-      let term ← `(leaderboardBlocks
-        $(quote summary)
-        $(quote problemTriples)
-        $(quote problemKinds)
-        $(quote entries)
-        $(quote previewIds)
-        $anchorMap)
-      let expectedType ← Lean.Elab.Term.elabTerm
-        (← `(Array (Block Page))) none
-      Lean.Elab.Term.elabTerm term (some expectedType)
+      elaborateLeaderboardPayload (← parseLeaderboardPayload)
+  | `(leaderboardPreview%) => do
+      elaborateLeaderboardPayload (← parseLeaderboardPreviewPayload)
 
 end LeaderboardSite.Leaderboard

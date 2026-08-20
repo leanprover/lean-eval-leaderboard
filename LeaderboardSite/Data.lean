@@ -42,6 +42,13 @@ instance : FromJson Hole where
 structure ProblemEntry where
   id : String
   title : String
+  group : String
+  status : String
+  visible : Bool
+  statementRevision : Nat
+  tags : Array String
+  /-- Compatibility discriminator for the current site layout. Schema-v4
+  payloads contain only visible catalog entries, so this is always false. -/
   test : Bool
   submitter : String
   moduleName : String
@@ -64,6 +71,11 @@ instance : FromJson ProblemEntry where
     return {
       id := ← json.getObjValAs? String "id"
       title := ← json.getObjValAs? String "title"
+      group := ← json.getObjValAs? String "group"
+      status := ← json.getObjValAs? String "status"
+      visible := ← json.getObjValAs? Bool "visible"
+      statementRevision := ← json.getObjValAs? Nat "statement_revision"
+      tags := ← json.getObjValAs? (Array String) "tags"
       test := ← json.getObjValAs? Bool "test"
       submitter := ← json.getObjValAs? String "submitter"
       moduleName := ← json.getObjValAs? String "module"
@@ -238,6 +250,9 @@ def problemsJsonPath : System.FilePath :=
 def leaderboardJsonPath : System.FilePath :=
   "site-data/leaderboard.json"
 
+def leaderboardPreviewJsonPath : System.FilePath :=
+  "site-data/leaderboard-preview.json"
+
 /-- Per-problem snapshot file under `benchmark-snapshot/BenchmarkProblems/`.
 The snapshot generator emits one Lean module per problem, with the
 source author's exact `import` lines at the top of that file. The
@@ -261,28 +276,42 @@ def parseProblemsPayload : TermElabM ProblemsPayload := do
   | .ok payload => pure payload
   | .error err => throwError "Failed to decode {problemsJsonPath}: {err}"
 
-def parseLeaderboardPayload : TermElabM LeaderboardPayload := do
-  let raw ← IO.FS.readFile leaderboardJsonPath
+def parseLeaderboardPayloadAt (path : System.FilePath) : TermElabM LeaderboardPayload := do
+  let raw ← IO.FS.readFile path
   let json ←
     match Json.parse raw with
     | .ok json => pure json
-    | .error err => throwError "Failed to parse {leaderboardJsonPath}: {err}"
+    | .error err => throwError "Failed to parse {path}: {err}"
   match FromJson.fromJson? json with
   | .ok payload => pure payload
-  | .error err => throwError "Failed to decode {leaderboardJsonPath}: {err}"
+  | .error err => throwError "Failed to decode {path}: {err}"
+
+def parseLeaderboardPayload : TermElabM LeaderboardPayload :=
+  parseLeaderboardPayloadAt leaderboardJsonPath
+
+def parseLeaderboardPreviewPayload : TermElabM LeaderboardPayload :=
+  parseLeaderboardPayloadAt leaderboardPreviewJsonPath
 
 def loadSnapshotProblemFile (snapshotModule : String) : TermElabM String :=
   IO.FS.readFile (snapshotProblemFilePath snapshotModule)
 
 def validateProblems (payload : ProblemsPayload) : TermElabM (Array ProblemEntry) := do
-  if payload.schemaVersion != 3 then
-    throwError "Unsupported problems schema version {payload.schemaVersion}; expected 3"
+  if payload.schemaVersion != 4 then
+    throwError "Unsupported problems schema version {payload.schemaVersion}; expected 4"
   let mut seen : Std.HashSet String := {}
   for problem in payload.problems do
     if problem.id.trimAscii.isEmpty then
       throwError "Encountered a problem with an empty id"
     if problem.title.trimAscii.isEmpty then
       throwError "Problem '{problem.id}' is missing a title"
+    if problem.group.trimAscii.isEmpty then
+      throwError "Problem '{problem.id}' is missing a catalog group"
+    if problem.status.trimAscii.isEmpty then
+      throwError "Problem '{problem.id}' is missing a catalog status"
+    if !problem.visible then
+      throwError "Hidden problem '{problem.id}' leaked into the public problems payload"
+    if problem.statementRevision == 0 then
+      throwError "Problem '{problem.id}' has statement_revision 0"
     if problem.holes.isEmpty then
       throwError "Problem '{problem.id}' has no holes"
     if seen.contains problem.id then

@@ -1,9 +1,12 @@
+import pathlib
+import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 from scripts.generate_site_data import (
     dedupe_universe_declarations,
     fetch_json_url,
+    load_manifest,
     preserve_root_declarations,
     qualify_probability_root_opens,
 )
@@ -26,6 +29,47 @@ class SnapshotContextTests(unittest.TestCase):
         self.assertEqual(urlopen.call_count, 2)
         sleep.assert_called_once_with(2)
 
+
+class CatalogMetadataTests(unittest.TestCase):
+    manifest = """\
+id = "alpha"
+title = "Alpha"
+group = "formalization-evaluation"
+status = "draft"
+visible = false
+statement_revision = 2
+tags = ["annals"]
+module = "LeanEval.Alpha"
+holes = ["alpha"]
+submitter = "Alice"
+"""
+
+    @patch("scripts.generate_site_data.load_holes", return_value=())
+    def test_loads_required_catalog_metadata(self, _load_holes: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_dir = pathlib.Path(directory)
+            (manifest_dir / "alpha.toml").write_text(self.manifest)
+            loaded = load_manifest(manifest_dir, pathlib.Path("benchmark"))
+
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded[0].group, "formalization-evaluation")
+        self.assertEqual(loaded[0].status, "draft")
+        self.assertFalse(loaded[0].visible)
+        self.assertEqual(loaded[0].statement_revision, 2)
+        self.assertEqual(loaded[0].tags, ("annals",))
+
+    @patch("scripts.generate_site_data.load_holes", return_value=())
+    def test_missing_visible_field_fails_closed(self, _load_holes: MagicMock) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_dir = pathlib.Path(directory)
+            (manifest_dir / "alpha.toml").write_text(
+                self.manifest.replace("visible = false\n", "")
+            )
+            with self.assertRaisesRegex(SystemExit, "visible must be a boolean"):
+                load_manifest(manifest_dir, pathlib.Path("benchmark"))
+
+
+class SnapshotTransformationTests(unittest.TestCase):
     def test_deduplicates_universes_across_inlined_modules(self) -> None:
         fragments = [
             "universe u v\ndef first := 1",

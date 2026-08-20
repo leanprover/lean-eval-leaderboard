@@ -10,10 +10,14 @@ input_file problemsJson where
   path := "site-data/problems.json"
   text := true
 
+input_file leaderboardPreviewJson where
+  path := "site-data/leaderboard-preview.json"
+  text := true
+
 lean_lib SiteTheme where
 
 lean_lib LeaderboardSite where
-  needs := #[problemsJson]
+  needs := #[problemsJson, leaderboardPreviewJson]
 
 @[default_target]
 lean_exe «lean-eval-leaderboard» where

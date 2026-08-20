@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leanprover.github.io/lean-eval/schemas/results-v2.schema.json",
+  "title": "LeanEval per-user results file v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "user", "results"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "user": {"type": "string", "minLength": 1},
+    "results": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/result"}
+    }
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id",
+        "problem_id",
+        "statement_revision",
+        "declared_model",
+        "accepted_at",
+        "benchmark_commit",
+        "intake",
+        "submission",
+        "production_metadata"
+      ],
+      "properties": {
+        "result_id": {"type": "string", "pattern": "^r2_[0-9a-f]{64}$"},
+        "problem_id": {"type": "string", "minLength": 1},
+        "statement_revision": {"type": "integer", "minimum": 1},
+        "declared_model": {"type": "string", "minLength": 1},
+        "accepted_at": {"type": "string", "format": "date-time"},
+        "benchmark_commit": {"$ref": "#/$defs/sha"},
+        "intake": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "issue_number"],
+              "properties": {
+                "kind": {"const": "issue"},
+                "issue_number": {"type": "integer", "minimum": 1}
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "submission_id"],
+              "properties": {
+                "kind": {"const": "server"},
+                "submission_id": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              }
+            }
+          ]
+        },
+        "submission": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "repo", "ref", "public"],
+          "properties": {
+            "kind": {"enum": ["github_repo", "gist"]},
+            "repo": {"type": "string", "minLength": 1},
+            "ref": {"$ref": "#/$defs/sha"},
+            "public": {"type": "boolean"}
+          }
+        },
+        "production_metadata": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

@@ -17,6 +17,27 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+try:
+    from scripts.results_v2 import ResultsV2Error, parse_v2_file
+    from scripts.v2_site_data import (
+        adapt_results_store,
+        adapt_state_domain,
+        build_v2_projection,
+        load_preview_fixture,
+        load_set_definitions,
+        merge_solutions,
+    )
+except ModuleNotFoundError:
+    from results_v2 import ResultsV2Error, parse_v2_file
+    from v2_site_data import (
+        adapt_results_store,
+        adapt_state_domain,
+        build_v2_projection,
+        load_preview_fixture,
+        load_set_definitions,
+        merge_solutions,
+    )
+
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE_DATA_ROOT = REPO_ROOT / "site-data"
@@ -39,6 +60,8 @@ RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
 # dependencies" for the procedure.
 BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+PROBLEM_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
+TAG_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ROOT_DECLARATIONS_BY_PROBLEM = {
     "annals_dirichlet_weyl_bound": {"Nat.IsCubeFree"},
 }
@@ -59,7 +82,11 @@ class Hole:
 class Problem:
     id: str
     title: str
-    test: bool
+    group: str
+    status: str
+    visible: bool
+    statement_revision: int
+    tags: tuple[str, ...]
     submitter: str
     module: str
     notes: str | None
@@ -127,13 +154,42 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
     problems: list[Problem] = []
     for index, path in enumerate(sorted(manifest_dir.glob("*.toml"))):
         raw = tomllib.loads(path.read_text(encoding="utf-8"))
+        for field in ("id", "title", "group", "status", "module", "submitter"):
+            if not isinstance(raw.get(field), str) or not raw[field].strip():
+                raise SystemExit(f"{path}: {field} must be a non-empty string")
+        if type(raw.get("visible")) is not bool:
+            raise SystemExit(f"{path}: visible must be a boolean")
+        revision = raw.get("statement_revision")
+        if type(revision) is not int or revision <= 0:
+            raise SystemExit(f"{path}: statement_revision must be a positive integer")
+        raw_tags = raw.get("tags")
+        if not isinstance(raw_tags, list) or not all(
+            isinstance(tag, str) and tag for tag in raw_tags
+        ):
+            raise SystemExit(f"{path}: tags must be an array of non-empty strings")
+        if len(raw_tags) != len(set(raw_tags)):
+            raise SystemExit(f"{path}: tags must not contain duplicates")
+        if raw["group"] not in {
+            "formalization-evaluation",
+            "software-verification",
+            "open-conjectures",
+        }:
+            raise SystemExit(f"{path}: unsupported group {raw['group']!r}")
+        if raw["status"] not in {"draft", "active", "archived"}:
+            raise SystemExit(f"{path}: unsupported status {raw['status']!r}")
         problem_id = str(raw["id"])
+        if not PROBLEM_ID_RE.fullmatch(problem_id):
+            raise SystemExit(f"{path}: invalid problem id {problem_id!r}")
         holes = load_holes(benchmark_repo, problem_id)
         problems.append(
             Problem(
                 id=problem_id,
                 title=str(raw["title"]),
-                test=bool(raw.get("test", False)),
+                group=str(raw["group"]),
+                status=str(raw["status"]),
+                visible=raw["visible"],
+                statement_revision=revision,
+                tags=tuple(raw_tags),
                 submitter=str(raw["submitter"]),
                 module=str(raw["module"]),
                 notes=str(raw["notes"]).strip() if raw.get("notes") else None,
@@ -155,6 +211,22 @@ def write_json(path: pathlib.Path, payload: Any) -> None:
 def write_text(path: pathlib.Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def load_tag_registry(path: pathlib.Path) -> dict[str, dict[str, str]]:
+    if not path.is_file():
+        return {}
+    raw = tomllib.loads(path.read_text(encoding="utf-8"))
+    registry: dict[str, dict[str, str]] = {}
+    for tag, definition in raw.get("tags", {}).items():
+        if not TAG_ID_RE.fullmatch(str(tag)):
+            raise SystemExit(f"{path}: invalid tag id {tag!r}")
+        label = definition.get("label")
+        description = definition.get("description")
+        if not isinstance(label, str) or not label or not isinstance(description, str):
+            raise SystemExit(f"{path}: tag {tag!r} has invalid display metadata")
+        registry[str(tag)] = {"label": label, "description": description}
+    return registry
 
 
 def benchmark_mathlib_require(benchmark_repo: pathlib.Path) -> tuple[str, str]:
@@ -267,6 +339,69 @@ def load_results(results_root: pathlib.Path) -> list[dict[str, Any]]:
     for path in sorted(results_root.glob("*.json")):
         results.append(load_json(path))
     return results
+
+
+def normalized_result_records(
+    user_record: dict[str, Any],
+    *,
+    context: str,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Return the v2-shaped internal view of one v1 or v2 user file.
+
+    The v1 branch intentionally retains the original reader's permissive
+    behavior. The v2 branch validates the complete flat envelope and stable
+    identifiers before any value reaches aggregation.
+    """
+
+    version = user_record.get("schema_version")
+    if version == 1:
+        user = str(user_record["user"])
+        normalized: list[dict[str, Any]] = []
+        solved_per_model = user_record.get("solved", {})
+        for raw_model_name, problems_for_model in solved_per_model.items():
+            for problem_id, record in problems_for_model.items():
+                production_metadata = {
+                    key: record[key]
+                    for key in (
+                        "production_description",
+                        "solution_publication_status",
+                        "solution_publication_date",
+                    )
+                    if key in record
+                }
+                normalized.append(
+                    {
+                        "result_id": None,
+                        "problem_id": str(problem_id),
+                        "statement_revision": 1,
+                        "declared_model": str(raw_model_name),
+                        "accepted_at": str(record["solved_at"]),
+                        "benchmark_commit": str(record["benchmark_commit"]),
+                        "intake": {
+                            "kind": "issue",
+                            "issue_number": int(record["issue_number"]),
+                        },
+                        "submission": {
+                            "kind": str(record["submission_kind"]),
+                            "repo": str(record["submission_repo"]),
+                            "ref": str(record["submission_ref"]),
+                            "public": bool(record["submission_public"]),
+                        },
+                        "production_metadata": production_metadata,
+                    }
+                )
+        return user, normalized
+    if version == 2:
+        try:
+            records = parse_v2_file(user_record, context=context)
+        except ResultsV2Error as exc:
+            raise SystemExit(str(exc)) from exc
+        return user_record["user"], records
+    raise SystemExit(
+        f"results file for user {user_record.get('user')!r} has "
+        f"schema_version {version!r}; "
+        "this generator supports versions 1 and 2."
+    )
 
 
 def camel_case(value: str) -> str:
@@ -622,7 +757,10 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     # blanket `import Mathlib` (and the all-Mathlib notation table that
     # comes with it) cannot pollute another problem whose body uses
     # identifiers like `μ` that Mathlib reserves as notation tokens.
-    sorted_problems = sorted(problems, key=lambda p: p.sort_index)
+    sorted_problems = sorted(
+        (problem for problem in problems if problem.visible),
+        key=lambda p: p.sort_index,
+    )
     umbrella_imports: list[str] = []
     for problem in sorted_problems:
         imports, fragments = build_problem_fragment(problem, benchmark_repo)
@@ -694,8 +832,10 @@ def timestamp_key(value: str) -> float:
 
 
 def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem]) -> dict[str, Any]:
+    """Build the public catalog from the complete visible/hidden manifest."""
+
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "generated_at": utc_now(),
         "benchmark": {
             "repo": "leanprover/lean-eval",
@@ -705,7 +845,15 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
             {
                 "id": problem.id,
                 "title": problem.title,
-                "test": problem.test,
+                # Kept in the derived payload during the UI transition. Hidden
+                # catalog fixtures are omitted entirely rather than exposed as
+                # a public "test" section.
+                "test": False,
+                "group": problem.group,
+                "status": problem.status,
+                "visible": problem.visible,
+                "statement_revision": problem.statement_revision,
+                "tags": list(problem.tags),
                 "submitter": problem.submitter,
                 "module": problem.module,
                 "snapshot_module": snapshot_module_name(problem),
@@ -725,6 +873,7 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
                 "sort_index": problem.sort_index,
             }
             for problem in problems
+            if problem.visible
         ],
     }
 
@@ -735,62 +884,85 @@ def build_leaderboard_payload(
     problems: list[Problem],
     raw_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    problem_map = {problem.id: problem for problem in problems}
-    per_model_problem: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
-    per_model_submitters: dict[str, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
-    model_display: dict[str, str] = {}
+    """Aggregate results against the complete visible/hidden catalog."""
 
-    for user_record in raw_results:
-        user = str(user_record["user"])
-        schema_version = user_record.get("schema_version")
-        if schema_version != 1:
-            raise SystemExit(
-                f"results file for user {user!r} has schema_version "
-                f"{schema_version!r}; this generator only knows version 1."
-            )
-        solved_per_model = user_record.get("solved", {})
-        for raw_model_name, problems_for_model in solved_per_model.items():
-            model_name = normalize_model_name(str(raw_model_name))
+    catalog_problem_map = {problem.id: problem for problem in problems}
+    problem_map = {
+        problem.id: problem for problem in problems if problem.visible
+    }
+    per_model_problem: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    per_model_submitter_problems: dict[str, defaultdict[str, set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )
+    model_display: dict[str, str] = {}
+    public_submitters: set[str] = set()
+
+    for file_index, user_record in enumerate(raw_results):
+        user, records = normalized_result_records(
+            user_record,
+            context=f"results file {file_index} for {user_record.get('user')!r}",
+        )
+        for record in records:
+            problem_id = record["problem_id"]
+            catalog_problem = catalog_problem_map.get(problem_id)
+            if catalog_problem is not None and not catalog_problem.visible:
+                # Hidden catalog entries are internal fixtures. They must not
+                # create a row, affect a score, or leak into public provenance.
+                continue
+            public_submitters.add(user)
+            model_name = normalize_model_name(record["declared_model"])
             model_id = slugify(model_name)
             model_display.setdefault(model_id, model_name)
-            for problem_id, record in problems_for_model.items():
-                per_model_submitters[model_id][user] += 1
-                current = per_model_problem[model_id].get(problem_id)
-                production_description_raw = record.get("production_description")
-                production_description = (
-                    str(production_description_raw).strip()
-                    if isinstance(production_description_raw, str) and str(production_description_raw).strip()
-                    else None
-                )
-                submission_kind = str(record["submission_kind"])
-                candidate = {
-                    "problem_id": problem_id,
-                    "solved_at": str(record["solved_at"]),
-                    "provenance": {
-                        "user": user,
-                        "issue_number": int(record["issue_number"]),
-                        "benchmark_commit": str(record["benchmark_commit"]),
-                        "submission_kind": submission_kind,
-                        "submission_repo": str(record["submission_repo"]),
-                        "submission_ref": str(record["submission_ref"]),
-                    },
-                    "public_solution": {
-                        "available": bool(record["submission_public"]),
-                        "kind": submission_kind if record["submission_public"] else None,
-                        "repo": str(record["submission_repo"]) if record["submission_public"] else None,
-                        "ref": str(record["submission_ref"]) if record["submission_public"] else None,
-                        "url": public_solution_url(
-                            submission_kind,
-                            str(record["submission_repo"]),
-                            str(record["submission_ref"]),
-                            problem_id,
-                            bool(record["submission_public"]),
-                        ),
-                    },
-                    "production_description": production_description,
-                }
-                if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(current["solved_at"]):
-                    per_model_problem[model_id][problem_id] = candidate
+            per_model_submitter_problems[model_id][user].add(problem_id)
+            current = per_model_problem[model_id].get(problem_id)
+            production_description_raw = record["production_metadata"].get(
+                "production_description"
+            )
+            production_description = (
+                production_description_raw.strip()
+                if isinstance(production_description_raw, str)
+                and production_description_raw.strip()
+                else None
+            )
+            submission = record["submission"]
+            intake = record["intake"]
+            submission_kind = submission["kind"]
+            provenance = {
+                "user": user,
+                "benchmark_commit": record["benchmark_commit"],
+                "submission_kind": submission_kind,
+                "submission_repo": submission["repo"],
+                "submission_ref": submission["ref"],
+                "intake": intake,
+                "statement_revision": record["statement_revision"],
+            }
+            if record["result_id"] is not None:
+                provenance["result_id"] = record["result_id"]
+            if intake["kind"] == "issue":
+                provenance["issue_number"] = intake["issue_number"]
+            candidate = {
+                "problem_id": problem_id,
+                "solved_at": record["accepted_at"],
+                "provenance": provenance,
+                "public_solution": {
+                    "available": submission["public"],
+                    "kind": submission_kind if submission["public"] else None,
+                    "repo": submission["repo"] if submission["public"] else None,
+                    "ref": submission["ref"] if submission["public"] else None,
+                    "url": public_solution_url(
+                        submission_kind,
+                        submission["repo"],
+                        submission["ref"],
+                        problem_id,
+                        submission["public"],
+                    ),
+                },
+                "production_description": production_description,
+            }
+            if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(
+                current["solved_at"]
+            ):
+                per_model_problem[model_id][problem_id] = candidate
 
     # Snapshot-race tolerance: a result can be recorded against a
     # leanprover/lean-eval commit slightly newer than the leaderboard's
@@ -831,7 +1003,7 @@ def build_leaderboard_payload(
             return (
                 solving_model_counts[item["problem_id"]],
                 -timestamp_key(item["solved_at"]),
-                1 if problem and problem.test else 0,
+                1 if problem is None else 0,
                 item["problem_id"],
             )
 
@@ -841,11 +1013,13 @@ def build_leaderboard_payload(
             recency_component = int(timestamp_key(item["solved_at"]) // 86400)
             item["rarity_rank"] = rank
             item["rarity_score"] = (total_models - solving_model_counts[item["problem_id"]]) * 1_000_000 + recency_component
-            item["problem_test"] = problem.test if problem else False
+            item["problem_test"] = False
 
         solved_total = len(solved_items)
-        solved_main = sum(0 if problem_map[item["problem_id"]].test else 1 for item in solved_items if item["problem_id"] in problem_map)
-        solved_test = sum(1 if problem_map[item["problem_id"]].test else 0 for item in solved_items if item["problem_id"] in problem_map)
+        solved_main = sum(
+            1 for item in solved_items if item["problem_id"] in problem_map
+        )
+        solved_test = 0
         entries.append(
             {
                 "model_id": model_id,
@@ -860,12 +1034,12 @@ def build_leaderboard_payload(
                 },
                 "first_solved_at": first_solved_at,
                 "last_solved_at": last_solved_at,
-                "submitter_count": len(per_model_submitters[model_id]),
+                "submitter_count": len(per_model_submitter_problems[model_id]),
                 "submitters": [
-                    {"user": user, "solved_total": count}
-                    for user, count in sorted(
-                        per_model_submitters[model_id].items(),
-                        key=lambda item: (-item[1], item[0].lower()),
+                    {"user": user, "solved_total": len(problem_ids)}
+                    for user, problem_ids in sorted(
+                        per_model_submitter_problems[model_id].items(),
+                        key=lambda item: (-len(item[1]), item[0].lower()),
                     )
                 ],
                 "solved_problem_ids": [item["problem_id"] for item in solved_items],
@@ -907,6 +1081,9 @@ def build_leaderboard_payload(
 
     return {
         "schema_version": 1,
+        "raw_results_schema_versions": sorted(
+            {int(record.get("schema_version", -1)) for record in raw_results}
+        ),
         "generated_at": utc_now(),
         "results_repo": {
             "repo": RESULTS_REPO_SLUG,
@@ -918,11 +1095,13 @@ def build_leaderboard_payload(
         },
         "summary": {
             "models": len(entries),
-            "submitters": len({str(record["user"]) for record in raw_results}),
-            "problem_authors": len({problem.submitter for problem in problems}),
-            "problems": len(problems),
-            "main_problems": sum(0 if problem.test else 1 for problem in problems),
-            "test_problems": sum(1 if problem.test else 0 for problem in problems),
+            "submitters": len(public_submitters),
+            "problem_authors": len(
+                {problem.submitter for problem in problems if problem.visible}
+            ),
+            "problems": len(problem_map),
+            "main_problems": len(problem_map),
+            "test_problems": 0,
         },
         "entries": entries,
     }
@@ -961,6 +1140,28 @@ def parse_args() -> argparse.Namespace:
         "Defaults to <results-repo>/results.",
     )
     parser.add_argument("--output-dir", default=str(SITE_DATA_ROOT))
+    parser.add_argument(
+        "--state-domain",
+        default=None,
+        help="Optional lean-eval-state materialized/domain.json projection. "
+        "The preview never reads State events directly.",
+    )
+    parser.add_argument(
+        "--state-repo",
+        default=None,
+        help="State checkout whose HEAD produced --state-domain; recorded as provenance.",
+    )
+    parser.add_argument(
+        "--preview-fixture",
+        default=None,
+        help="Optional schema-v1 lifecycle/alias fixture for local preview development. "
+        "Never inferred or enabled implicitly.",
+    )
+    parser.add_argument(
+        "--site-base-url",
+        default="https://lean-lang.org/eval/",
+        help="Absolute public base URL used only for RSS links.",
+    )
     parser.add_argument(
         "--no-write-snapshot",
         action="store_true",
@@ -1041,11 +1242,65 @@ def main() -> int:
     problems = load_manifest(manifest_dir, benchmark_repo)
     raw_results = load_results(results_root)
 
+    normalized_files = [
+        normalized_result_records(
+            user_record,
+            context=f"results file {index} for {user_record.get('user')!r}",
+        )
+        for index, user_record in enumerate(raw_results)
+    ]
+
     write_json(output_dir / "problems.json", build_problem_payload(benchmark_repo, problems))
-    write_json(
-        output_dir / "leaderboard.json",
-        build_leaderboard_payload(results_repo, benchmark_repo, problems, raw_results),
+    leaderboard_payload = build_leaderboard_payload(
+        results_repo, benchmark_repo, problems, raw_results
     )
+    write_json(output_dir / "leaderboard.json", leaderboard_payload)
+    preview_payload = {
+        **leaderboard_payload,
+        "preview": {
+            "kind": "results-v2-compatibility",
+            "source": "strict-v2-normalized-results",
+        },
+    }
+    write_json(output_dir / "leaderboard-preview.json", preview_payload)
+    fixture_path = (
+        pathlib.Path(args.preview_fixture).resolve() if args.preview_fixture else None
+    )
+    fixture = load_preview_fixture(fixture_path)
+    aliases = {
+        item["declared_label"]: {
+            "canonical_id": item["canonical_id"],
+            "label": item["label"],
+        }
+        for item in fixture.get("model_aliases", [])
+    }
+    state_domain_path = (
+        pathlib.Path(args.state_domain).resolve() if args.state_domain else None
+    )
+    state_domain = load_json(state_domain_path) if state_domain_path else None
+    state_repo = pathlib.Path(args.state_repo).resolve() if args.state_repo else None
+    if state_domain_path is not None and state_repo is None:
+        raise SystemExit("--state-domain requires --state-repo for immutable provenance")
+    fallback_solutions = adapt_results_store(normalized_files, aliases)
+    state_solutions = adapt_state_domain(state_domain, aliases)
+    v2_files = build_v2_projection(
+        problems=problems,
+        solutions=merge_solutions(state_solutions, fallback_solutions),
+        set_definitions=load_set_definitions(benchmark_repo / "manifests" / "sets"),
+        tag_registry=load_tag_registry(benchmark_repo / "manifests" / "tags.toml"),
+        fixture=fixture,
+        generated_at=leaderboard_payload["generated_at"],
+        benchmark_commit=git_head(benchmark_repo),
+        state_commit=git_head(state_repo) if state_repo else None,
+        state_metadata=state_domain,
+        site_base_url=args.site_base_url,
+    )
+    for relative_path, payload in v2_files.items():
+        destination = output_dir / relative_path
+        if isinstance(payload, str):
+            write_text(destination, payload)
+        else:
+            write_json(destination, payload)
     if not args.no_write_snapshot:
         write_benchmark_snapshot(benchmark_repo, problems)
     return 0

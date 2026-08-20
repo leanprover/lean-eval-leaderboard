@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leanprover.github.io/lean-eval-leaderboard/schemas/site-data-v2.schema.json",
+  "title": "LeanEval split site-data v2 payload",
+  "oneOf": [
+    {"$ref": "#/$defs/index"},
+    {"$ref": "#/$defs/group"},
+    {"$ref": "#/$defs/problem"},
+    {"$ref": "#/$defs/recent"}
+  ],
+  "$defs": {
+    "nonempty": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
+    "groupId": {
+      "enum": ["formalization-evaluation", "software-verification", "open-conjectures"]
+    },
+    "groupInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "policy"],
+      "properties": {
+        "id": {"$ref": "#/$defs/groupId"},
+        "label": {"$ref": "#/$defs/nonempty"},
+        "policy": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "countSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unique", "first", "total"],
+      "properties": {
+        "unique": {"type": "integer", "minimum": 0},
+        "first": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 0}
+      }
+    },
+    "index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "generated_at", "benchmark", "state", "default_group", "model_aliases", "groups", "recent_solutions_url", "recent_solutions_rss_url", "data_limitations"],
+      "properties": {
+        "schema_version": {"const": 2},
+        "generated_at": {"$ref": "#/$defs/timestamp"},
+        "benchmark": {"type": "object", "required": ["repo", "commit"]},
+        "state": {"type": "object", "required": ["repo", "commit", "materialized", "environment", "source_event_count", "source_digest"]},
+        "default_group": {"$ref": "#/$defs/groupId"},
+        "model_aliases": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["declared_label", "canonical_id", "label"], "properties": {"declared_label": {"$ref": "#/$defs/nonempty"}, "canonical_id": {"$ref": "#/$defs/nonempty"}, "label": {"$ref": "#/$defs/nonempty"}}}},
+        "groups": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "required": ["id", "label", "policy", "default_scope", "problem_count", "solution_count", "data_url", "url"]}},
+        "recent_solutions_url": {"$ref": "#/$defs/nonempty"},
+        "recent_solutions_rss_url": {"$ref": "#/$defs/nonempty"},
+        "data_limitations": {"$ref": "#/$defs/limitations"}
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "generated_at", "group", "default_scope", "scopes", "tags", "problems", "credits", "standings", "standings_default_sort", "data_limitations"],
+      "properties": {
+        "schema_version": {"const": 2},
+        "generated_at": {"$ref": "#/$defs/timestamp"},
+        "group": {"$ref": "#/$defs/groupInfo"},
+        "default_scope": {"$ref": "#/$defs/nonempty"},
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "kind", "frozen", "published_at", "members", "flagship"],
+            "properties": {
+              "id": {"$ref": "#/$defs/nonempty"},
+              "label": {"$ref": "#/$defs/nonempty"},
+              "kind": {"enum": ["frozen-set", "current-status"]},
+              "frozen": {"type": "boolean"},
+              "published_at": {"type": ["string", "null"]},
+              "flagship": {"type": "boolean"},
+              "members": {"type": "array", "items": {"type": "object", "required": ["problem_id", "statement_revision"]}}
+            }
+          }
+        },
+        "tags": {"type": "array", "items": {"type": "object", "required": ["id", "label", "description"]}},
+        "problems": {"type": "array", "items": {"type": "object", "required": ["id", "title", "status", "statement_revision", "tags", "sets", "url", "stable_url", "sort_index"]}},
+        "credits": {"type": "array", "items": {"type": "object", "required": ["result_id", "problem_id", "statement_revision", "canonical_model_id", "model_label", "submitter", "accepted_at", "acceptance_event_id", "first_solve"]}},
+        "standings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["canonical_model_id", "model_label", "counts", "problem_ids", "submitters"],
+            "properties": {
+              "canonical_model_id": {"$ref": "#/$defs/nonempty"},
+              "model_label": {"$ref": "#/$defs/nonempty"},
+              "counts": {"$ref": "#/$defs/countSet"},
+              "problem_ids": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
+              "submitters": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}}
+            }
+          }
+        },
+        "standings_default_sort": {"const": "unique"},
+        "data_limitations": {"$ref": "#/$defs/limitations"}
+      }
+    },
+    "solution": {
+      "type": "object",
+      "required": ["result_id", "problem_id", "statement_revision", "canonical_credit", "submitter", "accepted_at", "acceptance_event_id", "first_solve", "retracted", "metadata", "provenance", "public_solution", "replay", "measurements", "release"],
+      "properties": {
+        "result_id": {"$ref": "#/$defs/nonempty"},
+        "problem_id": {"$ref": "#/$defs/nonempty"},
+        "statement_revision": {"type": "integer", "minimum": 1},
+        "canonical_credit": {"type": "object", "required": ["id", "label", "declared_label"]},
+        "submitter": {"$ref": "#/$defs/nonempty"},
+        "accepted_at": {"$ref": "#/$defs/timestamp"},
+        "acceptance_event_id": {"$ref": "#/$defs/nonempty"},
+        "first_solve": {"type": "boolean"},
+        "retracted": {"type": "boolean"},
+        "metadata": {"type": "object"},
+        "provenance": {"type": "object"},
+        "public_solution": {"type": "object", "required": ["available", "url"]},
+        "replay": {"type": "object", "required": ["status"]},
+        "measurements": {"type": "array", "items": {"type": "object", "required": ["kind", "status"]}},
+        "release": {"type": "object", "required": ["status"]}
+      }
+    },
+    "problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "generated_at", "problem", "lifecycle", "sets", "solutions", "data_limitations"],
+      "properties": {
+        "schema_version": {"const": 2},
+        "generated_at": {"$ref": "#/$defs/timestamp"},
+        "problem": {"type": "object", "required": ["id", "title", "group", "current_status", "visible", "statement_revision", "tags", "stable_url", "preview_url"]},
+        "lifecycle": {"type": "object", "required": ["status_history", "statement_revisions"]},
+        "sets": {"type": "array", "items": {"type": "object", "required": ["id", "title", "frozen", "published_at", "statement_revision"]}},
+        "solutions": {"type": "array", "items": {"$ref": "#/$defs/solution"}},
+        "data_limitations": {"$ref": "#/$defs/limitations"}
+      }
+    },
+    "recent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "generated_at", "solutions", "data_limitations"],
+      "properties": {
+        "schema_version": {"const": 2},
+        "generated_at": {"$ref": "#/$defs/timestamp"},
+        "solutions": {"type": "array", "items": {"allOf": [{"$ref": "#/$defs/solution"}, {"type": "object", "required": ["group", "problem_title", "problem_url"]}]}},
+        "data_limitations": {"$ref": "#/$defs/limitations"}
+      }
+    }
+  }
+}

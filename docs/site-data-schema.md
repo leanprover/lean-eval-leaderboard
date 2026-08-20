@@ -22,6 +22,7 @@ The first version should generate exactly two public artifacts:
 site-data/
   problems.json
   leaderboard.json
+  leaderboard-preview.json
 ```
 
 ## `site-data/problems.json`
@@ -30,7 +31,7 @@ This file is the benchmark catalog as consumed by the website.
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 4,
   "generated_at": "2026-04-11T12:00:00Z",
   "benchmark": {
     "repo": "leanprover/lean-eval",
@@ -40,6 +41,11 @@ This file is the benchmark catalog as consumed by the website.
     {
       "id": "finite_graph_ramsey_theorem",
       "title": "Finite Ramsey theorem for graphs",
+      "group": "formalization-evaluation",
+      "status": "active",
+      "visible": true,
+      "statement_revision": 1,
+      "tags": [],
       "test": false,
       "submitter": "Kim Morrison",
       "module": "FormalMathEval.Combinatorics.Ramsey",
@@ -61,13 +67,16 @@ This file is the benchmark catalog as consumed by the website.
 - `generated_at`: ISO 8601 UTC timestamp of the site-data build
 - `benchmark.repo`: source repository for benchmark metadata
 - `benchmark.commit`: exact benchmark commit used for extraction
-- `problems`: complete problem catalog
+- `problems`: public problem catalog; entries with catalog `visible = false`
+  are omitted
 
 ### Per-problem fields
 
 - `id`: stable benchmark problem id
 - `title`: display title
-- `test`: whether this is a test/starter problem
+- `group`, `status`, `visible`, `statement_revision`, and `tags`: required
+  catalog lifecycle metadata copied from the benchmark manifest
+- `test`: compatibility field for the current UI; always `false` in schema v4
 - `submitter`: benchmark submitter
 - `module`: Lean module containing the theorem
 - `theorem`: Lean theorem identifier from the manifest
@@ -82,6 +91,32 @@ This file is the benchmark catalog as consumed by the website.
 
 This file is the site-facing leaderboard representation. It is already
 aggregated, ranked, and enriched with provenance and notability metadata.
+
+The generator accepts raw results schemas v1 and v2. The `raw_results_schema_versions`
+top-level array records which versions contributed to a build. V2 is validated
+against the flat public contract, including recomputing every `result_id`,
+before aggregation. A new statement revision remains a distinct base record,
+while this compatibility view counts a model/user/problem only once.
+Results for catalog entries with `visible = false` are removed before model,
+submitter, score, rarity, provenance, and summary aggregation. Hidden fixtures
+therefore cannot create a leaderboard row or leak through the public site data.
+
+`leaderboard-preview.json` contains this exact payload plus:
+
+```json
+{
+  "preview": {
+    "kind": "results-v2-compatibility",
+    "source": "strict-v2-normalized-results"
+  }
+}
+```
+
+CI removes only `preview` and requires the remaining JSON to equal
+`leaderboard.json` exactly. The artifact is retained as a strict results-v2
+parity check. The richer local-only `/preview/` UI consumes the split v2
+materialized-domain projection documented in
+[`site-data-v2.md`](site-data-v2.md).
 
 ```json
 {

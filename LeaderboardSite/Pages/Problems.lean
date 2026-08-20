@@ -161,6 +161,10 @@ private def filterHaystackText (problem : ProblemEntry) : String :=
   let parts : Array String := #[
     problem.title,
     problem.id,
+    problem.group,
+    problem.status,
+    toString problem.statementRevision,
+    String.intercalate " " problem.tags.toList,
     problem.submitter,
     problem.notesText.getD "",
     problem.sourceText.getD "",
