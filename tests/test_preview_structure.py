@@ -21,6 +21,8 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("_site/preview/index.html", workflow)
         self.assertIn("leaderboard-preview.json", workflow)
         self.assertIn("del(.preview)", workflow)
+        self.assertIn("Verify public catalog visibility", workflow)
+        self.assertIn("all(.problems[]; .visible == true", workflow)
         self.assertIn("python3 scripts/check_links.py", workflow)
 
 

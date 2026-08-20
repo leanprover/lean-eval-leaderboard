@@ -5,7 +5,11 @@ import pathlib
 import unittest
 from unittest.mock import patch
 
-from scripts.generate_site_data import Problem, build_leaderboard_payload
+from scripts.generate_site_data import (
+    Problem,
+    build_leaderboard_payload,
+    build_problem_payload,
+)
 from scripts.results_v2 import result_id
 
 
@@ -13,11 +17,19 @@ SHA = "a" * 40
 REF = "b" * 40
 
 
-def problem() -> Problem:
+def problem(
+    problem_id: str = "two_plus_two",
+    *,
+    visible: bool = True,
+) -> Problem:
     return Problem(
-        id="two_plus_two",
-        title="Two plus two",
-        test=False,
+        id=problem_id,
+        title=problem_id.replace("_", " ").title(),
+        group="formalization-evaluation",
+        status="active",
+        visible=visible,
+        statement_revision=1,
+        tags=(),
         submitter="benchmark-author",
         module="LeanEval.TwoPlusTwo",
         notes=None,
@@ -123,6 +135,54 @@ class ResultsCompatibilityTests(unittest.TestCase):
         document["results"][0]["benchmark_commit"] = "mutable-main"
         with self.assertRaisesRegex(SystemExit, "benchmark_commit must be a SHA"):
             build([document])
+
+    def test_hidden_catalog_problems_are_not_public_or_scored(self) -> None:
+        visible = problem()
+        hidden = problem("internal_fixture", visible=False)
+        hidden_only = v1_document()
+        hidden_only["user"] = "bob"
+        hidden_only["solved"] = {
+            "Hidden-only Model": {
+                "internal_fixture": copy.deepcopy(
+                    v1_document()["solved"]["Claude Opus 4.6"]["two_plus_two"]
+                )
+            }
+        }
+
+        with (
+            patch("scripts.generate_site_data.git_head", return_value="c" * 40),
+            patch(
+                "scripts.generate_site_data.utc_now",
+                return_value="2026-08-20T00:00:00Z",
+            ),
+        ):
+            leaderboard = build_leaderboard_payload(
+                results_repo=pathlib.Path("results"),
+                benchmark_repo=pathlib.Path("benchmark"),
+                problems=[visible, hidden],
+                raw_results=[v1_document(), hidden_only],
+            )
+            problem_payload = build_problem_payload(
+                pathlib.Path("benchmark"), [visible, hidden]
+            )
+
+        self.assertEqual(
+            [item["id"] for item in problem_payload["problems"]], ["two_plus_two"]
+        )
+        public_problem = problem_payload["problems"][0]
+        self.assertEqual(public_problem["group"], "formalization-evaluation")
+        self.assertEqual(public_problem["status"], "active")
+        self.assertEqual(public_problem["statement_revision"], 1)
+        self.assertEqual(public_problem["tags"], [])
+        self.assertTrue(public_problem["visible"])
+
+        self.assertEqual(leaderboard["summary"]["problems"], 1)
+        self.assertEqual(leaderboard["summary"]["submitters"], 1)
+        self.assertEqual(len(leaderboard["entries"]), 1)
+        self.assertEqual(leaderboard["entries"][0]["score"]["solved_total"], 1)
+        self.assertEqual(
+            leaderboard["entries"][0]["solved_problem_ids"], ["two_plus_two"]
+        )
 
 
 if __name__ == "__main__":

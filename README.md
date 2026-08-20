@@ -57,6 +57,11 @@ with language-neutral identifier vectors under `tests/fixtures/`. Keeping
 these files in the site repository avoids executing code from the checked-out
 results data repository.
 
+Benchmark catalog metadata is read from the required `group`, `status`,
+`visible`, `statement_revision`, and `tags` manifest fields. Problems marked
+`visible = false` and their results are excluded before any public catalog or
+leaderboard aggregation is produced.
+
 The Pages artifact includes `/preview/`, visibly labeled “Results schema v2
 preview.” It renders from `leaderboard-preview.json` while the current root
 page remains unchanged. Verso's site-root `<base>` keeps assets, problem pages,

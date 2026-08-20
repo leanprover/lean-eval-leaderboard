@@ -86,9 +86,27 @@ class StrictV2ReaderTests(unittest.TestCase):
         document = v2_document()
         document["results"][0]["intake"] = {
             "kind": "server",
-            "submission_id": "0198cafe-1234-7000-8000-000000000000",
+            "submission_id": "0198cafe-1234-7abc-8def-000000000000",
         }
         parse_v2_file(document, context="fixture")
+
+    def test_server_intake_rejects_non_uuidv7_and_noncanonical_ids(self) -> None:
+        for invalid in (
+            "submission-123",
+            "0198cafe-1234-4abc-8def-000000000000",
+            "0198CAFE-1234-7ABC-8DEF-000000000000",
+            "0198cafe-1234-7abc-7def-000000000000",
+        ):
+            with self.subTest(invalid=invalid):
+                document = v2_document()
+                document["results"][0]["intake"] = {
+                    "kind": "server",
+                    "submission_id": invalid,
+                }
+                with self.assertRaisesRegex(
+                    ResultsV2Error, "canonical lowercase UUIDv7"
+                ):
+                    parse_v2_file(document, context="fixture")
 
 
 if __name__ == "__main__":

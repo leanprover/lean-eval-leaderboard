@@ -21,6 +21,9 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 LOGIN_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$")
 OWNER_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9._-]+$")
 UTC_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+UUIDV7_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
 V2_FIELDS = {
     "result_id",
     "problem_id",
@@ -196,7 +199,13 @@ def parse_v2_file(document: Any, *, context: str) -> list[dict[str, Any]]:
         elif intake.get("kind") == "server":
             if set(intake) != {"kind", "submission_id"}:
                 raise ResultsV2Error(f"{item_context}.intake fields are invalid")
-            _string(intake["submission_id"], f"{item_context}.submission_id")
+            submission_id = _string(
+                intake["submission_id"], f"{item_context}.submission_id"
+            )
+            if not UUIDV7_RE.fullmatch(submission_id):
+                raise ResultsV2Error(
+                    f"{item_context}.submission_id must be a canonical lowercase UUIDv7"
+                )
         else:
             raise ResultsV2Error(f"{item_context}.intake.kind is unsupported")
         submission = _object(record["submission"], f"{item_context}.submission")

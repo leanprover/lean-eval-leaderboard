@@ -160,6 +160,17 @@ jobs:
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
 
+      - name: Verify public catalog visibility
+        run: |
+          set -euo pipefail
+          jq --exit-status \
+            '.schema_version == 4 and all(.problems[]; .visible == true and .test == false)' \
+            _site/site-data/problems.json
+          public_count="$(jq '.problems | length' _site/site-data/problems.json)"
+          jq --argjson count "$public_count" --exit-status \
+            '.summary.problems == $count and .summary.main_problems == $count and .summary.test_problems == 0' \
+            _site/site-data/leaderboard.json
+
       - name: Verify results-v2 preview artifact
         run: |
           set -euo pipefail

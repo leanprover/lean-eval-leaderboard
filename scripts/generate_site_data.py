@@ -64,7 +64,11 @@ class Hole:
 class Problem:
     id: str
     title: str
-    test: bool
+    group: str
+    status: str
+    visible: bool
+    statement_revision: int
+    tags: tuple[str, ...]
     submitter: str
     module: str
     notes: str | None
@@ -132,13 +136,30 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
     problems: list[Problem] = []
     for index, path in enumerate(sorted(manifest_dir.glob("*.toml"))):
         raw = tomllib.loads(path.read_text(encoding="utf-8"))
+        for field in ("id", "title", "group", "status", "module", "submitter"):
+            if not isinstance(raw.get(field), str) or not raw[field].strip():
+                raise SystemExit(f"{path}: {field} must be a non-empty string")
+        if type(raw.get("visible")) is not bool:
+            raise SystemExit(f"{path}: visible must be a boolean")
+        revision = raw.get("statement_revision")
+        if type(revision) is not int or revision <= 0:
+            raise SystemExit(f"{path}: statement_revision must be a positive integer")
+        raw_tags = raw.get("tags")
+        if not isinstance(raw_tags, list) or not all(
+            isinstance(tag, str) and tag for tag in raw_tags
+        ):
+            raise SystemExit(f"{path}: tags must be an array of non-empty strings")
         problem_id = str(raw["id"])
         holes = load_holes(benchmark_repo, problem_id)
         problems.append(
             Problem(
                 id=problem_id,
                 title=str(raw["title"]),
-                test=bool(raw.get("test", False)),
+                group=str(raw["group"]),
+                status=str(raw["status"]),
+                visible=raw["visible"],
+                statement_revision=revision,
+                tags=tuple(raw_tags),
                 submitter=str(raw["submitter"]),
                 module=str(raw["module"]),
                 notes=str(raw["notes"]).strip() if raw.get("notes") else None,
@@ -690,7 +711,10 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     # blanket `import Mathlib` (and the all-Mathlib notation table that
     # comes with it) cannot pollute another problem whose body uses
     # identifiers like `μ` that Mathlib reserves as notation tokens.
-    sorted_problems = sorted(problems, key=lambda p: p.sort_index)
+    sorted_problems = sorted(
+        (problem for problem in problems if problem.visible),
+        key=lambda p: p.sort_index,
+    )
     umbrella_imports: list[str] = []
     for problem in sorted_problems:
         imports, fragments = build_problem_fragment(problem, benchmark_repo)
@@ -762,8 +786,10 @@ def timestamp_key(value: str) -> float:
 
 
 def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem]) -> dict[str, Any]:
+    """Build the public catalog from the complete visible/hidden manifest."""
+
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "generated_at": utc_now(),
         "benchmark": {
             "repo": "leanprover/lean-eval",
@@ -773,7 +799,15 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
             {
                 "id": problem.id,
                 "title": problem.title,
-                "test": problem.test,
+                # Kept in the derived payload during the UI transition. Hidden
+                # catalog fixtures are omitted entirely rather than exposed as
+                # a public "test" section.
+                "test": False,
+                "group": problem.group,
+                "status": problem.status,
+                "visible": problem.visible,
+                "statement_revision": problem.statement_revision,
+                "tags": list(problem.tags),
                 "submitter": problem.submitter,
                 "module": problem.module,
                 "snapshot_module": snapshot_module_name(problem),
@@ -793,6 +827,7 @@ def build_problem_payload(benchmark_repo: pathlib.Path, problems: list[Problem])
                 "sort_index": problem.sort_index,
             }
             for problem in problems
+            if problem.visible
         ],
     }
 
@@ -803,12 +838,18 @@ def build_leaderboard_payload(
     problems: list[Problem],
     raw_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    problem_map = {problem.id: problem for problem in problems}
+    """Aggregate results against the complete visible/hidden catalog."""
+
+    catalog_problem_map = {problem.id: problem for problem in problems}
+    problem_map = {
+        problem.id: problem for problem in problems if problem.visible
+    }
     per_model_problem: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     per_model_submitter_problems: dict[str, defaultdict[str, set[str]]] = defaultdict(
         lambda: defaultdict(set)
     )
     model_display: dict[str, str] = {}
+    public_submitters: set[str] = set()
 
     for file_index, user_record in enumerate(raw_results):
         user, records = normalized_result_records(
@@ -816,10 +857,16 @@ def build_leaderboard_payload(
             context=f"results file {file_index} for {user_record.get('user')!r}",
         )
         for record in records:
+            problem_id = record["problem_id"]
+            catalog_problem = catalog_problem_map.get(problem_id)
+            if catalog_problem is not None and not catalog_problem.visible:
+                # Hidden catalog entries are internal fixtures. They must not
+                # create a row, affect a score, or leak into public provenance.
+                continue
+            public_submitters.add(user)
             model_name = normalize_model_name(record["declared_model"])
             model_id = slugify(model_name)
             model_display.setdefault(model_id, model_name)
-            problem_id = record["problem_id"]
             per_model_submitter_problems[model_id][user].add(problem_id)
             current = per_model_problem[model_id].get(problem_id)
             production_description_raw = record["production_metadata"].get(
@@ -910,7 +957,7 @@ def build_leaderboard_payload(
             return (
                 solving_model_counts[item["problem_id"]],
                 -timestamp_key(item["solved_at"]),
-                1 if problem and problem.test else 0,
+                1 if problem is None else 0,
                 item["problem_id"],
             )
 
@@ -920,11 +967,13 @@ def build_leaderboard_payload(
             recency_component = int(timestamp_key(item["solved_at"]) // 86400)
             item["rarity_rank"] = rank
             item["rarity_score"] = (total_models - solving_model_counts[item["problem_id"]]) * 1_000_000 + recency_component
-            item["problem_test"] = problem.test if problem else False
+            item["problem_test"] = False
 
         solved_total = len(solved_items)
-        solved_main = sum(0 if problem_map[item["problem_id"]].test else 1 for item in solved_items if item["problem_id"] in problem_map)
-        solved_test = sum(1 if problem_map[item["problem_id"]].test else 0 for item in solved_items if item["problem_id"] in problem_map)
+        solved_main = sum(
+            1 for item in solved_items if item["problem_id"] in problem_map
+        )
+        solved_test = 0
         entries.append(
             {
                 "model_id": model_id,
@@ -1000,11 +1049,13 @@ def build_leaderboard_payload(
         },
         "summary": {
             "models": len(entries),
-            "submitters": len({str(record["user"]) for record in raw_results}),
-            "problem_authors": len({problem.submitter for problem in problems}),
-            "problems": len(problems),
-            "main_problems": sum(0 if problem.test else 1 for problem in problems),
-            "test_problems": sum(1 if problem.test else 0 for problem in problems),
+            "submitters": len(public_submitters),
+            "problem_authors": len(
+                {problem.submitter for problem in problems if problem.visible}
+            ),
+            "problems": len(problem_map),
+            "main_problems": len(problem_map),
+            "test_problems": 0,
         },
         "entries": entries,
     }
