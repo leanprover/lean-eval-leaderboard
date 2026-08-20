@@ -34,7 +34,7 @@ def theme (_name : String) (siteName : String) : Theme := {
     let title ← param (α := String) "title"
     let path := (← read).path
     let isHome := path.isEmpty
-    let isPreview := path == #["preview"]
+    let isPreview := path[0]? == some "preview"
     let isWide := isHome || isPreview
     let pageClass :=
       if isPreview then "home-page preview-page"
@@ -80,6 +80,7 @@ def theme (_name : String) (siteName : String) : Theme := {
           <script src="static/theme-toggle.js"></script>
           <script defer="true" src="static/background.js"></script>
           <script defer="true" src="static/site.js"></script>
+          <script defer="true" src="static/v2-preview.js"></script>
         </head>
         <body class={{pageClass}}>
           <div class="site-shell">

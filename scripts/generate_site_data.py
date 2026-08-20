@@ -19,8 +19,24 @@ from typing import Any
 
 try:
     from scripts.results_v2 import ResultsV2Error, parse_v2_file
+    from scripts.v2_site_data import (
+        adapt_results_store,
+        adapt_state_domain,
+        build_v2_projection,
+        load_preview_fixture,
+        load_set_definitions,
+        merge_solutions,
+    )
 except ModuleNotFoundError:
     from results_v2 import ResultsV2Error, parse_v2_file
+    from v2_site_data import (
+        adapt_results_store,
+        adapt_state_domain,
+        build_v2_projection,
+        load_preview_fixture,
+        load_set_definitions,
+        merge_solutions,
+    )
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -44,6 +60,8 @@ RESULTS_REPO_SLUG = "leanprover/lean-eval-submissions"
 # dependencies" for the procedure.
 BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+PROBLEM_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
+TAG_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 ROOT_DECLARATIONS_BY_PROBLEM = {
     "annals_dirichlet_weyl_bound": {"Nat.IsCubeFree"},
 }
@@ -149,7 +167,19 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
             isinstance(tag, str) and tag for tag in raw_tags
         ):
             raise SystemExit(f"{path}: tags must be an array of non-empty strings")
+        if len(raw_tags) != len(set(raw_tags)):
+            raise SystemExit(f"{path}: tags must not contain duplicates")
+        if raw["group"] not in {
+            "formalization-evaluation",
+            "software-verification",
+            "open-conjectures",
+        }:
+            raise SystemExit(f"{path}: unsupported group {raw['group']!r}")
+        if raw["status"] not in {"draft", "active", "archived"}:
+            raise SystemExit(f"{path}: unsupported status {raw['status']!r}")
         problem_id = str(raw["id"])
+        if not PROBLEM_ID_RE.fullmatch(problem_id):
+            raise SystemExit(f"{path}: invalid problem id {problem_id!r}")
         holes = load_holes(benchmark_repo, problem_id)
         problems.append(
             Problem(
@@ -181,6 +211,22 @@ def write_json(path: pathlib.Path, payload: Any) -> None:
 def write_text(path: pathlib.Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def load_tag_registry(path: pathlib.Path) -> dict[str, dict[str, str]]:
+    if not path.is_file():
+        return {}
+    raw = tomllib.loads(path.read_text(encoding="utf-8"))
+    registry: dict[str, dict[str, str]] = {}
+    for tag, definition in raw.get("tags", {}).items():
+        if not TAG_ID_RE.fullmatch(str(tag)):
+            raise SystemExit(f"{path}: invalid tag id {tag!r}")
+        label = definition.get("label")
+        description = definition.get("description")
+        if not isinstance(label, str) or not label or not isinstance(description, str):
+            raise SystemExit(f"{path}: tag {tag!r} has invalid display metadata")
+        registry[str(tag)] = {"label": label, "description": description}
+    return registry
 
 
 def benchmark_mathlib_require(benchmark_repo: pathlib.Path) -> tuple[str, str]:
@@ -1095,6 +1141,28 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output-dir", default=str(SITE_DATA_ROOT))
     parser.add_argument(
+        "--state-domain",
+        default=None,
+        help="Optional lean-eval-state materialized/domain.json projection. "
+        "The preview never reads State events directly.",
+    )
+    parser.add_argument(
+        "--state-repo",
+        default=None,
+        help="State checkout whose HEAD produced --state-domain; recorded as provenance.",
+    )
+    parser.add_argument(
+        "--preview-fixture",
+        default=None,
+        help="Optional schema-v1 lifecycle/alias fixture for local preview development. "
+        "Never inferred or enabled implicitly.",
+    )
+    parser.add_argument(
+        "--site-base-url",
+        default="https://lean-lang.org/eval/",
+        help="Absolute public base URL used only for RSS links.",
+    )
+    parser.add_argument(
         "--no-write-snapshot",
         action="store_true",
         help="Regenerate site-data/ only; leave benchmark-snapshot/ untouched. "
@@ -1174,6 +1242,14 @@ def main() -> int:
     problems = load_manifest(manifest_dir, benchmark_repo)
     raw_results = load_results(results_root)
 
+    normalized_files = [
+        normalized_result_records(
+            user_record,
+            context=f"results file {index} for {user_record.get('user')!r}",
+        )
+        for index, user_record in enumerate(raw_results)
+    ]
+
     write_json(output_dir / "problems.json", build_problem_payload(benchmark_repo, problems))
     leaderboard_payload = build_leaderboard_payload(
         results_repo, benchmark_repo, problems, raw_results
@@ -1187,6 +1263,44 @@ def main() -> int:
         },
     }
     write_json(output_dir / "leaderboard-preview.json", preview_payload)
+    fixture_path = (
+        pathlib.Path(args.preview_fixture).resolve() if args.preview_fixture else None
+    )
+    fixture = load_preview_fixture(fixture_path)
+    aliases = {
+        item["declared_label"]: {
+            "canonical_id": item["canonical_id"],
+            "label": item["label"],
+        }
+        for item in fixture.get("model_aliases", [])
+    }
+    state_domain_path = (
+        pathlib.Path(args.state_domain).resolve() if args.state_domain else None
+    )
+    state_domain = load_json(state_domain_path) if state_domain_path else None
+    state_repo = pathlib.Path(args.state_repo).resolve() if args.state_repo else None
+    if state_domain_path is not None and state_repo is None:
+        raise SystemExit("--state-domain requires --state-repo for immutable provenance")
+    fallback_solutions = adapt_results_store(normalized_files, aliases)
+    state_solutions = adapt_state_domain(state_domain, aliases)
+    v2_files = build_v2_projection(
+        problems=problems,
+        solutions=merge_solutions(state_solutions, fallback_solutions),
+        set_definitions=load_set_definitions(benchmark_repo / "manifests" / "sets"),
+        tag_registry=load_tag_registry(benchmark_repo / "manifests" / "tags.toml"),
+        fixture=fixture,
+        generated_at=leaderboard_payload["generated_at"],
+        benchmark_commit=git_head(benchmark_repo),
+        state_commit=git_head(state_repo) if state_repo else None,
+        state_metadata=state_domain,
+        site_base_url=args.site_base_url,
+    )
+    for relative_path, payload in v2_files.items():
+        destination = output_dir / relative_path
+        if isinstance(payload, str):
+            write_text(destination, payload)
+        else:
+            write_json(destination, payload)
     if not args.no_write_snapshot:
         write_benchmark_snapshot(benchmark_repo, problems)
     return 0

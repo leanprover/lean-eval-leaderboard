@@ -27,6 +27,12 @@ site-data/
   problems.json
   leaderboard.json
   leaderboard-preview.json
+  v2/
+    index.json
+    groups/<group>.json
+    problems/<id>.json
+    recent-solutions.json
+    recent-solutions.xml
 ```
 
 The `site-data/` directory is generated from the results store
@@ -50,8 +56,10 @@ The generator preserves the legacy nested-v1 reader and also accepts the
 strict flat-v2 results contract. V2 files are rejected unless their complete
 envelope, stable identifiers, uniqueness constraints, source pins, and intake
 shape validate. Both versions normalize into one internal record shape before
-aggregation. `leaderboard-preview.json` is the same derived payload plus a
-preview marker; CI proves its rendering payload equals `leaderboard.json`.
+aggregation. `leaderboard-preview.json` remains a parity artifact for the
+strict results-v2 transition. The local-only `/preview/` UI consumes the split
+`site-data/v2/` materialized-domain projection documented in
+[docs/site-data-v2.md](docs/site-data-v2.md).
 The vendored machine-readable contract is `schemas/results-v2.schema.json`,
 with language-neutral identifier vectors under `tests/fixtures/`. Keeping
 these files in the site repository avoids executing code from the checked-out
@@ -62,11 +70,13 @@ Benchmark catalog metadata is read from the required `group`, `status`,
 `visible = false` and their results are excluded before any public catalog or
 leaderboard aggregation is produced.
 
-The Pages artifact includes `/preview/`, visibly labeled “Results schema v2
-preview.” It renders from `leaderboard-preview.json` while the current root
-page remains unchanged. Verso's site-root `<base>` keeps assets, problem pages,
-and navigation links valid from the nested preview URL. The deploy's link check
-walks both the root and preview pages.
+The Pages artifact includes a visibly labeled local-only `/preview/` surface:
+group tabs and policies, flagship/status scopes, URL-persistent tag filters,
+group-local unique/first/total standings, recent JSON/RSS feeds, and permanent
+problem comparison pages. The current root page remains unchanged. Existing
+`/problems/<id>/` routes keep the public `/eval/problems/<id>/` URLs stable.
+Verso's site-root `<base>` keeps assets and navigation links valid from
+nested preview URLs, and the deploy's link check walks every generated route.
 
 ## Results
 
@@ -207,4 +217,5 @@ be implemented in Verso.
 See:
 
 - [docs/site-data-schema.md](docs/site-data-schema.md)
+- [docs/site-data-v2.md](docs/site-data-v2.md)
 - [docs/website-plan.md](docs/website-plan.md)

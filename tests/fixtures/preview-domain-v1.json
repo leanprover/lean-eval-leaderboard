@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "model_aliases": [
+    {
+      "declared_label": "Example Model v1",
+      "canonical_id": "example-model",
+      "label": "Example Model"
+    }
+  ],
+  "metadata_amendments": {
+    "r2_a": {
+      "human_involvement": {
+        "value": "fully autonomous",
+        "provenance": "backfilled",
+        "recorded_at": "2026-08-20T12:00:00Z"
+      }
+    }
+  },
+  "retracted_result_ids": [],
+  "problem_lifecycle": {
+    "alpha": {
+      "status_history": [
+        {
+          "status": "draft",
+          "effective_at": "2026-07-01T00:00:00Z",
+          "source": "fixture-event-1"
+        },
+        {
+          "status": "active",
+          "effective_at": "2026-08-01T00:00:00Z",
+          "source": "fixture-event-2"
+        }
+      ],
+      "statement_revisions": [
+        {
+          "revision": 1,
+          "status": "current",
+          "source": "fixture-event-2"
+        }
+      ]
+    }
+  }
+}
