@@ -17,6 +17,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+try:
+    from scripts.results_v2 import ResultsV2Error, parse_v2_file
+except ModuleNotFoundError:
+    from results_v2 import ResultsV2Error, parse_v2_file
+
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE_DATA_ROOT = REPO_ROOT / "site-data"
@@ -267,6 +272,69 @@ def load_results(results_root: pathlib.Path) -> list[dict[str, Any]]:
     for path in sorted(results_root.glob("*.json")):
         results.append(load_json(path))
     return results
+
+
+def normalized_result_records(
+    user_record: dict[str, Any],
+    *,
+    context: str,
+) -> tuple[str, list[dict[str, Any]]]:
+    """Return the v2-shaped internal view of one v1 or v2 user file.
+
+    The v1 branch intentionally retains the original reader's permissive
+    behavior. The v2 branch validates the complete flat envelope and stable
+    identifiers before any value reaches aggregation.
+    """
+
+    version = user_record.get("schema_version")
+    if version == 1:
+        user = str(user_record["user"])
+        normalized: list[dict[str, Any]] = []
+        solved_per_model = user_record.get("solved", {})
+        for raw_model_name, problems_for_model in solved_per_model.items():
+            for problem_id, record in problems_for_model.items():
+                production_metadata = {
+                    key: record[key]
+                    for key in (
+                        "production_description",
+                        "solution_publication_status",
+                        "solution_publication_date",
+                    )
+                    if key in record
+                }
+                normalized.append(
+                    {
+                        "result_id": None,
+                        "problem_id": str(problem_id),
+                        "statement_revision": 1,
+                        "declared_model": str(raw_model_name),
+                        "accepted_at": str(record["solved_at"]),
+                        "benchmark_commit": str(record["benchmark_commit"]),
+                        "intake": {
+                            "kind": "issue",
+                            "issue_number": int(record["issue_number"]),
+                        },
+                        "submission": {
+                            "kind": str(record["submission_kind"]),
+                            "repo": str(record["submission_repo"]),
+                            "ref": str(record["submission_ref"]),
+                            "public": bool(record["submission_public"]),
+                        },
+                        "production_metadata": production_metadata,
+                    }
+                )
+        return user, normalized
+    if version == 2:
+        try:
+            records = parse_v2_file(user_record, context=context)
+        except ResultsV2Error as exc:
+            raise SystemExit(str(exc)) from exc
+        return user_record["user"], records
+    raise SystemExit(
+        f"results file for user {user_record.get('user')!r} has "
+        f"schema_version {version!r}; "
+        "this generator supports versions 1 and 2."
+    )
 
 
 def camel_case(value: str) -> str:
@@ -737,60 +805,71 @@ def build_leaderboard_payload(
 ) -> dict[str, Any]:
     problem_map = {problem.id: problem for problem in problems}
     per_model_problem: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
-    per_model_submitters: dict[str, defaultdict[str, int]] = defaultdict(lambda: defaultdict(int))
+    per_model_submitter_problems: dict[str, defaultdict[str, set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )
     model_display: dict[str, str] = {}
 
-    for user_record in raw_results:
-        user = str(user_record["user"])
-        schema_version = user_record.get("schema_version")
-        if schema_version != 1:
-            raise SystemExit(
-                f"results file for user {user!r} has schema_version "
-                f"{schema_version!r}; this generator only knows version 1."
-            )
-        solved_per_model = user_record.get("solved", {})
-        for raw_model_name, problems_for_model in solved_per_model.items():
-            model_name = normalize_model_name(str(raw_model_name))
+    for file_index, user_record in enumerate(raw_results):
+        user, records = normalized_result_records(
+            user_record,
+            context=f"results file {file_index} for {user_record.get('user')!r}",
+        )
+        for record in records:
+            model_name = normalize_model_name(record["declared_model"])
             model_id = slugify(model_name)
             model_display.setdefault(model_id, model_name)
-            for problem_id, record in problems_for_model.items():
-                per_model_submitters[model_id][user] += 1
-                current = per_model_problem[model_id].get(problem_id)
-                production_description_raw = record.get("production_description")
-                production_description = (
-                    str(production_description_raw).strip()
-                    if isinstance(production_description_raw, str) and str(production_description_raw).strip()
-                    else None
-                )
-                submission_kind = str(record["submission_kind"])
-                candidate = {
-                    "problem_id": problem_id,
-                    "solved_at": str(record["solved_at"]),
-                    "provenance": {
-                        "user": user,
-                        "issue_number": int(record["issue_number"]),
-                        "benchmark_commit": str(record["benchmark_commit"]),
-                        "submission_kind": submission_kind,
-                        "submission_repo": str(record["submission_repo"]),
-                        "submission_ref": str(record["submission_ref"]),
-                    },
-                    "public_solution": {
-                        "available": bool(record["submission_public"]),
-                        "kind": submission_kind if record["submission_public"] else None,
-                        "repo": str(record["submission_repo"]) if record["submission_public"] else None,
-                        "ref": str(record["submission_ref"]) if record["submission_public"] else None,
-                        "url": public_solution_url(
-                            submission_kind,
-                            str(record["submission_repo"]),
-                            str(record["submission_ref"]),
-                            problem_id,
-                            bool(record["submission_public"]),
-                        ),
-                    },
-                    "production_description": production_description,
-                }
-                if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(current["solved_at"]):
-                    per_model_problem[model_id][problem_id] = candidate
+            problem_id = record["problem_id"]
+            per_model_submitter_problems[model_id][user].add(problem_id)
+            current = per_model_problem[model_id].get(problem_id)
+            production_description_raw = record["production_metadata"].get(
+                "production_description"
+            )
+            production_description = (
+                production_description_raw.strip()
+                if isinstance(production_description_raw, str)
+                and production_description_raw.strip()
+                else None
+            )
+            submission = record["submission"]
+            intake = record["intake"]
+            submission_kind = submission["kind"]
+            provenance = {
+                "user": user,
+                "benchmark_commit": record["benchmark_commit"],
+                "submission_kind": submission_kind,
+                "submission_repo": submission["repo"],
+                "submission_ref": submission["ref"],
+                "intake": intake,
+                "statement_revision": record["statement_revision"],
+            }
+            if record["result_id"] is not None:
+                provenance["result_id"] = record["result_id"]
+            if intake["kind"] == "issue":
+                provenance["issue_number"] = intake["issue_number"]
+            candidate = {
+                "problem_id": problem_id,
+                "solved_at": record["accepted_at"],
+                "provenance": provenance,
+                "public_solution": {
+                    "available": submission["public"],
+                    "kind": submission_kind if submission["public"] else None,
+                    "repo": submission["repo"] if submission["public"] else None,
+                    "ref": submission["ref"] if submission["public"] else None,
+                    "url": public_solution_url(
+                        submission_kind,
+                        submission["repo"],
+                        submission["ref"],
+                        problem_id,
+                        submission["public"],
+                    ),
+                },
+                "production_description": production_description,
+            }
+            if current is None or timestamp_key(candidate["solved_at"]) < timestamp_key(
+                current["solved_at"]
+            ):
+                per_model_problem[model_id][problem_id] = candidate
 
     # Snapshot-race tolerance: a result can be recorded against a
     # leanprover/lean-eval commit slightly newer than the leaderboard's
@@ -860,12 +939,12 @@ def build_leaderboard_payload(
                 },
                 "first_solved_at": first_solved_at,
                 "last_solved_at": last_solved_at,
-                "submitter_count": len(per_model_submitters[model_id]),
+                "submitter_count": len(per_model_submitter_problems[model_id]),
                 "submitters": [
-                    {"user": user, "solved_total": count}
-                    for user, count in sorted(
-                        per_model_submitters[model_id].items(),
-                        key=lambda item: (-item[1], item[0].lower()),
+                    {"user": user, "solved_total": len(problem_ids)}
+                    for user, problem_ids in sorted(
+                        per_model_submitter_problems[model_id].items(),
+                        key=lambda item: (-len(item[1]), item[0].lower()),
                     )
                 ],
                 "solved_problem_ids": [item["problem_id"] for item in solved_items],
@@ -907,6 +986,9 @@ def build_leaderboard_payload(
 
     return {
         "schema_version": 1,
+        "raw_results_schema_versions": sorted(
+            {int(record.get("schema_version", -1)) for record in raw_results}
+        ),
         "generated_at": utc_now(),
         "results_repo": {
             "repo": RESULTS_REPO_SLUG,
@@ -1042,10 +1124,18 @@ def main() -> int:
     raw_results = load_results(results_root)
 
     write_json(output_dir / "problems.json", build_problem_payload(benchmark_repo, problems))
-    write_json(
-        output_dir / "leaderboard.json",
-        build_leaderboard_payload(results_repo, benchmark_repo, problems, raw_results),
+    leaderboard_payload = build_leaderboard_payload(
+        results_repo, benchmark_repo, problems, raw_results
     )
+    write_json(output_dir / "leaderboard.json", leaderboard_payload)
+    preview_payload = {
+        **leaderboard_payload,
+        "preview": {
+            "kind": "results-v2-compatibility",
+            "source": "strict-v2-normalized-results",
+        },
+    }
+    write_json(output_dir / "leaderboard-preview.json", preview_payload)
     if not args.no_write_snapshot:
         write_benchmark_snapshot(benchmark_repo, problems)
     return 0

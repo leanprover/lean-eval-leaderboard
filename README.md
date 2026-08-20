@@ -26,6 +26,7 @@ public website. **Do not edit generated files here by hand.**
 site-data/
   problems.json
   leaderboard.json
+  leaderboard-preview.json
 ```
 
 The `site-data/` directory is generated from the results store
@@ -45,11 +46,29 @@ recorded in `benchmark-snapshot/.benchmark-commit`, so the regenerated
 site-data and the checked-in snapshot's catalog stay in lockstep; the results
 clone is always read at `main` HEAD.
 
+The generator preserves the legacy nested-v1 reader and also accepts the
+strict flat-v2 results contract. V2 files are rejected unless their complete
+envelope, stable identifiers, uniqueness constraints, source pins, and intake
+shape validate. Both versions normalize into one internal record shape before
+aggregation. `leaderboard-preview.json` is the same derived payload plus a
+preview marker; CI proves its rendering payload equals `leaderboard.json`.
+The vendored machine-readable contract is `schemas/results-v2.schema.json`,
+with language-neutral identifier vectors under `tests/fixtures/`. Keeping
+these files in the site repository avoids executing code from the checked-out
+results data repository.
+
+The Pages artifact includes `/preview/`, visibly labeled “Results schema v2
+preview.” It renders from `leaderboard-preview.json` while the current root
+page remains unchanged. Verso's site-root `<base>` keeps assets, problem pages,
+and navigation links valid from the nested preview URL. The deploy's link check
+walks both the root and preview pages.
+
 ## Results
 
 The results store and its record schema live in
 [`leanprover/lean-eval-submissions`](https://github.com/leanprover/lean-eval-submissions).
-Successes are **sticky**: once a `(user, model, problem)` triple is recorded
+Successes are **sticky**: once a `(user, model, problem, statement revision)`
+tuple is recorded
 it is never modified or removed.
 
 <details>

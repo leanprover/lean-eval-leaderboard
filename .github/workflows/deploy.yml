@@ -160,6 +160,18 @@ jobs:
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
 
+      - name: Verify results-v2 preview artifact
+        run: |
+          set -euo pipefail
+          test -f _site/preview/index.html
+          test -f _site/site-data/leaderboard-preview.json
+          grep -F "Results schema v2 preview" _site/preview/index.html
+          jq --exit-status '.preview.kind == "results-v2-compatibility"' \
+            _site/site-data/leaderboard-preview.json
+          diff \
+            <(jq --sort-keys 'del(.preview)' _site/site-data/leaderboard-preview.json) \
+            <(jq --sort-keys '.' _site/site-data/leaderboard.json)
+
       - name: Check internal links resolve under the GitHub Pages base path
         # GitHub Pages serves this site under `/lean-eval-leaderboard/`, so a
         # link like `/foo` (root-absolute) or `../foo` (popping past the base

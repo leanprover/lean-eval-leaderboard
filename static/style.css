@@ -184,6 +184,50 @@ body::before {
   flex-grow: 1;
 }
 
+.v2-preview-banner {
+  width: min(1120px, calc(100vw - 48px));
+  margin: 0 auto var(--space-8);
+  padding: var(--space-5) var(--space-6);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-5);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg));
+}
+
+.v2-preview-banner h1,
+.v2-preview-banner p {
+  margin: 0;
+}
+
+.v2-preview-banner h1 {
+  font-size: 1.25rem;
+}
+
+.v2-preview-banner p {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.v2-preview-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .v2-preview-banner {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    Topbar (mirrors lean-lang.org's .site-header / .navbar / .nav-link)
    ───────────────────────────────────────────────────────────────────────── */

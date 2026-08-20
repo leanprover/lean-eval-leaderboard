@@ -8,8 +8,8 @@ __pycache__/
 # Derived from results/ + benchmark-snapshot/ by scripts/generate_site_data.py;
 # regenerated on every deploy and on every `lake script run generate`.
 site-data/leaderboard.json
+site-data/leaderboard-preview.json
 site-data/problems.json
 
 # Used by the deploy workflow for the benchmark sibling clone.
 lean-eval-benchmark/
-

@@ -238,6 +238,9 @@ def problemsJsonPath : System.FilePath :=
 def leaderboardJsonPath : System.FilePath :=
   "site-data/leaderboard.json"
 
+def leaderboardPreviewJsonPath : System.FilePath :=
+  "site-data/leaderboard-preview.json"
+
 /-- Per-problem snapshot file under `benchmark-snapshot/BenchmarkProblems/`.
 The snapshot generator emits one Lean module per problem, with the
 source author's exact `import` lines at the top of that file. The
@@ -261,15 +264,21 @@ def parseProblemsPayload : TermElabM ProblemsPayload := do
   | .ok payload => pure payload
   | .error err => throwError "Failed to decode {problemsJsonPath}: {err}"
 
-def parseLeaderboardPayload : TermElabM LeaderboardPayload := do
-  let raw ← IO.FS.readFile leaderboardJsonPath
+def parseLeaderboardPayloadAt (path : System.FilePath) : TermElabM LeaderboardPayload := do
+  let raw ← IO.FS.readFile path
   let json ←
     match Json.parse raw with
     | .ok json => pure json
-    | .error err => throwError "Failed to parse {leaderboardJsonPath}: {err}"
+    | .error err => throwError "Failed to parse {path}: {err}"
   match FromJson.fromJson? json with
   | .ok payload => pure payload
-  | .error err => throwError "Failed to decode {leaderboardJsonPath}: {err}"
+  | .error err => throwError "Failed to decode {path}: {err}"
+
+def parseLeaderboardPayload : TermElabM LeaderboardPayload :=
+  parseLeaderboardPayloadAt leaderboardJsonPath
+
+def parseLeaderboardPreviewPayload : TermElabM LeaderboardPayload :=
+  parseLeaderboardPayloadAt leaderboardPreviewJsonPath
 
 def loadSnapshotProblemFile (snapshotModule : String) : TermElabM String :=
   IO.FS.readFile (snapshotProblemFilePath snapshotModule)

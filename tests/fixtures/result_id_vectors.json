@@ -1,0 +1,69 @@
+{
+  "contract": "r2_ + lowercase_hex(SHA256(UTF8('lean-eval-result-v2\\0') + RFC8785([lowercase_login, verbatim_declared_model, problem_id, statement_revision])))",
+  "vectors": [
+    {
+      "name": "base",
+      "user": "alice",
+      "declared_model": "Claude Opus 4.6",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_80b33b4cd92349af0b7052708859fef6379e73f55ef2dd3664fa2a9f51fe9b63"
+    },
+    {
+      "name": "retry_same_identity",
+      "user": "alice",
+      "declared_model": "Claude Opus 4.6",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_80b33b4cd92349af0b7052708859fef6379e73f55ef2dd3664fa2a9f51fe9b63"
+    },
+    {
+      "name": "login_case_collision_is_intentional",
+      "user": "Alice",
+      "declared_model": "Claude Opus 4.6",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_80b33b4cd92349af0b7052708859fef6379e73f55ef2dd3664fa2a9f51fe9b63"
+    },
+    {
+      "name": "verbatim_model_whitespace",
+      "user": "alice",
+      "declared_model": "Claude Opus 4.6 ",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_87c1330bb8601dab7ee7a4dabcdb4f90e4c2020a6e69cd45753c8c4309fc1e7d"
+    },
+    {
+      "name": "canonical_model_before_alias",
+      "user": "alice",
+      "declared_model": "Canonical Model",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_d732ae5fcfd0b8077d86a1f31d0f557e325b223fe6bc991df4cd1bd07ec80572"
+    },
+    {
+      "name": "alias_label_remains_distinct_base_record",
+      "user": "alice",
+      "declared_model": "Alias Label",
+      "problem_id": "two_plus_two",
+      "statement_revision": 1,
+      "expected": "r2_5f42653c5ff0a9c918dd21a6e69813114bfb61d1b7b0b7f4f69ff90b8c59884e"
+    },
+    {
+      "name": "new_statement_revision",
+      "user": "alice",
+      "declared_model": "Claude Opus 4.6",
+      "problem_id": "two_plus_two",
+      "statement_revision": 2,
+      "expected": "r2_1e82d73e6b1b0766df45ca374b4b10ae0eb8b9205c46e0d4488d302e6aca1a1f"
+    },
+    {
+      "name": "unicode_rfc8785",
+      "user": "unicode-user",
+      "declared_model": "Modèle α",
+      "problem_id": "problème",
+      "statement_revision": 3,
+      "expected": "r2_20645eaf451fcd1407e83a6fe96b66d906b03221fe624e777735835bcc45082a"
+    }
+  ]
+}

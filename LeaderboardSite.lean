@@ -6,6 +6,7 @@ import LeaderboardSite.Pages.Front
 import LeaderboardSite.Pages.Problems
 import LeaderboardSite.Pages.ProblemDetail
 import LeaderboardSite.Pages.Submit
+import LeaderboardSite.Pages.Preview
 
 open Verso Doc
 open Verso.Genre.Blog
@@ -28,6 +29,10 @@ def leaderboardSite : Site :=
     Dir.page "submit"
       (%docName? LeaderboardSite.Pages.Submit)
       (%doc? LeaderboardSite.Pages.Submit)
+      #[],
+    Dir.page "preview"
+      (%docName? LeaderboardSite.Pages.Preview)
+      (%doc? LeaderboardSite.Pages.Preview)
       #[]
   ]
 

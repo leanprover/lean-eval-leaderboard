@@ -22,6 +22,7 @@ The first version should generate exactly two public artifacts:
 site-data/
   problems.json
   leaderboard.json
+  leaderboard-preview.json
 ```
 
 ## `site-data/problems.json`
@@ -82,6 +83,26 @@ This file is the benchmark catalog as consumed by the website.
 
 This file is the site-facing leaderboard representation. It is already
 aggregated, ranked, and enriched with provenance and notability metadata.
+
+The generator accepts raw results schemas v1 and v2. The `raw_results_schema_versions`
+top-level array records which versions contributed to a build. V2 is validated
+against the flat public contract, including recomputing every `result_id`,
+before aggregation. A new statement revision remains a distinct base record,
+while this compatibility view counts a model/user/problem only once.
+
+`leaderboard-preview.json` contains this exact payload plus:
+
+```json
+{
+  "preview": {
+    "kind": "results-v2-compatibility",
+    "source": "strict-v2-normalized-results"
+  }
+}
+```
+
+The `/preview/` page consumes that artifact. CI removes only `preview` and
+requires the remaining JSON to equal `leaderboard.json` exactly.
 
 ```json
 {
