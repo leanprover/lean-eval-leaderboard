@@ -1,7 +1,8 @@
 # Split leaderboard site-data v2
 
-`site-data/v2/` is the local preview's versioned browser interface. The
-existing `/` site and its `problems.json`/`leaderboard.json` files are unchanged.
+`site-data/v2/` is the lifecycle-aware leaderboard's versioned browser
+interface. The compatibility `problems.json`/`leaderboard.json` files remain
+available to the preserved `/legacy/` surface and downstream consumers.
 
 The generator reads the public State `materialized/domain.json`, never the
 append-only events. It joins submissions, results, replay tasks, and release
@@ -45,10 +46,11 @@ The newest published frozen set is the group's flagship/default scope. Before
 a group has a frozen set, draft is its explicit fallback. Tag filters and a
 non-default scope or ordering persist in the query string.
 
-The old `/problems/<id>/` routes remain unchanged, preserving the public
-`/eval/problems/<id>/` URLs under the site's mount point. Preview comparisons
-live at `/preview/problems/<id>/`. The v2 client constructs untrusted content
-with `textContent`, and RSS text is XML-escaped.
+The lifecycle-aware problem views own the stable `/problems/<id>/` routes,
+preserving the public `/eval/problems/<id>/` URLs under the site's mount point.
+The previous server-rendered leaderboard remains available under `/legacy/`
+for comparison and rollback diagnosis. The v2 client constructs untrusted
+content with `textContent`, and RSS text is XML-escaped.
 
 ## Local fixture boundary
 

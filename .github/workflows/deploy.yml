@@ -171,9 +171,16 @@ jobs:
             '.summary.problems == $count and .summary.main_problems == $count and .summary.test_problems == 0' \
             _site/site-data/leaderboard.json
 
-      - name: Verify leaderboard v2 preview artifacts
+      - name: Verify leaderboard v2 cutover and preview artifacts
         run: |
           set -euo pipefail
+          test -f _site/index.html
+          test -f _site/formalization-evaluation/index.html
+          test -f _site/software-verification/index.html
+          test -f _site/open-conjectures/index.html
+          test -f _site/recent/index.html
+          test -f _site/legacy/index.html
+          test -f _site/legacy/problems/index.html
           test -f _site/preview/index.html
           test -f _site/preview/formalization-evaluation/index.html
           test -f _site/preview/software-verification/index.html
@@ -187,17 +194,26 @@ jobs:
             test -n "$problem_id"
             test -f "_site/preview/problems/$problem_id/index.html"
             test -f "_site/problems/$problem_id/index.html"
+            test -f "_site/legacy/problems/$problem_id/index.html"
             test -f "_site/site-data/v2/problems/$problem_id.json"
           done < <(jq -r '.problems[].id' _site/site-data/problems.json)
+          grep -F "LeanEval leaderboard" _site/index.html
+          grep -F 'data-v2-app="true"' _site/index.html
+          test "$(grep -o '<h1' _site/index.html | wc -l)" -eq 1
+          test "$(grep -o '<h1' _site/preview/index.html | wc -l)" -eq 1
+          if grep -F 'v2-preview-badge' _site/index.html; then
+            echo "::error::The stable leaderboard root still contains the preview badge."
+            exit 1
+          fi
           grep -F "LeanEval leaderboard v2" _site/preview/index.html
           grep -F 'aria-live="polite"' _site/preview/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
             _site/site-data/leaderboard-preview.json
           jq --exit-status \
-            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-conjectures", "software-verification"]' \
+            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-conjectures", "software-verification"] and all(.groups[]; (.url | startswith("preview/") | not))' \
             _site/site-data/v2/index.json
           jq --exit-status \
-            '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id))' \
+            '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id)) and all(.problems[]; .url | startswith("problems/"))' \
             _site/site-data/v2/groups/formalization-evaluation.json
           grep -F '<rss version="2.0">' _site/site-data/v2/recent-solutions.xml
           python3 scripts/validate_site_data_v2.py --root _site/site-data/v2

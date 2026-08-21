@@ -57,7 +57,7 @@ strict flat-v2 results contract. V2 files are rejected unless their complete
 envelope, stable identifiers, uniqueness constraints, source pins, and intake
 shape validate. Both versions normalize into one internal record shape before
 aggregation. `leaderboard-preview.json` remains a parity artifact for the
-strict results-v2 transition. The local-only `/preview/` UI consumes the split
+strict results-v2 transition. The lifecycle-aware UI consumes the split
 `site-data/v2/` materialized-domain projection documented in
 [docs/site-data-v2.md](docs/site-data-v2.md).
 The vendored machine-readable contract is `schemas/results-v2.schema.json`,
@@ -70,13 +70,15 @@ Benchmark catalog metadata is read from the required `group`, `status`,
 `visible = false` and their results are excluded before any public catalog or
 leaderboard aggregation is produced.
 
-The Pages artifact includes a visibly labeled local-only `/preview/` surface:
-group tabs and policies, flagship/status scopes, URL-persistent tag filters,
-group-local unique/first/total standings, recent JSON/RSS feeds, and permanent
-problem comparison pages. The current root page remains unchanged. Existing
-`/problems/<id>/` routes keep the public `/eval/problems/<id>/` URLs stable.
-Verso's site-root `<base>` keeps assets and navigation links valid from
-nested preview URLs, and the deploy's link check walks every generated route.
+The lifecycle-aware surface is the default leaderboard: group tabs and
+policies, flagship/status scopes, URL-persistent tag filters, group-local
+unique/first/total standings, recent JSON/RSS feeds, and permanent problem
+comparison pages. Existing `/problems/<id>/` routes keep the public
+`/eval/problems/<id>/` URLs stable. The previous server-rendered leaderboard
+is preserved under `/legacy/`; `/preview/` remains as a visibly labelled
+comparison route during the cutover. Verso's site-root `<base>` keeps assets
+and navigation links valid from nested routes, and the deploy's link check
+walks every generated route.
 
 ## Results
 

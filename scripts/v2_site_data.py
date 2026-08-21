@@ -674,7 +674,7 @@ def build_v2_projection(
                     "statement_revision": problem.statement_revision,
                     "tags": list(problem.tags),
                     "sets": membership,
-                    "url": f"preview/problems/{quote(problem.id, safe='')}/",
+                    "url": f"problems/{quote(problem.id, safe='')}/",
                     "stable_url": f"problems/{quote(problem.id, safe='')}/",
                     "sort_index": problem.sort_index,
                 }
@@ -733,7 +733,7 @@ def build_v2_projection(
                 "problem_count": len(group_problems),
                 "solution_count": len(group_credits),
                 "data_url": f"site-data/{path}",
-                "url": f"preview/{group['id']}/",
+                "url": f"{group['id']}/",
             }
         )
 
@@ -786,7 +786,7 @@ def build_v2_projection(
                 **_solution_payload(solution, first_ids),
                 "group": problem_by_id[solution.problem_id].group,
                 "problem_title": problem_by_id[solution.problem_id].title,
-                "problem_url": f"preview/problems/{quote(solution.problem_id, safe='')}/",
+                "problem_url": f"problems/{quote(solution.problem_id, safe='')}/",
             }
             for solution in recent
             if not solution.retracted
@@ -853,7 +853,7 @@ def build_recent_rss(payload: dict[str, Any], site_base_url: str) -> str:
         "<rss version=\"2.0\">\n"
         "  <channel>\n"
         "    <title>LeanEval recent solutions</title>\n"
-        f"    <link>{xml_escape(base + 'preview/recent/')}</link>\n"
+        f"    <link>{xml_escape(base + 'recent/')}</link>\n"
         "    <description>Recently accepted LeanEval solutions</description>\n"
         + ("\n".join(items) + "\n" if items else "")
         + "  </channel>\n</rss>\n"
