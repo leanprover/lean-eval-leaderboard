@@ -1,0 +1,14 @@
+import Mathlib
+
+namespace ProblemKlartagPacking
+
+-- ANCHOR: klartag_packing__klartag_packing
+theorem klartag_packing : ∃ c : ℝ, 0 < c ∧ ∀ n : ℕ,
+    let V := EuclideanSpace ℝ (Fin (n + 1))
+    ∃ φ : V →ₗ[ℝ] V, let E := φ '' Metric.ball (0 : V) 1
+      (MeasureTheory.volume E : EReal) = c * n ^ 2 ∧
+      {v ∈ E | ∀ i, v i ∈ Set.range ((↑) : ℤ → ℝ)} = {0} := by
+  sorry
+-- ANCHOR_END: klartag_packing__klartag_packing
+
+end ProblemKlartagPacking
