@@ -171,7 +171,7 @@ jobs:
             '.summary.problems == $count and .summary.main_problems == $count and .summary.test_problems == 0' \
             _site/site-data/leaderboard.json
 
-      - name: Verify leaderboard v2 preview artifacts
+      - name: Verify lifecycle-aware leaderboard preview artifacts
         run: |
           set -euo pipefail
           test -f _site/preview/index.html
@@ -189,7 +189,7 @@ jobs:
             test -f "_site/problems/$problem_id/index.html"
             test -f "_site/site-data/v2/problems/$problem_id.json"
           done < <(jq -r '.problems[].id' _site/site-data/problems.json)
-          grep -F "LeanEval leaderboard v2" _site/preview/index.html
+          grep -F "LeanEval lifecycle-aware leaderboard" _site/preview/index.html
           grep -F 'aria-live="polite"' _site/preview/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
             _site/site-data/leaderboard-preview.json

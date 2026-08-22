@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the split, client-facing leaderboard v2 projection.
+"""Build the split, client-facing lifecycle-aware leaderboard projection.
 
 The adapter deliberately consumes only materialized State data.  It never reads
 the append-only event log and it never executes submission source.  While the
@@ -589,7 +589,7 @@ def build_v2_projection(
     state_metadata: dict[str, Any] | None,
     site_base_url: str,
 ) -> dict[str, Any]:
-    """Return path→payload for every v2 JSON file plus the RSS string."""
+    """Return path→payload for every schema-version-2 JSON file and RSS."""
 
     fixture_metadata = fixture.get("metadata_amendments", {})
     fixture_retractions = set(fixture.get("retracted_result_ids", []))
@@ -605,16 +605,16 @@ def build_v2_projection(
 
     problem_ids = [problem.id for problem in problems]
     if len(problem_ids) != len(set(problem_ids)):
-        raise SystemExit("v2 projection: duplicate catalog problem id")
+        raise SystemExit("lifecycle-aware projection: duplicate catalog problem id")
     for problem in problems:
         if problem.group not in GROUP_BY_ID:
             raise SystemExit(
-                f"v2 projection: unsupported group {problem.group!r} for {problem.id}"
+                f"lifecycle-aware projection: unsupported group {problem.group!r} for {problem.id}"
             )
         unknown_tags = set(problem.tags) - set(tag_registry)
         if unknown_tags:
             raise SystemExit(
-                f"v2 projection: unregistered tags for {problem.id}: {sorted(unknown_tags)}"
+                f"lifecycle-aware projection: unregistered tags for {problem.id}: {sorted(unknown_tags)}"
             )
     visible = [problem for problem in problems if problem.visible]
     visible_ids = {problem.id for problem in visible}

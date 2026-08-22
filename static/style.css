@@ -228,7 +228,7 @@ body::before {
   }
 }
 
-/* ── Local-only leaderboard v2 preview ─────────────────────────────────── */
+/* ── Local-only lifecycle-aware leaderboard preview ───────────────────── */
 
 .v2-app {
   display: grid;

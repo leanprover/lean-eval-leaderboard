@@ -38,7 +38,7 @@ private def appShell (view : String) (identity : String := "") : Block Page :=
       <aside class="v2-preview-banner">
         <span class="v2-preview-badge">{{textHtml "Preview"}}</span>
         <div>
-          <h1 id="v2-preview-title">{{textHtml "LeanEval leaderboard v2"}}</h1>
+          <h1 id="v2-preview-title">{{textHtml "LeanEval lifecycle-aware leaderboard"}}</h1>
           <p>{{textHtml "Local-only preview of the normalized materialized-domain contract."}}</p>
         </div>
         <a href=".">{{textHtml "Current leaderboard"}}</a>
@@ -58,7 +58,7 @@ private def pagePart (title view : String) (identity : String := "") : Part Page
   .mk #[textInline title] title none #[appShell view identity] #[]
 
 def _root_.LeaderboardSite.Pages.Preview : VersoDoc Page :=
-  .mk (fun _ => pagePart "Leaderboard v2 preview" "group" "formalization-evaluation") "{}"
+  .mk (fun _ => pagePart "Lifecycle-aware leaderboard preview" "group" "formalization-evaluation") "{}"
 
 def _root_.LeaderboardSite.Pages.PreviewFormalization : VersoDoc Page :=
   .mk (fun _ => pagePart "Formalization evaluation" "group" "formalization-evaluation") "{}"

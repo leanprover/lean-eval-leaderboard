@@ -1,7 +1,8 @@
-# Split leaderboard site-data v2
+# Lifecycle-aware leaderboard site-data
 
-`site-data/v2/` is the local preview's versioned browser interface. The
-existing `/` site and its `problems.json`/`leaderboard.json` files are unchanged.
+`site-data/v2/` is the lifecycle-aware leaderboard's browser interface, using
+wire schema version 2. The existing `/` site and its
+`problems.json`/`leaderboard.json` files are unchanged.
 
 The generator reads the public State `materialized/domain.json`, never the
 append-only events. It joins submissions, results, replay tasks, and release
@@ -47,8 +48,8 @@ non-default scope or ordering persist in the query string.
 
 The old `/problems/<id>/` routes remain unchanged, preserving the public
 `/eval/problems/<id>/` URLs under the site's mount point. Preview comparisons
-live at `/preview/problems/<id>/`. The v2 client constructs untrusted content
-with `textContent`, and RSS text is XML-escaped.
+live at `/preview/problems/<id>/`. The lifecycle-aware client constructs
+untrusted content with `textContent`, and RSS text is XML-escaped.
 
 ## Local fixture boundary
 

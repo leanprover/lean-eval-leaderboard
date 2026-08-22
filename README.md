@@ -52,12 +52,14 @@ recorded in `benchmark-snapshot/.benchmark-commit`, so the regenerated
 site-data and the checked-in snapshot's catalog stay in lockstep; the results
 clone is always read at `main` HEAD.
 
-The generator preserves the legacy nested-v1 reader and also accepts the
-strict flat-v2 results contract. V2 files are rejected unless their complete
+The generator preserves the legacy nested schema-version-1 reader and also
+accepts the strict flat results schema-version-2 contract. Schema-version-2
+files are rejected unless their complete
 envelope, stable identifiers, uniqueness constraints, source pins, and intake
 shape validate. Both versions normalize into one internal record shape before
 aggregation. `leaderboard-preview.json` remains a parity artifact for the
-strict results-v2 transition. The local-only `/preview/` UI consumes the split
+strict results schema-version-2 transition. The local-only `/preview/` UI
+contains the lifecycle-aware leaderboard and consumes the split
 `site-data/v2/` materialized-domain projection documented in
 [docs/site-data-v2.md](docs/site-data-v2.md).
 The vendored machine-readable contract is `schemas/results-v2.schema.json`,
@@ -92,7 +94,7 @@ it is never modified or removed.
 The text below is retained for reference; the authoritative schema is the
 one in the submissions repo's README.
 
-### Record schema (v2)
+### Results record schema version 2
 
 ```json
 {
