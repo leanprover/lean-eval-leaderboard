@@ -32,7 +32,7 @@ private def groupTabs : Html := {{
 }}
 
 private def appShell (preview : Bool) (view : String) (identity : String := "") : Block Page :=
-  let heading := if preview then "LeanEval leaderboard v2 preview" else "LeanEval leaderboard"
+  let heading := if preview then "LeanEval lifecycle-aware leaderboard preview" else "LeanEval leaderboard"
   let description :=
     if preview then
       "Preview of the lifecycle-aware leaderboard now available at the stable site routes."
@@ -91,7 +91,7 @@ def _root_.LeaderboardSite.Pages.V2Problems : VersoDoc Page :=
   .mk (fun _ => pagePart false "Problems" "group" "formalization-evaluation") "{}"
 
 def _root_.LeaderboardSite.Pages.Preview : VersoDoc Page :=
-  .mk (fun _ => pagePart true "Leaderboard v2 preview" "group" "formalization-evaluation") "{}"
+  .mk (fun _ => pagePart true "Lifecycle-aware leaderboard preview" "group" "formalization-evaluation") "{}"
 
 def _root_.LeaderboardSite.Pages.PreviewFormalization : VersoDoc Page :=
   .mk (fun _ => pagePart true "Formalization evaluation" "group" "formalization-evaluation") "{}"

@@ -171,7 +171,7 @@ jobs:
             '.summary.problems == $count and .summary.main_problems == $count and .summary.test_problems == 0' \
             _site/site-data/leaderboard.json
 
-      - name: Verify leaderboard v2 cutover and preview artifacts
+      - name: Verify lifecycle-aware leaderboard cutover and preview artifacts
         run: |
           set -euo pipefail
           test -f _site/index.html
@@ -205,7 +205,7 @@ jobs:
             echo "::error::The stable leaderboard root still contains the preview badge."
             exit 1
           fi
-          grep -F "LeanEval leaderboard v2" _site/preview/index.html
+          grep -F "LeanEval lifecycle-aware leaderboard" _site/preview/index.html
           grep -F 'aria-live="polite"' _site/preview/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
             _site/site-data/leaderboard-preview.json

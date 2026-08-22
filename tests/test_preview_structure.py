@@ -23,7 +23,7 @@ class PreviewStructureTests(unittest.TestCase):
         theme = (REPO_ROOT / "SiteTheme.lean").read_text()
         self.assertIn("isLegacyFront", theme)
         self.assertIn('"home-page legacy-page"', theme)
-        self.assertIn("LeanEval leaderboard v2", page)
+        self.assertIn("LeanEval lifecycle-aware leaderboard", page)
         self.assertIn('aria-live="polite"', page)
         self.assertIn("aria-label={{heading}}", page)
         self.assertNotIn('<h1 id="v2-title">', page)

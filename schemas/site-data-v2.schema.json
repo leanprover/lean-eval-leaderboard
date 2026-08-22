@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://leanprover.github.io/lean-eval-leaderboard/schemas/site-data-v2.schema.json",
-  "title": "LeanEval split site-data v2 payload",
+  "title": "LeanEval lifecycle-aware site-data payload, schema version 2",
   "oneOf": [
     {"$ref": "#/$defs/index"},
     {"$ref": "#/$defs/group"},

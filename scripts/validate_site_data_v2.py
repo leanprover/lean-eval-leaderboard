@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate generated split site-data v2 without third-party dependencies."""
+"""Validate lifecycle-aware site-data schema version 2 without dependencies."""
 
 from __future__ import annotations
 
@@ -150,7 +150,7 @@ def main() -> int:
     except ContractError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    print("site-data v2 contract: ok")
+    print("lifecycle-aware site-data schema version 2: ok")
     return 0
 
 

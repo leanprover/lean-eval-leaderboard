@@ -346,10 +346,11 @@ def normalized_result_records(
     *,
     context: str,
 ) -> tuple[str, list[dict[str, Any]]]:
-    """Return the v2-shaped internal view of one v1 or v2 user file.
+    """Return the normalized internal view of a schema-version-1/2 user file.
 
     The v1 branch intentionally retains the original reader's permissive
-    behavior. The v2 branch validates the complete flat envelope and stable
+    behavior. The schema-version-2 branch validates the complete flat envelope
+    and stable
     identifiers before any value reaches aggregation.
     """
 
