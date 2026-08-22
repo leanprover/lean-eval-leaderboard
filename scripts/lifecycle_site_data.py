@@ -576,7 +576,7 @@ def _solution_payload(solution: Solution, first_ids: set[str]) -> dict[str, Any]
     }
 
 
-def build_v2_projection(
+def build_lifecycle_projection(
     *,
     problems: list[Any],
     solutions: list[Solution],
