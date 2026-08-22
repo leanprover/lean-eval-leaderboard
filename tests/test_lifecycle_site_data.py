@@ -242,7 +242,7 @@ class LifecycleProjectionTests(unittest.TestCase):
                 "result_id": "r2_" + "b" * 64,
                 "problem_id": "alpha",
                 "statement_revision": 1,
-                "declared_model": "Example Model v1",
+                "declared_model": "Example Model Revision B",
                 "submitter": "alice",
                 "accepted_at": "2026-08-20T00:00:00.000Z",
                 "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",

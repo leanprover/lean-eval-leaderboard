@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v1.schema.json",
-  "title": "LeanEval public State projection v1",
+  "title": "LeanEval public State projection schema version 1",
   "type": "object",
   "additionalProperties": false,
   "required": [
