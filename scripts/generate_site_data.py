@@ -350,8 +350,7 @@ def normalized_result_records(
 
     The v1 branch intentionally retains the original reader's permissive
     behavior. The schema-version-2 branch validates the complete flat envelope
-    and stable
-    identifiers before any value reaches aggregation.
+    and stable identifiers before any value reaches aggregation.
     """
 
     version = user_record.get("schema_version")
