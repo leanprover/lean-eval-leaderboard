@@ -8,7 +8,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 class PreviewStructureTests(unittest.TestCase):
-    def test_site_contains_v2_cutover_and_legacy_rollback_routes(self) -> None:
+    def test_site_contains_lifecycle_cutover_and_legacy_rollback_routes(self) -> None:
         site = (REPO_ROOT / "LeaderboardSite.lean").read_text()
         page = (REPO_ROOT / "LeaderboardSite/Pages/Preview.lean").read_text()
         self.assertIn("LeaderboardSite.Pages.V2Front", site)
