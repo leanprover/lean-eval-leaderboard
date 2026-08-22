@@ -138,6 +138,7 @@ open RademacherEnfloType
 open Function MeasureTheory _root_.ProbabilityTheory Measure NNReal
 open scoped ENNReal
 
+set_option autoImplicit false
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 variable (X : Type*) [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 

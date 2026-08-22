@@ -81,6 +81,7 @@ end
 open WilkiesConjecture
 open FirstOrder WilkiesConjecture.Language IntermediateField
 
+set_option autoImplicit false
 variable {n : ℕ}
 local notation "ℝⁿ" => Fin n → ℝ
 

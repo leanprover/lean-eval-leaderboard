@@ -74,6 +74,8 @@ end
 
 open UnitConjecture
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_unit_conjecture__theorem_A
 theorem theorem_A : (∀ g : UnitConjecture.P, ∀ n ≠ 0, g ^ n = 1 → g = 1) ∧ IsUnit UnitConjecture.u ∧ ¬ ∃ g : UnitConjecture.P, UnitConjecture.u = g := by
   sorry

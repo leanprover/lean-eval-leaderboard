@@ -57,6 +57,8 @@ open AbsoluteProfiniteRigidity
 open Group Polynomial
 
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_absolute_profinite_rigidity__theorem_7_1
 theorem theorem_7_1 : AbsoluteProfiniteRigidity.ProfinitelyRigid (AbsoluteProfiniteRigidity.BianchiGroup 3) := by
   sorry

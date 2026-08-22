@@ -33,6 +33,8 @@ end OnCoherenceOfOneRelatorGroups
 
 open OnCoherenceOfOneRelatorGroups
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_on_coherence_of_one_relator_groups__theorem_1_1
 theorem theorem_1_1 (G K : Type*) [Group G] [Field K] [CharZero K] (hG : Group.OneRelator G) :
     Group.Coherent G ∧ Ring.Coherent (MonoidAlgebra K G) := by

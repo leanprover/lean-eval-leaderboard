@@ -43,6 +43,8 @@ end SimplicityConjecture
 open SimplicityConjecture
 open Function Homeomorph MeasureTheory
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_simplicity_conjecture__theorem_1_2
 theorem theorem_1_2 : ¬ IsSimpleGroup SimplicityConjecture.Homeo := by
   sorry

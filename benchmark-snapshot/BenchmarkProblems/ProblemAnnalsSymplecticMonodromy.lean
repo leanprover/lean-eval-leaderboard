@@ -32,6 +32,8 @@ end SymplecticMonodromy
 open SymplecticMonodromy
 open MvPowerSeries
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_symplectic_monodromy__theorem_1_1
 theorem theorem_1_1 (n : ℕ) (f : unitInterval → MvPowerSeries (Fin n) ℂ)
     (cont : ∀ d, Continuous fun t ↦ coeff d (f t)) (h_const : ∀ t, constantCoeff (f t) = 0)

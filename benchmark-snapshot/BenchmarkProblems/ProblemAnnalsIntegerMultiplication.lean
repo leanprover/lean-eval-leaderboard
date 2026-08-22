@@ -38,6 +38,8 @@ end IntegerMultiplication
 open IntegerMultiplication
 open Computability Turing Real
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_integer_multiplication__theorem_1_1
 theorem theorem_1_1 :
     ∃ T : TM2ComputableInTime (IntegerMultiplication.encodeProd encodeNat encodeNat) encodeNat (fun (x, y) ↦ x * y),

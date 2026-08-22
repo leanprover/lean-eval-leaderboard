@@ -30,6 +30,7 @@ end McKayConjecture
 open McKayConjecture
 open CategoryTheory Module Subgroup
 
+set_option autoImplicit false
 variable (ℓ : ℕ) (X : Type*) [Group X] [Finite X]
 
 -- ANCHOR: annals_mckay_conjecture__theorem_1_1

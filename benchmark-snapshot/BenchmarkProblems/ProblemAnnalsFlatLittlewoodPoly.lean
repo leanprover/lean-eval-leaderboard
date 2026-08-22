@@ -28,6 +28,8 @@ end FlatLittlewoodPoly
 open FlatLittlewoodPoly
 open scoped Polynomial
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_flat_littlewood_poly__theorem_1_1
 theorem theorem_1_1 :
     ∃ Δ δ : ℝ, Δ > δ ∧ δ > 0 ∧ ∀ n ≥ 2,

@@ -74,6 +74,7 @@ open HassePrincipleRandomFano
 open MvPolynomial Filter NumberField Real
 open scoped LinearAlgebra.Projectivization
 
+set_option autoImplicit false
 variable (d n : ℕ)
 
 -- ANCHOR: annals_hasse_principle_random_fano__theorem_1_1

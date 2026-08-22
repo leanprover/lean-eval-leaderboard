@@ -35,6 +35,8 @@ end vanDerWaerdenConjecture
 open vanDerWaerdenConjecture
 open Function Polynomial Filter
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_van_der_waerden_conjecture__theorem_1
 theorem theorem_1 (n : ℕ) (hn : 3 ≤ n) :
     (fun H ↦ (vanDerWaerdenConjecture.E n H : ℝ)) =O[atTop] (fun H ↦ (H ^ (n - 1) : ℝ)) := by

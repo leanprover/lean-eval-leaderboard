@@ -33,6 +33,8 @@ open RectangularPegProblem
 open Manifold Complex Real
 open scoped ContDiff
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_rectangular_peg_problem__theorem_1
 theorem theorem_1 (γ : Circle → ℂ) (z w : ℂ) (θ : Real.Angle)
     (hγ : IsSmoothEmbedding (𝓡 1) 𝓘(ℝ, ℂ) ∞ γ) :

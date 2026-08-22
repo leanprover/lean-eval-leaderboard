@@ -37,6 +37,8 @@ end OnPropertyT
 
 open OnPropertyT
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_on_property_t__theorem_1
 theorem theorem_1 (n : ℕ) (hn : n ≥ 6) : OnPropertyT.PropertyT (MulAut (FreeGroup (Fin n))) := by
   sorry

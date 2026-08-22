@@ -46,6 +46,7 @@ end ErdosFaberLovaszConjecture
 open ErdosFaberLovaszConjecture
 open Filter
 
+set_option autoImplicit false
 variable {V : Type*}
 
 -- ANCHOR: annals_erdos_faber_lovasz_conjecture__theorem_1_1

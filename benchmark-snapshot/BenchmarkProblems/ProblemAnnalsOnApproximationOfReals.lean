@@ -57,6 +57,8 @@ end OnApproximationOfReals
 open OnApproximationOfReals
 open NNReal ENNReal
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_on_approximation_of_reals__theorem_1_1
 theorem theorem_1_1 (n : ℕ) (hn : n ≥ 2) (ξ : ℝ) (hξ : Transcendental ℚ ξ) :
     letI a : ℝ := 1 / (2 - Real.log 2)

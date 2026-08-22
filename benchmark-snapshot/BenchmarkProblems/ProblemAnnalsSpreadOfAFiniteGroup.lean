@@ -26,6 +26,8 @@ end SpreadOfAFiniteGroup
 
 open SpreadOfAFiniteGroup
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_spread_of_a_finite_group__theorem_1
 theorem theorem_1 (G : Type*) [Group G] [Finite G] :
     s G ≥ 2 ↔ ∀ (N : Subgroup G) [N.Normal] [Nontrivial N], IsCyclic (G ⧸ N) := by

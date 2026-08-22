@@ -74,6 +74,7 @@ end HessianEstimates
 open HessianEstimates
 open Laplacian Metric ContDiff MeasureTheory ENNReal
 
+set_option autoImplicit false
 local notation "‖" f "‖_C¹(" s ")" => eC1NormOn f s volume
 local notation "‖" T "‖_F" => frobeniusNorm T
 local notation "ℝ⁴" => EuclideanSpace ℝ (Fin 4)

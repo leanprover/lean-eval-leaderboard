@@ -82,6 +82,8 @@ end LorentzianPolynomials
 open LorentzianPolynomials
 open Finsupp Matrix MvPolynomial UpperHalfPlane
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_lorentzian_polynomials__theorem_2_25
 theorem theorem_2_25 (n d : ℕ) (hn : 0 < n) : closure (Ŀ n d) = LorentzianPolynomials.L n d := by
   sorry

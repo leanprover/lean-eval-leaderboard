@@ -25,6 +25,8 @@ end DirichletWeylBound
 open DirichletWeylBound
 open Complex
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_dirichlet_weyl_bound__corollary_1_3
 theorem corollary_1_3 (ε : ℝ) (hε : 0 < ε) : ∃ C : ℝ,
     ∀ q (_hq : q.IsCubeFree) [NeZero q] (χ : DirichletCharacter ℂ q) (_hχ : χ.IsPrimitive) (t : ℝ),

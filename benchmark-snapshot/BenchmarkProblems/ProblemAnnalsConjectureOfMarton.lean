@@ -28,6 +28,7 @@ end ConjectureOfMarton
 open ConjectureOfMarton
 open Pointwise
 
+set_option autoImplicit false
 variable (n : ℕ)
 
 -- ANCHOR: annals_conjecture_of_marton__theorem_1_2

@@ -52,6 +52,8 @@ open EquiangularLinesFixedAngle
 open Filter
 open scoped RealInnerProductSpace
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_equiangular_lines_fixed_angle__theorem_1_2
 theorem theorem_1_2 (α : ℝ) (hα : α ∈ Set.Ioo 0 1) :
     let k := spectralRadiusOrder ((1 - α) / (2 * α))

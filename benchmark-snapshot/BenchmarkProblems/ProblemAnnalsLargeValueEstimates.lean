@@ -26,6 +26,8 @@ end LargeValueEstimates
 open LargeValueEstimates
 open Asymptotics Complex
 
+set_option autoImplicit false
+
 -- ANCHOR: annals_large_value_estimates__theorem_1_1
 theorem theorem_1_1 : ∃ o : ℝ → ℝ, o =o[Filter.atTop] (1 : ℝ → ℝ) ∧
     ∀ (b : ℕ → ℂ) (_hb : ∀ n, ‖b n‖ ≤ 1) (N : ℕ) (V : ℝ) (T : ℝ) (R : ℕ) (t : Fin R → ℝ),
