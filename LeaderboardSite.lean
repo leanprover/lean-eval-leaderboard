@@ -23,25 +23,25 @@ problem entry. Their macros expand those children at elaboration time. The
 `%doc?` / `%docName?` macros resolve each top-level page constant exactly the
 way the DSL would. -/
 def leaderboardSite : Site :=
-  Site.page (%docName? LeaderboardSite.Pages.V2Front) (%doc? LeaderboardSite.Pages.V2Front) #[
+  Site.page (%docName? LeaderboardSite.Pages.LifecycleFront) (%doc? LeaderboardSite.Pages.LifecycleFront) #[
     Dir.static "static" "static",
     Dir.static "site-data" "site-data",
     Dir.page "problems"
-      (%docName? LeaderboardSite.Pages.V2Problems)
-      (%doc? LeaderboardSite.Pages.V2Problems)
-      (v2_problem_pages%),
+      (%docName? LeaderboardSite.Pages.LifecycleProblems)
+      (%doc? LeaderboardSite.Pages.LifecycleProblems)
+      (lifecycle_problem_pages%),
     Dir.page "formalization-evaluation"
-      (%docName? LeaderboardSite.Pages.V2Formalization)
-      (%doc? LeaderboardSite.Pages.V2Formalization) #[],
+      (%docName? LeaderboardSite.Pages.LifecycleFormalization)
+      (%doc? LeaderboardSite.Pages.LifecycleFormalization) #[],
     Dir.page "software-verification"
-      (%docName? LeaderboardSite.Pages.V2Software)
-      (%doc? LeaderboardSite.Pages.V2Software) #[],
+      (%docName? LeaderboardSite.Pages.LifecycleSoftware)
+      (%doc? LeaderboardSite.Pages.LifecycleSoftware) #[],
     Dir.page "open-conjectures"
-      (%docName? LeaderboardSite.Pages.V2Conjectures)
-      (%doc? LeaderboardSite.Pages.V2Conjectures) #[],
+      (%docName? LeaderboardSite.Pages.LifecycleConjectures)
+      (%doc? LeaderboardSite.Pages.LifecycleConjectures) #[],
     Dir.page "recent"
-      (%docName? LeaderboardSite.Pages.V2Recent)
-      (%doc? LeaderboardSite.Pages.V2Recent) #[],
+      (%docName? LeaderboardSite.Pages.LifecycleRecent)
+      (%doc? LeaderboardSite.Pages.LifecycleRecent) #[],
     Dir.page "submit"
       (%docName? LeaderboardSite.Pages.Submit)
       (%doc? LeaderboardSite.Pages.Submit)

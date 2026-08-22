@@ -11,14 +11,14 @@ class PreviewStructureTests(unittest.TestCase):
     def test_site_contains_lifecycle_cutover_and_legacy_rollback_routes(self) -> None:
         site = (REPO_ROOT / "LeaderboardSite.lean").read_text()
         page = (REPO_ROOT / "LeaderboardSite/Pages/Preview.lean").read_text()
-        self.assertIn("LeaderboardSite.Pages.V2Front", site)
+        self.assertIn("LeaderboardSite.Pages.LifecycleFront", site)
         self.assertIn('Dir.page "legacy"', site)
         self.assertIn('Dir.page "preview"', site)
         self.assertIn('Dir.page "formalization-evaluation"', site)
         self.assertIn('Dir.page "software-verification"', site)
         self.assertIn('Dir.page "open-conjectures"', site)
         self.assertIn('Dir.page "recent"', site)
-        self.assertIn("v2_problem_pages%", site)
+        self.assertIn("lifecycle_problem_pages%", site)
         self.assertIn("preview_problem_pages%", site)
         theme = (REPO_ROOT / "SiteTheme.lean").read_text()
         self.assertIn("isLegacyFront", theme)
@@ -26,12 +26,12 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("LeanEval lifecycle-aware leaderboard", page)
         self.assertIn('aria-live="polite"', page)
         self.assertIn("aria-label={{heading}}", page)
-        self.assertNotIn('<h1 id="v2-title">', page)
+        self.assertNotIn('<h1 id="lifecycle-title">', page)
         self.assertIn('href="legacy/"', page)
         self.assertNotIn("Local-only preview", page)
 
     def test_site_data_uses_stable_cutover_routes(self) -> None:
-        generator = (REPO_ROOT / "scripts/v2_site_data.py").read_text()
+        generator = (REPO_ROOT / "scripts/lifecycle_site_data.py").read_text()
         self.assertIn('"url": f"problems/', generator)
         self.assertIn('"url": f"{group[\'id\']}/"', generator)
         self.assertIn("base + 'recent/'", generator)
@@ -39,7 +39,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertNotIn("base + 'preview/recent/'", generator)
 
     def test_client_uses_safe_dom_and_url_persistent_filters(self) -> None:
-        client = (REPO_ROOT / "static/v2-preview.js").read_text()
+        client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
         self.assertNotIn("innerHTML", client)
         self.assertIn("textContent", client)
         self.assertIn("history.replaceState", client)

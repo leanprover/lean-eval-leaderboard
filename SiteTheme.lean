@@ -36,16 +36,16 @@ def theme (_name : String) (siteName : String) : Theme := {
     let isHome := path.isEmpty
     let isPreview := path[0]? == some "preview"
     let isLegacyFront := path.size == 1 && path[0]? == some "legacy"
-    let isV2 := isHome || isPreview ||
+    let isLifecycleAware := isHome || isPreview ||
       path[0]? == some "problems" ||
       path[0]? == some "formalization-evaluation" ||
       path[0]? == some "software-verification" ||
       path[0]? == some "open-conjectures" ||
       path[0]? == some "recent"
-    let isWide := isV2 || isLegacyFront
+    let isWide := isLifecycleAware || isLegacyFront
     let pageClass :=
       if isPreview then "home-page preview-page"
-      else if isV2 then "home-page v2-page"
+      else if isLifecycleAware then "home-page lifecycle-page"
       else if isLegacyFront then "home-page legacy-page"
       else "inner-page"
     -- Verso emits a `<base href>` tag pointing at the site root, so all
@@ -88,7 +88,7 @@ def theme (_name : String) (siteName : String) : Theme := {
           <script src="static/theme-toggle.js"></script>
           <script defer="true" src="static/background.js"></script>
           <script defer="true" src="static/site.js"></script>
-          <script defer="true" src="static/v2-preview.js"></script>
+          <script defer="true" src="static/lifecycle-preview.js"></script>
         </head>
         <body class={{pageClass}}>
           <div class="site-shell">

@@ -19,20 +19,20 @@ from typing import Any
 
 try:
     from scripts.results_v2 import ResultsV2Error, parse_v2_file
-    from scripts.v2_site_data import (
+    from scripts.lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
-        build_v2_projection,
+        build_lifecycle_projection,
         load_preview_fixture,
         load_set_definitions,
         merge_solutions,
     )
 except ModuleNotFoundError:
     from results_v2 import ResultsV2Error, parse_v2_file
-    from v2_site_data import (
+    from lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
-        build_v2_projection,
+        build_lifecycle_projection,
         load_preview_fixture,
         load_set_definitions,
         merge_solutions,
@@ -1288,7 +1288,7 @@ def main() -> int:
         write_json(output_dir / "public-state.json", state_projection)
     fallback_solutions = adapt_results_store(normalized_files, aliases)
     state_solutions = adapt_state_projection(state_projection, aliases)
-    v2_files = build_v2_projection(
+    lifecycle_files = build_lifecycle_projection(
         problems=problems,
         solutions=merge_solutions(state_solutions, fallback_solutions),
         set_definitions=load_set_definitions(benchmark_repo / "manifests" / "sets"),
@@ -1300,7 +1300,7 @@ def main() -> int:
         state_metadata=state_projection,
         site_base_url=args.site_base_url,
     )
-    for relative_path, payload in v2_files.items():
+    for relative_path, payload in lifecycle_files.items():
         destination = output_dir / relative_path
         if isinstance(payload, str):
             write_text(destination, payload)

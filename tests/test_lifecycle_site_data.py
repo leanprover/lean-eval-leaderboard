@@ -5,11 +5,11 @@ import unittest
 from types import SimpleNamespace
 
 from scripts.results_v2 import result_id
-from scripts.v2_site_data import (
+from scripts.lifecycle_site_data import (
     SetDefinition,
     Solution,
     adapt_state_projection,
-    build_v2_projection,
+    build_lifecycle_projection,
     load_preview_fixture,
     merge_solutions,
 )
@@ -68,7 +68,7 @@ def solution(
     )
 
 
-class V2ProjectionTests(unittest.TestCase):
+class LifecycleProjectionTests(unittest.TestCase):
     def build(self):
         problems = [
             problem("alpha", tags=("annals",)),
@@ -82,7 +82,7 @@ class V2ProjectionTests(unittest.TestCase):
             solution("r2_d", "gamma", "model-c", "2026-08-22T00:00:00Z", "event-d"),
         ]
         fixture = load_preview_fixture(ROOT / "tests/fixtures/preview-domain-v1.json")
-        return build_v2_projection(
+        return build_lifecycle_projection(
             problems=problems,
             solutions=solutions,
             set_definitions=[

@@ -27,7 +27,7 @@ site-data/
   problems.json
   leaderboard.json
   leaderboard-preview.json
-  v2/
+  v2/  # wire schema version 2
     index.json
     groups/<group>.json
     problems/<id>.json
@@ -52,13 +52,13 @@ recorded in `benchmark-snapshot/.benchmark-commit`, so the regenerated
 site-data and the checked-in snapshot's catalog stay in lockstep; the results
 clone is always read at `main` HEAD.
 
-The generator preserves the legacy nested schema-version-1 reader and also
-accepts the strict flat results schema-version-2 contract. Schema-version-2
+The generator preserves the legacy nested schema version 1 reader and also
+accepts the strict flat results schema version 2 contract. Schema version 2
 files are rejected unless their complete
 envelope, stable identifiers, uniqueness constraints, source pins, and intake
 shape validate. Both versions normalize into one internal record shape before
 aggregation. `leaderboard-preview.json` remains a parity artifact for the
-strict results schema-version-2 transition. The lifecycle-aware UI consumes the
+strict results schema version 2 transition. The lifecycle-aware UI consumes the
 split lifecycle-aware `site-data/v2/` projection documented in
 [docs/site-data-v2.md](docs/site-data-v2.md).
 The vendored machine-readable contract is `schemas/results-v2.schema.json`,

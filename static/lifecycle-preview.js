@@ -46,15 +46,15 @@
 
   function limitations(items) {
     if (!items || !items.length) return null;
-    return node("aside", { className: "v2-limitations", "aria-label": "Preview data limitations" }, [
+    return node("aside", { className: "lifecycle-limitations", "aria-label": "Preview data limitations" }, [
       heading(2, "Data limitations"),
       node("ul", {}, items.map(function (item) { return node("li", { text: item }); }))
     ]);
   }
 
   function markGroupTab(groupId) {
-    document.querySelectorAll("[data-v2-group-tab]").forEach(function (tab) {
-      if (tab.getAttribute("data-v2-group-tab") === groupId) {
+    document.querySelectorAll("[data-lifecycle-group-tab]").forEach(function (tab) {
+      if (tab.getAttribute("data-lifecycle-group-tab") === groupId) {
         tab.setAttribute("aria-current", "page");
       } else {
         tab.removeAttribute("aria-current");
@@ -114,16 +114,16 @@
       body.appendChild(node("tr", {}, [
         node("td", { text: String(index + 1) }),
         node("th", { scope: "row", text: row.label }),
-        node("td", { className: sortKey === "unique" ? "v2-leading-count" : "", text: String(row.counts.unique) }),
-        node("td", { className: sortKey === "first" ? "v2-leading-count" : "", text: String(row.counts.first) }),
-        node("td", { className: sortKey === "total" ? "v2-leading-count" : "", text: String(row.counts.total) }),
+        node("td", { className: sortKey === "unique" ? "lifecycle-leading-count" : "", text: String(row.counts.unique) }),
+        node("td", { className: sortKey === "first" ? "lifecycle-leading-count" : "", text: String(row.counts.first) }),
+        node("td", { className: sortKey === "total" ? "lifecycle-leading-count" : "", text: String(row.counts.total) }),
         node("td", { text: Array.from(row.submitters).map(function (user) { return "@" + user; }).join(", ") })
       ]));
     });
     if (!rows.length) {
       body.appendChild(node("tr", {}, [node("td", { colspan: "6", text: "No accepted solves in this scope." })]));
     }
-    return node("div", { className: "v2-table-scroll" }, [node("table", { className: "v2-table" }, [
+    return node("div", { className: "lifecycle-table-scroll" }, [node("table", { className: "lifecycle-table" }, [
       node("caption", { text: groupLabel + " — " + scopeLabel + " standings; ordered by " + sortKey + " solves" }),
       node("thead", {}, [node("tr", {}, [
         node("th", { scope: "col", text: "Rank" }),
@@ -137,13 +137,13 @@
   }
 
   function tagChip(tag) {
-    return node("span", { className: "v2-tag", text: tag });
+    return node("span", { className: "lifecycle-tag", text: tag });
   }
 
   function problemsTable(problems) {
     var body = node("tbody");
     problems.forEach(function (problem) {
-      var tags = node("div", { className: "v2-tag-list" }, problem.tags.map(tagChip));
+      var tags = node("div", { className: "lifecycle-tag-list" }, problem.tags.map(tagChip));
       body.appendChild(node("tr", {}, [
         node("th", { scope: "row" }, [node("a", { href: problem.url, text: problem.title })]),
         node("td", { text: problem.status }),
@@ -154,7 +154,7 @@
     if (!problems.length) {
       body.appendChild(node("tr", {}, [node("td", { colspan: "4", text: "No problems match these filters." })]));
     }
-    return node("div", { className: "v2-table-scroll" }, [node("table", { className: "v2-table" }, [
+    return node("div", { className: "lifecycle-table-scroll" }, [node("table", { className: "lifecycle-table" }, [
       node("caption", { text: "Problems in the selected scope" }),
       node("thead", {}, [node("tr", {}, [
         node("th", { scope: "col", text: "Problem" }), node("th", { scope: "col", text: "Status" }),
@@ -174,7 +174,7 @@
       var selectedTags = new Set((params.get("tags") || "").split(",").filter(Boolean));
 
       var title = heading(2, data.group.label);
-      var policy = node("p", { className: "v2-policy", text: data.group.policy });
+      var policy = node("p", { className: "lifecycle-policy", text: data.group.policy });
       if (!scope) {
         var emptyChildren = [title, policy, node("p", { text: "No visible problems are published in this group yet." })];
         var emptyNote = limitations(data.data_limitations);
@@ -182,31 +182,31 @@
         content.replaceChildren.apply(content, emptyChildren);
         return;
       }
-      var controls = node("div", { className: "v2-controls" });
+      var controls = node("div", { className: "lifecycle-controls" });
       var scopeSelect;
       if (data.scopes.length > 1) {
-        scopeSelect = node("select", { id: "v2-scope" }, data.scopes.map(function (item) {
+        scopeSelect = node("select", { id: "lifecycle-scope" }, data.scopes.map(function (item) {
           var option = node("option", { value: item.id, text: item.label });
           option.selected = item.id === scope.id;
           return option;
         }));
         controls.appendChild(node("label", { text: "Scope " }, [scopeSelect]));
       }
-      var sortSelect = node("select", { id: "v2-sort" }, ["unique", "first", "total"].map(function (key) {
+      var sortSelect = node("select", { id: "lifecycle-sort" }, ["unique", "first", "total"].map(function (key) {
         var option = node("option", { value: key, text: key[0].toUpperCase() + key.slice(1) + " solves" });
         option.selected = key === sortKey;
         return option;
       }));
       controls.appendChild(node("label", { text: "Order " }, [sortSelect]));
-      var tagFieldset = node("fieldset", { className: "v2-tag-filter" }, [node("legend", { text: "Filter by tag" })]);
+      var tagFieldset = node("fieldset", { className: "lifecycle-tag-filter" }, [node("legend", { text: "Filter by tag" })]);
       data.tags.forEach(function (tag) {
         var checkbox = node("input", { type: "checkbox", value: tag.id, id: "tag-" + tag.id });
         checkbox.checked = selectedTags.has(tag.id);
         tagFieldset.appendChild(node("label", { title: tag.description }, [checkbox, document.createTextNode(tag.label)]));
       });
       if (data.tags.length) controls.appendChild(tagFieldset);
-      var standingsRoot = node("section", { className: "v2-panel", "aria-labelledby": "v2-standings-title" });
-      var problemsRoot = node("section", { className: "v2-panel", "aria-labelledby": "v2-problems-title" });
+      var standingsRoot = node("section", { className: "lifecycle-panel", "aria-labelledby": "lifecycle-standings-title" });
+      var problemsRoot = node("section", { className: "lifecycle-panel", "aria-labelledby": "lifecycle-problems-title" });
 
       function update() {
         scopeId = scopeSelect ? scopeSelect.value : scope.id;
@@ -251,7 +251,7 @@
         node("option", { value: "open-conjectures", text: "Open conjectures" })
       ]);
       select.value = selected;
-      var list = node("ol", { className: "v2-recent-list" });
+      var list = node("ol", { className: "lifecycle-recent-list" });
       function update() {
         selected = select.value;
         list.replaceChildren();
@@ -259,9 +259,9 @@
           return selected === "all" || solution.group === selected;
         }).forEach(function (solution) {
           var badges = [tagChip(solution.group)];
-          if (solution.first_solve) badges.push(node("span", { className: "v2-first", text: "First solve" }));
+          if (solution.first_solve) badges.push(node("span", { className: "lifecycle-first", text: "First solve" }));
           list.appendChild(node("li", {}, [
-            node("div", { className: "v2-tag-list" }, badges),
+            node("div", { className: "lifecycle-tag-list" }, badges),
             node("a", { href: solution.problem_url, text: solution.problem_title }),
             node("span", { text: solution.canonical_credit.label + " · @" + solution.submitter + " · " + formattedDate(solution.accepted_at) })
           ]));
@@ -280,7 +280,7 @@
   }
 
   function definitionList(values) {
-    var list = node("dl", { className: "v2-definition-list" });
+    var list = node("dl", { className: "lifecycle-definition-list" });
     values.forEach(function (pair) {
       list.appendChild(node("dt", { text: pair[0] }));
       list.appendChild(node("dd", { text: pair[1] === null || pair[1] === undefined || pair[1] === "" ? "Unavailable" : String(pair[1]) }));
@@ -293,15 +293,15 @@
       status.hidden = true;
       var problem = data.problem;
       markGroupTab(problem.group);
-      var history = node("ol", { className: "v2-history" }, data.lifecycle.status_history.map(function (entry) {
+      var history = node("ol", { className: "lifecycle-history" }, data.lifecycle.status_history.map(function (entry) {
         return node("li", { text: entry.status + (entry.effective_at ? " · " + formattedDate(entry.effective_at) : " · date unavailable") });
       }));
       var sets = node("ul", {}, data.sets.length ? data.sets.map(function (set) {
         return node("li", { text: set.title + " · statement r" + set.statement_revision + (set.frozen ? " · frozen" : " · draft") });
       }) : [node("li", { text: "No named set membership." })]);
-      var solutions = node("div", { className: "v2-solution-grid" });
+      var solutions = node("div", { className: "lifecycle-solution-grid" });
       data.solutions.forEach(function (solution) {
-        var card = node("article", { className: "v2-solution-card" }, [
+        var card = node("article", { className: "lifecycle-solution-card" }, [
           heading(4, solution.canonical_credit.label),
           definitionList([
             ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
@@ -334,7 +334,7 @@
             ]));
           });
         } else {
-          card.appendChild(node("p", { className: "v2-unavailable", text: "Replay measurements unavailable." }));
+          card.appendChild(node("p", { className: "lifecycle-unavailable", text: "Replay measurements unavailable." }));
         }
         solutions.appendChild(card);
       });
@@ -354,12 +354,12 @@
   }
 
   function run() {
-    var app = document.querySelector("[data-v2-app]");
+    var app = document.querySelector("[data-lifecycle-app]");
     if (!app) return;
-    var view = app.getAttribute("data-v2-view");
-    var identity = app.getAttribute("data-v2-identity") || "";
-    var content = app.querySelector(".v2-app-content");
-    var status = app.querySelector(".v2-app-status");
+    var view = app.getAttribute("data-lifecycle-view");
+    var identity = app.getAttribute("data-lifecycle-identity") || "";
+    var content = app.querySelector(".lifecycle-app-content");
+    var status = app.querySelector(".lifecycle-app-status");
     if (view === "recent") renderRecent(content, status);
     else if (view === "problem") renderProblem(content, status, identity);
     else renderGroup(app, content, status, identity || "formalization-evaluation");

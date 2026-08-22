@@ -20,12 +20,12 @@ private def htmlBlob (html : Html) : Block Page :=
   .other (BlockExt.blob html) #[]
 
 private def groupTabs : Html := {{
-  <nav class="v2-group-tabs" aria-label="Leaderboard groups">
-    <a data-v2-group-tab="formalization-evaluation"
+  <nav class="lifecycle-group-tabs" aria-label="Leaderboard groups">
+    <a data-lifecycle-group-tab="formalization-evaluation"
        href="formalization-evaluation/">{{textHtml "Formalization evaluation"}}</a>
-    <a data-v2-group-tab="software-verification"
+    <a data-lifecycle-group-tab="software-verification"
        href="software-verification/">{{textHtml "Software verification"}}</a>
-    <a data-v2-group-tab="open-conjectures"
+    <a data-lifecycle-group-tab="open-conjectures"
        href="open-conjectures/">{{textHtml "Open conjectures"}}</a>
     <a href="recent/">{{textHtml "Recent solutions"}}</a>
   </nav>
@@ -45,13 +45,13 @@ private def appShell (preview : Bool) (view : String) (identity : String := "") 
       {{<a href="legacy/">{{textHtml "Legacy leaderboard"}}</a>}}
   let badge :=
     if preview then
-      {{<span class="v2-preview-badge">{{textHtml "Preview"}}</span>}}
+      {{<span class="lifecycle-preview-badge">{{textHtml "Preview"}}</span>}}
     else
       .seq #[]
   htmlBlob {{
-    <section class="v2-app wrap" data-v2-app="true" data-v2-view={{view}}
-             data-v2-identity={{identity}} aria-label={{heading}}>
-      <aside class="v2-preview-banner">
+    <section class="lifecycle-app wrap" data-lifecycle-app="true" data-lifecycle-view={{view}}
+             data-lifecycle-identity={{identity}} aria-label={{heading}}>
+      <aside class="lifecycle-preview-banner">
         {{badge}}
         <div>
           <p>{{textHtml description}}</p>
@@ -59,10 +59,10 @@ private def appShell (preview : Bool) (view : String) (identity : String := "") 
         {{bannerLink}}
       </aside>
       {{groupTabs}}
-      <div class="v2-app-status" role="status" aria-live="polite">
+      <div class="lifecycle-app-status" role="status" aria-live="polite">
         {{textHtml "Loading leaderboard data…"}}
       </div>
-      <div class="v2-app-content"></div>
+      <div class="lifecycle-app-content"></div>
       <noscript>
         <p>{{textHtml "This leaderboard uses client-side tables. Enable JavaScript to inspect it; the legacy leaderboard remains available from the link above."}}</p>
       </noscript>
@@ -72,22 +72,22 @@ private def appShell (preview : Bool) (view : String) (identity : String := "") 
 private def pagePart (preview : Bool) (title view : String) (identity : String := "") : Part Page :=
   .mk #[textInline title] title none #[appShell preview view identity] #[]
 
-def _root_.LeaderboardSite.Pages.V2Front : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleFront : VersoDoc Page :=
   .mk (fun _ => pagePart false "LeanEval leaderboard" "group" "formalization-evaluation") "{}"
 
-def _root_.LeaderboardSite.Pages.V2Formalization : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleFormalization : VersoDoc Page :=
   .mk (fun _ => pagePart false "Formalization evaluation" "group" "formalization-evaluation") "{}"
 
-def _root_.LeaderboardSite.Pages.V2Software : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleSoftware : VersoDoc Page :=
   .mk (fun _ => pagePart false "Software verification" "group" "software-verification") "{}"
 
-def _root_.LeaderboardSite.Pages.V2Conjectures : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleConjectures : VersoDoc Page :=
   .mk (fun _ => pagePart false "Open conjectures" "group" "open-conjectures") "{}"
 
-def _root_.LeaderboardSite.Pages.V2Recent : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleRecent : VersoDoc Page :=
   .mk (fun _ => pagePart false "Recent solutions" "recent") "{}"
 
-def _root_.LeaderboardSite.Pages.V2Problems : VersoDoc Page :=
+def _root_.LeaderboardSite.Pages.LifecycleProblems : VersoDoc Page :=
   .mk (fun _ => pagePart false "Problems" "group" "formalization-evaluation") "{}"
 
 def _root_.LeaderboardSite.Pages.Preview : VersoDoc Page :=
@@ -115,7 +115,7 @@ private def previewPageName (namePrefix problemId : String) : Lean.Name :=
   ((`LeaderboardSite.Pages.Preview).str namePrefix).str problemId
 
 scoped syntax "preview_problem_pages%" : term
-scoped syntax "v2_problem_pages%" : term
+scoped syntax "lifecycle_problem_pages%" : term
 
 private def problemPageTerms (preview : Bool) (namePrefix : String) : TermElabM Expr := do
   let problems ← validateProblems (← parseProblemsPayload)
@@ -130,6 +130,6 @@ private def problemPageTerms (preview : Bool) (namePrefix : String) : TermElabM 
 
 elab_rules : term
   | `(preview_problem_pages%) => problemPageTerms true "PreviewProblem"
-  | `(v2_problem_pages%) => problemPageTerms false "V2Problem"
+  | `(lifecycle_problem_pages%) => problemPageTerms false "LifecycleProblem"
 
 end LeaderboardSite.Pages.Preview
