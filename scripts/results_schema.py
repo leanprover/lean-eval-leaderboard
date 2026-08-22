@@ -24,7 +24,7 @@ UTC_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 UUIDV7_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
-V2_FIELDS = {
+SCHEMA_VERSION_2_FIELDS = {
     "result_id",
     "problem_id",
     "statement_revision",
@@ -37,7 +37,7 @@ V2_FIELDS = {
 }
 
 
-class ResultsV2Error(ValueError):
+class ResultsSchemaError(ValueError):
     """A schema-version-2 results file violates the public contract."""
 
 
@@ -53,7 +53,7 @@ def _canonical_identity(value: list[Any]) -> bytes:
         )
         return rendered.encode("utf-8")
     except (TypeError, ValueError, UnicodeEncodeError) as exc:
-        raise ResultsV2Error(f"identity is not RFC 8785 canonicalizable: {exc}") from exc
+        raise ResultsSchemaError(f"identity is not RFC 8785 canonicalizable: {exc}") from exc
 
 
 def result_id(
@@ -63,17 +63,17 @@ def result_id(
     statement_revision: int,
 ) -> str:
     if not isinstance(user, str) or not user:
-        raise ResultsV2Error("user must be a non-empty string")
+        raise ResultsSchemaError("user must be a non-empty string")
     if not isinstance(declared_model, str) or not declared_model:
-        raise ResultsV2Error("declared_model must be a non-empty string")
+        raise ResultsSchemaError("declared_model must be a non-empty string")
     if not isinstance(problem_id, str) or not problem_id:
-        raise ResultsV2Error("problem_id must be a non-empty string")
+        raise ResultsSchemaError("problem_id must be a non-empty string")
     if (
         not isinstance(statement_revision, int)
         or isinstance(statement_revision, bool)
         or statement_revision <= 0
     ):
-        raise ResultsV2Error("statement_revision must be a positive integer")
+        raise ResultsSchemaError("statement_revision must be a positive integer")
     identity = [user.lower(), declared_model, problem_id, statement_revision]
     digest = hashlib.sha256(RESULT_ID_DOMAIN + _canonical_identity(identity)).hexdigest()
     return "r2_" + digest
@@ -81,19 +81,19 @@ def result_id(
 
 def _object(value: Any, context: str) -> dict[str, Any]:
     if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
-        raise ResultsV2Error(f"{context} must be an object")
+        raise ResultsSchemaError(f"{context} must be an object")
     return value
 
 
 def _string(value: Any, context: str) -> str:
     if not isinstance(value, str) or not value:
-        raise ResultsV2Error(f"{context} must be a non-empty string")
+        raise ResultsSchemaError(f"{context} must be a non-empty string")
     return value
 
 
 def _positive_int(value: Any, context: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-        raise ResultsV2Error(f"{context} must be a positive integer")
+        raise ResultsSchemaError(f"{context} must be a positive integer")
     return value
 
 
@@ -110,55 +110,57 @@ def _validate_production_metadata(
         or "\x00" in description
         or len(description) > 4000
     ):
-        raise ResultsV2Error(f"{context}.production_description is invalid")
+        raise ResultsSchemaError(f"{context}.production_description is invalid")
     status = metadata.get("solution_publication_status")
     date = metadata.get("solution_publication_date")
     if status is not None:
         if status not in {"private", "planned", "published"}:
-            raise ResultsV2Error(f"{context}.solution_publication_status is invalid")
+            raise ResultsSchemaError(f"{context}.solution_publication_status is invalid")
         if status == "published" and not public:
-            raise ResultsV2Error(f"{context} published solution must be public")
+            raise ResultsSchemaError(f"{context} published solution must be public")
         if status in {"private", "planned"} and public:
-            raise ResultsV2Error(f"{context} {status} solution must be private")
+            raise ResultsSchemaError(f"{context} {status} solution must be private")
     if status in {"planned", "published"}:
         if not isinstance(date, str):
-            raise ResultsV2Error(f"{context}.solution_publication_date is required")
+            raise ResultsSchemaError(f"{context}.solution_publication_date is required")
         try:
             datetime.date.fromisoformat(date)
         except ValueError as exc:
-            raise ResultsV2Error(
+            raise ResultsSchemaError(
                 f"{context}.solution_publication_date is invalid"
             ) from exc
     elif date is not None:
-        raise ResultsV2Error(f"{context}.solution_publication_date is not allowed")
+        raise ResultsSchemaError(f"{context}.solution_publication_date is not allowed")
 
 
-def parse_v2_file(document: Any, *, context: str) -> list[dict[str, Any]]:
+def parse_schema_version_2_file(
+    document: Any, *, context: str
+) -> list[dict[str, Any]]:
     """Validate a complete schema-version-2 file and return its records."""
 
     data = _object(document, context)
     if set(data) != {"schema_version", "user", "results"}:
-        raise ResultsV2Error(
+        raise ResultsSchemaError(
             f"{context} must contain only schema_version, user, and results"
         )
     if data.get("schema_version") != 2:
-        raise ResultsV2Error(f"{context} is not results schema version 2")
+        raise ResultsSchemaError(f"{context} is not results schema version 2")
     user = _string(data.get("user"), f"{context}.user")
     if not LOGIN_RE.fullmatch(user):
-        raise ResultsV2Error(f"{context}.user is not a valid GitHub login")
+        raise ResultsSchemaError(f"{context}.user is not a valid GitHub login")
     values = data.get("results")
     if not isinstance(values, list):
-        raise ResultsV2Error(f"{context}.results must be an array")
+        raise ResultsSchemaError(f"{context}.results must be an array")
     seen_ids: set[str] = set()
     seen_keys: set[tuple[str, str, int]] = set()
     for index, value in enumerate(values):
         item_context = f"{context}.results[{index}]"
         record = _object(value, item_context)
-        if set(record) != V2_FIELDS:
-            raise ResultsV2Error(
+        if set(record) != SCHEMA_VERSION_2_FIELDS:
+            raise ResultsSchemaError(
                 f"{item_context} has invalid fields; "
-                f"missing={sorted(V2_FIELDS - set(record))}, "
-                f"extra={sorted(set(record) - V2_FIELDS)}"
+                f"missing={sorted(SCHEMA_VERSION_2_FIELDS - set(record))}, "
+                f"extra={sorted(set(record) - SCHEMA_VERSION_2_FIELDS)}"
             )
         model = _string(record["declared_model"], f"{item_context}.declared_model")
         problem = _string(record["problem_id"], f"{item_context}.problem_id")
@@ -167,60 +169,60 @@ def parse_v2_file(document: Any, *, context: str) -> list[dict[str, Any]]:
         )
         identifier = _string(record["result_id"], f"{item_context}.result_id")
         if not RESULT_ID_RE.fullmatch(identifier):
-            raise ResultsV2Error(f"{item_context}.result_id has invalid syntax")
+            raise ResultsSchemaError(f"{item_context}.result_id has invalid syntax")
         if identifier != result_id(user, model, problem, revision):
-            raise ResultsV2Error(f"{item_context}.result_id does not match its fields")
+            raise ResultsSchemaError(f"{item_context}.result_id does not match its fields")
         if identifier in seen_ids:
-            raise ResultsV2Error(f"{context} has duplicate result_id {identifier}")
+            raise ResultsSchemaError(f"{context} has duplicate result_id {identifier}")
         seen_ids.add(identifier)
         sticky_key = (model, problem, revision)
         if sticky_key in seen_keys:
-            raise ResultsV2Error(f"{context} has duplicate sticky key {sticky_key!r}")
+            raise ResultsSchemaError(f"{context} has duplicate sticky key {sticky_key!r}")
         seen_keys.add(sticky_key)
         accepted_at = _string(record["accepted_at"], f"{item_context}.accepted_at")
         if not UTC_TIMESTAMP_RE.fullmatch(accepted_at):
-            raise ResultsV2Error(
+            raise ResultsSchemaError(
                 f"{item_context}.accepted_at must be second-precision UTC"
             )
         try:
             datetime.datetime.fromisoformat(accepted_at.replace("Z", "+00:00"))
         except ValueError as exc:
-            raise ResultsV2Error(f"{item_context}.accepted_at is invalid") from exc
+            raise ResultsSchemaError(f"{item_context}.accepted_at is invalid") from exc
         benchmark_commit = _string(
             record["benchmark_commit"], f"{item_context}.benchmark_commit"
         )
         if not SHA_RE.fullmatch(benchmark_commit):
-            raise ResultsV2Error(f"{item_context}.benchmark_commit must be a SHA")
+            raise ResultsSchemaError(f"{item_context}.benchmark_commit must be a SHA")
         intake = _object(record["intake"], f"{item_context}.intake")
         if intake.get("kind") == "issue":
             if set(intake) != {"kind", "issue_number"}:
-                raise ResultsV2Error(f"{item_context}.intake fields are invalid")
+                raise ResultsSchemaError(f"{item_context}.intake fields are invalid")
             _positive_int(intake["issue_number"], f"{item_context}.issue_number")
         elif intake.get("kind") == "server":
             if set(intake) != {"kind", "submission_id"}:
-                raise ResultsV2Error(f"{item_context}.intake fields are invalid")
+                raise ResultsSchemaError(f"{item_context}.intake fields are invalid")
             submission_id = _string(
                 intake["submission_id"], f"{item_context}.submission_id"
             )
             if not UUIDV7_RE.fullmatch(submission_id):
-                raise ResultsV2Error(
+                raise ResultsSchemaError(
                     f"{item_context}.submission_id must be a canonical lowercase UUIDv7"
                 )
         else:
-            raise ResultsV2Error(f"{item_context}.intake.kind is unsupported")
+            raise ResultsSchemaError(f"{item_context}.intake.kind is unsupported")
         submission = _object(record["submission"], f"{item_context}.submission")
         if set(submission) != {"kind", "repo", "ref", "public"}:
-            raise ResultsV2Error(f"{item_context}.submission fields are invalid")
+            raise ResultsSchemaError(f"{item_context}.submission fields are invalid")
         if submission["kind"] not in {"github_repo", "gist"}:
-            raise ResultsV2Error(f"{item_context}.submission.kind is unsupported")
+            raise ResultsSchemaError(f"{item_context}.submission.kind is unsupported")
         repo = _string(submission["repo"], f"{item_context}.submission.repo")
         if not OWNER_NAME_RE.fullmatch(repo):
-            raise ResultsV2Error(f"{item_context}.submission.repo is invalid")
+            raise ResultsSchemaError(f"{item_context}.submission.repo is invalid")
         ref = _string(submission["ref"], f"{item_context}.submission.ref")
         if not SHA_RE.fullmatch(ref):
-            raise ResultsV2Error(f"{item_context}.submission.ref must be a SHA")
+            raise ResultsSchemaError(f"{item_context}.submission.ref must be a SHA")
         if not isinstance(submission["public"], bool):
-            raise ResultsV2Error(f"{item_context}.submission.public must be boolean")
+            raise ResultsSchemaError(f"{item_context}.submission.public must be boolean")
         production = _object(
             record["production_metadata"], f"{item_context}.production_metadata"
         )

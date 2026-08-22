@@ -54,8 +54,9 @@ untrusted content with `textContent`, and RSS text is XML-escaped.
 ## Local fixture boundary
 
 Production State currently lacks lifecycle histories and model-alias amendment
-views. `tests/fixtures/preview-domain-v1.json` exercises the complete adapter
-contract locally. It is loaded only via the explicit `--preview-fixture` flag
+views. `tests/fixtures/preview-domain-schema-version-1.json` exercises the
+complete adapter contract locally. It is loaded only via the explicit
+`--preview-fixture` flag
 and can never be inferred by a deploy build.
 
 Example local generation:

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "model_aliases": [
     {
-      "declared_label": "Example Model v1",
+      "declared_label": "Example Model Revision A",
       "canonical_id": "example-model",
       "label": "Example Model"
     }

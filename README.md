@@ -182,7 +182,8 @@ problem records keep their original `solved_at` timestamps and audit trail
 
 A single user can therefore claim the same problem under several model
 names — one record per `(user, model, problem)` triple. This is the change
-from v1, which keyed sticky records on `(user, problem)` only and so could
+from results schema version 1, which keyed sticky records on `(user, problem)`
+only and so could
 record at most one model per problem per user.
 
 ## Commit convention

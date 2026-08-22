@@ -4,11 +4,11 @@ import pathlib
 import unittest
 from types import SimpleNamespace
 
-from scripts.v2_site_data import (
+from scripts.lifecycle_site_data import (
     SetDefinition,
     Solution,
     adapt_state_domain,
-    build_v2_projection,
+    build_lifecycle_projection,
     load_preview_fixture,
     merge_solutions,
 )
@@ -67,7 +67,7 @@ def solution(
     )
 
 
-class V2ProjectionTests(unittest.TestCase):
+class LifecycleProjectionTests(unittest.TestCase):
     def build(self):
         problems = [
             problem("alpha", tags=("annals",)),
@@ -80,8 +80,10 @@ class V2ProjectionTests(unittest.TestCase):
             solution("r2_c", "beta", "model-a", "2026-08-21T00:00:00Z", "event-c"),
             solution("r2_d", "gamma", "model-c", "2026-08-22T00:00:00Z", "event-d"),
         ]
-        fixture = load_preview_fixture(ROOT / "tests/fixtures/preview-domain-v1.json")
-        return build_v2_projection(
+        fixture = load_preview_fixture(
+            ROOT / "tests/fixtures/preview-domain-schema-version-1.json"
+        )
+        return build_lifecycle_projection(
             problems=problems,
             solutions=solutions,
             set_definitions=[
@@ -168,7 +170,7 @@ class V2ProjectionTests(unittest.TestCase):
             "submissions": [{
                 "submission_id": "0198abcd-1111-7000-8000-000000000001",
                 "actor": "alice",
-                "declared_model": "Example Model v1",
+                "declared_model": "Example Model Revision A",
                 "evaluation": {
                     "status": "accepted",
                     "occurred_at": "2026-08-20T00:00:00Z",
@@ -181,7 +183,7 @@ class V2ProjectionTests(unittest.TestCase):
                 "submission_id": "0198abcd-1111-7000-8000-000000000001",
                 "problem_id": "alpha",
                 "statement_revision": 1,
-                "declared_model": "Example Model v1",
+                "declared_model": "Example Model Revision A",
                 "recorded_at": "2026-08-20T00:00:01Z",
                 "event_id": "0198abcd-0000-7000-8000-000000000002",
             }],
@@ -201,7 +203,12 @@ class V2ProjectionTests(unittest.TestCase):
                 "release_at": "2026-10-20T00:00:00Z",
             }],
         }
-        aliases = {"Example Model v1": {"canonical_id": "example-model", "label": "Example Model"}}
+        aliases = {
+            "Example Model Revision A": {
+                "canonical_id": "example-model",
+                "label": "Example Model",
+            }
+        }
 
         adapted = adapt_state_domain(raw, aliases)
 

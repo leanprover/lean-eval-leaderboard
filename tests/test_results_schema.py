@@ -5,7 +5,11 @@ import json
 import pathlib
 import unittest
 
-from scripts.results_v2 import ResultsV2Error, parse_v2_file, result_id
+from scripts.results_schema import (
+    ResultsSchemaError,
+    parse_schema_version_2_file,
+    result_id,
+)
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -13,7 +17,7 @@ SHA = "a" * 40
 REF = "b" * 40
 
 
-def v2_document() -> dict:
+def schema_version_2_document() -> dict:
     model = "Claude Opus 4.6"
     problem = "two_plus_two"
     return {
@@ -60,35 +64,38 @@ class ResultIdContractTests(unittest.TestCase):
                 )
 
 
-class StrictV2ReaderTests(unittest.TestCase):
+class StrictSchemaVersion2ReaderTests(unittest.TestCase):
     def test_valid_file_is_returned(self) -> None:
-        document = v2_document()
-        self.assertEqual(parse_v2_file(document, context="fixture"), document["results"])
+        document = schema_version_2_document()
+        self.assertEqual(
+            parse_schema_version_2_file(document, context="fixture"),
+            document["results"],
+        )
 
     def test_identifier_mismatch_is_rejected(self) -> None:
-        document = v2_document()
+        document = schema_version_2_document()
         document["results"][0]["result_id"] = "r2_" + "0" * 64
-        with self.assertRaisesRegex(ResultsV2Error, "does not match"):
-            parse_v2_file(document, context="fixture")
+        with self.assertRaisesRegex(ResultsSchemaError, "does not match"):
+            parse_schema_version_2_file(document, context="fixture")
 
     def test_unknown_field_and_duplicate_are_rejected(self) -> None:
-        document = v2_document()
+        document = schema_version_2_document()
         document["results"][0]["unexpected"] = True
-        with self.assertRaisesRegex(ResultsV2Error, "invalid fields"):
-            parse_v2_file(document, context="fixture")
+        with self.assertRaisesRegex(ResultsSchemaError, "invalid fields"):
+            parse_schema_version_2_file(document, context="fixture")
 
-        duplicate = v2_document()
+        duplicate = schema_version_2_document()
         duplicate["results"].append(copy.deepcopy(duplicate["results"][0]))
-        with self.assertRaisesRegex(ResultsV2Error, "duplicate result_id"):
-            parse_v2_file(duplicate, context="fixture")
+        with self.assertRaisesRegex(ResultsSchemaError, "duplicate result_id"):
+            parse_schema_version_2_file(duplicate, context="fixture")
 
     def test_server_intake_is_supported(self) -> None:
-        document = v2_document()
+        document = schema_version_2_document()
         document["results"][0]["intake"] = {
             "kind": "server",
             "submission_id": "0198cafe-1234-7abc-8def-000000000000",
         }
-        parse_v2_file(document, context="fixture")
+        parse_schema_version_2_file(document, context="fixture")
 
     def test_server_intake_rejects_non_uuidv7_and_noncanonical_ids(self) -> None:
         for invalid in (
@@ -98,15 +105,15 @@ class StrictV2ReaderTests(unittest.TestCase):
             "0198cafe-1234-7abc-7def-000000000000",
         ):
             with self.subTest(invalid=invalid):
-                document = v2_document()
+                document = schema_version_2_document()
                 document["results"][0]["intake"] = {
                     "kind": "server",
                     "submission_id": invalid,
                 }
                 with self.assertRaisesRegex(
-                    ResultsV2Error, "canonical lowercase UUIDv7"
+                    ResultsSchemaError, "canonical lowercase UUIDv7"
                 ):
-                    parse_v2_file(document, context="fixture")
+                    parse_schema_version_2_file(document, context="fixture")
 
 
 if __name__ == "__main__":
