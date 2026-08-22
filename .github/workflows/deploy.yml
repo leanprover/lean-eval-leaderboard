@@ -245,10 +245,10 @@ jobs:
             test -f "_site/site-data/v2/problems/$problem_id.json"
           done < <(jq -r '.problems[].id' _site/site-data/problems.json)
           grep -F "LeanEval leaderboard" _site/index.html
-          grep -F 'data-v2-app="true"' _site/index.html
+          grep -F 'data-lifecycle-app="true"' _site/index.html
           test "$(grep -o '<h1' _site/index.html | wc -l)" -eq 1
           test "$(grep -o '<h1' _site/preview/index.html | wc -l)" -eq 1
-          if grep -F 'v2-preview-badge' _site/index.html; then
+          if grep -F 'lifecycle-preview-badge' _site/index.html; then
             echo "::error::The stable leaderboard root still contains the preview badge."
             exit 1
           fi
