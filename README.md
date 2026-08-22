@@ -27,7 +27,7 @@ site-data/
   problems.json
   leaderboard.json
   leaderboard-preview.json
-  v2/
+  v2/  # wire schema version 2
     index.json
     groups/<group>.json
     problems/<id>.json
@@ -52,33 +52,42 @@ recorded in `benchmark-snapshot/.benchmark-commit`, so the regenerated
 site-data and the checked-in snapshot's catalog stay in lockstep; the results
 clone is always read at `main` HEAD.
 
-The generator preserves the legacy nested schema-version-1 reader and also
-accepts the strict flat results schema-version-2 contract. Schema-version-2
+The generator preserves the legacy nested schema version 1 reader and also
+accepts the strict flat results schema version 2 contract. Schema version 2
 files are rejected unless their complete
 envelope, stable identifiers, uniqueness constraints, source pins, and intake
 shape validate. Both versions normalize into one internal record shape before
 aggregation. `leaderboard-preview.json` remains a parity artifact for the
-strict results schema-version-2 transition. The local-only `/preview/` UI
-contains the lifecycle-aware leaderboard and consumes the split
-`site-data/v2/` materialized-domain projection documented in
+strict results schema version 2 transition. The lifecycle-aware UI consumes the
+split lifecycle-aware `site-data/v2/` projection documented in
 [docs/site-data-v2.md](docs/site-data-v2.md).
 The vendored machine-readable contract is `schemas/results-v2.schema.json`,
 with language-neutral identifier vectors under `tests/fixtures/`. Keeping
 these files in the site repository avoids executing code from the checked-out
 results data repository.
 
+Production deploys additionally check out private production State through the
+read-only `PRODUCTION_STATE_READ_KEY` deploy key. They generate State's strict,
+redacted `public-state-projection-v1` artifact before site generation and
+publish that exact artifact as `site-data/public-state.json`. Pull-request
+builds receive no State credential and exercise the explicitly labelled
+base-results fallback. Neither raw State events nor the internal materialized
+domain enters the Pages artifact.
+
 Benchmark catalog metadata is read from the required `group`, `status`,
 `visible`, `statement_revision`, and `tags` manifest fields. Problems marked
 `visible = false` and their results are excluded before any public catalog or
 leaderboard aggregation is produced.
 
-The Pages artifact includes a visibly labeled local-only `/preview/` surface:
-group tabs and policies, flagship/status scopes, URL-persistent tag filters,
-group-local unique/first/total standings, recent JSON/RSS feeds, and permanent
-problem comparison pages. The current root page remains unchanged. Existing
-`/problems/<id>/` routes keep the public `/eval/problems/<id>/` URLs stable.
-Verso's site-root `<base>` keeps assets and navigation links valid from
-nested preview URLs, and the deploy's link check walks every generated route.
+The lifecycle-aware surface is the default leaderboard: group tabs and
+policies, flagship/status scopes, URL-persistent tag filters, group-local
+unique/first/total standings, recent JSON/RSS feeds, and permanent problem
+comparison pages. Existing `/problems/<id>/` routes keep the public
+`/eval/problems/<id>/` URLs stable. The previous server-rendered leaderboard
+is preserved under `/legacy/`; `/preview/` remains as a visibly labelled
+comparison route during the cutover. Verso's site-root `<base>` keeps assets
+and navigation links valid from nested routes, and the deploy's link check
+walks every generated route.
 
 ## Results
 

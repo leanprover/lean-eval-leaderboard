@@ -64,6 +64,18 @@ jobs:
           repository: leanprover/lean-eval-submissions
           path: lean-eval-submissions
 
+      # Production-only. Pull requests exercise the explicit base-results
+      # fallback and never receive the read-only private-State deploy key.
+      - name: Checkout private production State for its redacted projection
+        if: github.ref == 'refs/heads/main'
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-08-06).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: leanprover/lean-eval-state
+          path: lean-eval-state
+          ssh-key: ${{ secrets.PRODUCTION_STATE_READ_KEY }}
+          persist-credentials: false
+
       - name: Pin benchmark checkout to snapshot commit
         run: |
           pin=$(cat benchmark-snapshot/.benchmark-commit)
@@ -146,7 +158,21 @@ jobs:
           )
           lake build BenchmarkProblems subverso-extract-mod "${highlighted_targets[@]}"
 
-      - name: Regenerate site-data from the results store and the pinned benchmark
+      - name: Produce and validate the redacted public State projection
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          state_commit="$(git -C lean-eval-state rev-parse HEAD)"
+          python3 lean-eval-state/scripts/public_projection.py \
+            --root lean-eval-state \
+            --state-commit "$state_commit" \
+            --output "$RUNNER_TEMP/public-state.json"
+          python3 lean-eval-state/scripts/public_projection.py \
+            --validate "$RUNNER_TEMP/public-state.json"
+
+      - name: Regenerate pull-request site-data from public base results
+        if: github.ref != 'refs/heads/main'
         # site-data/ is .gitignored — regenerated here so every new result
         # in leanprover/lean-eval-submissions shows up on the next deploy.
         # --no-write-snapshot keeps benchmark-snapshot/ untouched so its
@@ -156,6 +182,16 @@ jobs:
             --no-write-snapshot \
             --benchmark-repo lean-eval-benchmark \
             --results-repo lean-eval-submissions
+
+      - name: Regenerate production site-data with the public State projection
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python3 scripts/generate_site_data.py \
+            --no-write-snapshot \
+            --benchmark-repo lean-eval-benchmark \
+            --results-repo lean-eval-submissions \
+            --state-projection "$RUNNER_TEMP/public-state.json" \
+            --state-repo lean-eval-state
 
       - name: Build site
         run: lake exe lean-eval-leaderboard --output _site
@@ -171,9 +207,16 @@ jobs:
             '.summary.problems == $count and .summary.main_problems == $count and .summary.test_problems == 0' \
             _site/site-data/leaderboard.json
 
-      - name: Verify lifecycle-aware leaderboard preview artifacts
+      - name: Verify lifecycle-aware leaderboard cutover and preview artifacts
         run: |
           set -euo pipefail
+          test -f _site/index.html
+          test -f _site/formalization-evaluation/index.html
+          test -f _site/software-verification/index.html
+          test -f _site/open-conjectures/index.html
+          test -f _site/recent/index.html
+          test -f _site/legacy/index.html
+          test -f _site/legacy/problems/index.html
           test -f _site/preview/index.html
           test -f _site/preview/formalization-evaluation/index.html
           test -f _site/preview/software-verification/index.html
@@ -183,21 +226,41 @@ jobs:
           test -f _site/site-data/v2/index.json
           test -f _site/site-data/v2/recent-solutions.json
           test -f _site/site-data/v2/recent-solutions.xml
+          if [ "${{ github.ref }}" = 'refs/heads/main' ]; then
+            test -f _site/site-data/public-state.json
+            jq --exit-status \
+              '.schema_version == 1 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$"))' \
+              _site/site-data/public-state.json
+            if rg -n 'source_repository|source_commit|archive_|submission_id|nonce_digest' \
+                _site/site-data/public-state.json; then
+              echo "::error::Private State fields leaked into the public projection."
+              exit 1
+            fi
+          fi
           while IFS= read -r problem_id; do
             test -n "$problem_id"
             test -f "_site/preview/problems/$problem_id/index.html"
             test -f "_site/problems/$problem_id/index.html"
+            test -f "_site/legacy/problems/$problem_id/index.html"
             test -f "_site/site-data/v2/problems/$problem_id.json"
           done < <(jq -r '.problems[].id' _site/site-data/problems.json)
+          grep -F "LeanEval leaderboard" _site/index.html
+          grep -F 'data-lifecycle-app="true"' _site/index.html
+          test "$(grep -o '<h1' _site/index.html | wc -l)" -eq 1
+          test "$(grep -o '<h1' _site/preview/index.html | wc -l)" -eq 1
+          if grep -F 'lifecycle-preview-badge' _site/index.html; then
+            echo "::error::The stable leaderboard root still contains the preview badge."
+            exit 1
+          fi
           grep -F "LeanEval lifecycle-aware leaderboard" _site/preview/index.html
           grep -F 'aria-live="polite"' _site/preview/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
             _site/site-data/leaderboard-preview.json
           jq --exit-status \
-            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-conjectures", "software-verification"]' \
+            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-conjectures", "software-verification"] and all(.groups[]; (.url | startswith("preview/") | not))' \
             _site/site-data/v2/index.json
           jq --exit-status \
-            '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id))' \
+            '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id)) and all(.problems[]; .url | startswith("problems/"))' \
             _site/site-data/v2/groups/formalization-evaluation.json
           grep -F '<rss version="2.0">' _site/site-data/v2/recent-solutions.xml
           python3 scripts/validate_lifecycle_site_data.py --root _site/site-data/v2

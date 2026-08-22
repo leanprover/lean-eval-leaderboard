@@ -115,9 +115,8 @@ therefore cannot create a leaderboard row or leak through the public site data.
 
 CI removes only `preview` and requires the remaining JSON to equal
 `leaderboard.json` exactly. The artifact is retained as a strict results
-schema-version-2 parity check. The richer local-only `/preview/` UI contains
-the lifecycle-aware leaderboard and consumes the split materialized-domain
-projection (wire schema version 2) documented in
+schema-version-2 parity check. The lifecycle-aware leaderboard consumes the
+split lifecycle-aware projection (wire schema version 2) documented in
 [`site-data-v2.md`](site-data-v2.md).
 
 ```json

@@ -1,13 +1,18 @@
 # Lifecycle-aware leaderboard site-data
 
 `site-data/v2/` is the lifecycle-aware leaderboard's browser interface, using
-wire schema version 2. The existing `/` site and its
-`problems.json`/`leaderboard.json` files are unchanged.
+wire schema version 2. The compatibility `problems.json`/`leaderboard.json`
+files remain available to the preserved `/legacy/` surface and downstream
+consumers.
 
-The generator reads the public State `materialized/domain.json`, never the
-append-only events. It joins submissions, results, replay tasks, and release
-tasks into one normalized solution view, then supplements presentation-only
-catalog fields from the pinned benchmark checkout. If no State projection is
+The production generator reads State's redacted
+`public-state-projection-v1` artifact, never the private append-only events or
+internal `materialized/domain.json`. The public artifact contains recorded
+results and public lifecycle evidence only; it excludes pending/rejected
+submissions, submission IDs, source and archive locators, and authentication
+nonces. Its source State commit, canonical event digest, and event count make
+the bytes reproducible by an authorized auditor. Presentation-only catalog
+fields come from the pinned benchmark checkout. If no State projection is
 provided, immutable base results are adapted instead. Every fallback appears
 in each payload's `data_limitations`; missing replay and release data is emitted
 as an explicit `unavailable` state rather than omitted or guessed.
@@ -46,16 +51,17 @@ The newest published frozen set is the group's flagship/default scope. Before
 a group has a frozen set, draft is its explicit fallback. Tag filters and a
 non-default scope or ordering persist in the query string.
 
-The old `/problems/<id>/` routes remain unchanged, preserving the public
-`/eval/problems/<id>/` URLs under the site's mount point. Preview comparisons
-live at `/preview/problems/<id>/`. The lifecycle-aware client constructs
+The lifecycle-aware problem views own the stable `/problems/<id>/` routes,
+preserving the public `/eval/problems/<id>/` URLs under the site's mount point.
+The previous server-rendered leaderboard remains available under `/legacy/`
+for comparison and rollback diagnosis. The lifecycle-aware client constructs
 untrusted content with `textContent`, and RSS text is XML-escaped.
 
 ## Local fixture boundary
 
-Production State currently lacks lifecycle histories and model-alias amendment
-views. `tests/fixtures/preview-domain-schema-version-1.json` exercises the
-complete adapter contract locally. It is loaded only via the explicit
+State does not own catalog lifecycle histories or model-alias policy.
+`tests/fixtures/preview-domain-schema-version-1.json` exercises those
+presentation-only fixtures locally. It is loaded only via the explicit
 `--preview-fixture` flag
 and can never be inferred by a deploy build.
 
@@ -66,6 +72,6 @@ python3 scripts/generate_site_data.py \
   --no-write-snapshot \
   --benchmark-repo ../lean-eval \
   --results-repo ../lean-eval-submissions \
-  --state-domain ../lean-eval-state/materialized/domain.json \
+  --state-projection /tmp/lean-eval-public-state.json \
   --state-repo ../lean-eval-state
 ```

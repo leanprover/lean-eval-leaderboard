@@ -236,7 +236,7 @@
       content.replaceChildren.apply(content, children);
       update();
     }).catch(function (error) {
-      status.textContent = "Could not load the preview: " + error.message;
+      status.textContent = "Could not load the leaderboard: " + error.message;
     });
   }
 
@@ -340,7 +340,7 @@
       });
       if (!data.solutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
       var children = [
-        node("p", {}, [node("a", { href: "preview/" + problem.group + "/", text: "Back to " + problem.group })]),
+        node("p", {}, [node("a", { href: problem.group + "/", text: "Back to " + problem.group })]),
         heading(2, problem.title),
         definitionList([["Problem id", problem.id], ["Group", problem.group], ["Status", problem.current_status],
           ["Statement revision", problem.statement_revision], ["Author", problem.submitter], ["Module", problem.module]]),

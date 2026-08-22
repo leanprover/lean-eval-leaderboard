@@ -17,22 +17,44 @@ open scoped LeaderboardSite.Pages.ProblemDetail
 open scoped LeaderboardSite.Pages.Preview
 
 /-- Site value built by hand rather than via `Site.Syntax`'s `site …` DSL.
-The DSL only allows statically-listed children per directory, but the
-`"problems"` directory needs a child `Dir.page` per problem entry, expanded
-at elaboration time by `problem_detail_pages%`. The `%doc?` / `%docName?`
-macros resolve each top-level page constant exactly the way the DSL would. -/
+The DSL only allows statically-listed children per directory, but the stable,
+legacy, and preview problem directories each need a child `Dir.page` per
+problem entry. Their macros expand those children at elaboration time. The
+`%doc?` / `%docName?` macros resolve each top-level page constant exactly the
+way the DSL would. -/
 def leaderboardSite : Site :=
-  Site.page (%docName? LeaderboardSite.Pages.Front) (%doc? LeaderboardSite.Pages.Front) #[
+  Site.page (%docName? LeaderboardSite.Pages.LifecycleFront) (%doc? LeaderboardSite.Pages.LifecycleFront) #[
     Dir.static "static" "static",
     Dir.static "site-data" "site-data",
     Dir.page "problems"
-      (%docName? LeaderboardSite.Pages.Problems)
-      (%doc? LeaderboardSite.Pages.Problems)
-      (problem_detail_pages%),
+      (%docName? LeaderboardSite.Pages.LifecycleProblems)
+      (%doc? LeaderboardSite.Pages.LifecycleProblems)
+      (lifecycle_problem_pages%),
+    Dir.page "formalization-evaluation"
+      (%docName? LeaderboardSite.Pages.LifecycleFormalization)
+      (%doc? LeaderboardSite.Pages.LifecycleFormalization) #[],
+    Dir.page "software-verification"
+      (%docName? LeaderboardSite.Pages.LifecycleSoftware)
+      (%doc? LeaderboardSite.Pages.LifecycleSoftware) #[],
+    Dir.page "open-conjectures"
+      (%docName? LeaderboardSite.Pages.LifecycleConjectures)
+      (%doc? LeaderboardSite.Pages.LifecycleConjectures) #[],
+    Dir.page "recent"
+      (%docName? LeaderboardSite.Pages.LifecycleRecent)
+      (%doc? LeaderboardSite.Pages.LifecycleRecent) #[],
     Dir.page "submit"
       (%docName? LeaderboardSite.Pages.Submit)
       (%doc? LeaderboardSite.Pages.Submit)
       #[],
+    Dir.page "legacy"
+      (%docName? LeaderboardSite.Pages.Front)
+      (%doc? LeaderboardSite.Pages.Front)
+      #[
+        Dir.page "problems"
+          (%docName? LeaderboardSite.Pages.Problems)
+          (%doc? LeaderboardSite.Pages.Problems)
+          (problem_detail_pages%)
+      ],
     Dir.page "preview"
       (%docName? LeaderboardSite.Pages.Preview)
       (%doc? LeaderboardSite.Pages.Preview)
