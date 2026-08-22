@@ -47,6 +47,18 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('["unique", "first", "total"]', client)
         self.assertIn("recent-solutions.xml", client)
 
+    def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
+        sources = [
+            REPO_ROOT / "LeaderboardSite/Pages/Preview.lean",
+            REPO_ROOT / "SiteTheme.lean",
+            REPO_ROOT / "static/lifecycle-preview.js",
+            REPO_ROOT / "static/style.css",
+        ]
+        for source in sources:
+            with self.subTest(source=source.relative_to(REPO_ROOT)):
+                self.assertNotIn("v2-", source.read_text())
+        self.assertFalse((REPO_ROOT / "static/v2-preview.js").exists())
+
     def test_deploy_checks_cutover_preview_parity_and_links(self) -> None:
         workflow = (REPO_ROOT / ".github/workflows/deploy.yml").read_text()
         self.assertIn("_site/legacy/index.html", workflow)
