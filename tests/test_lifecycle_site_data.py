@@ -4,7 +4,7 @@ import pathlib
 import unittest
 from types import SimpleNamespace
 
-from scripts.results_v2 import result_id
+from scripts.results_schema import result_id
 from scripts.lifecycle_site_data import (
     SetDefinition,
     Solution,
@@ -81,7 +81,9 @@ class LifecycleProjectionTests(unittest.TestCase):
             solution("r2_c", "beta", "model-a", "2026-08-21T00:00:00Z", "event-c"),
             solution("r2_d", "gamma", "model-c", "2026-08-22T00:00:00Z", "event-d"),
         ]
-        fixture = load_preview_fixture(ROOT / "tests/fixtures/preview-domain-v1.json")
+        fixture = load_preview_fixture(
+            ROOT / "tests/fixtures/preview-domain-schema-version-1.json"
+        )
         return build_lifecycle_projection(
             problems=problems,
             solutions=solutions,
@@ -161,7 +163,7 @@ class LifecycleProjectionTests(unittest.TestCase):
         self.assertTrue(any("unavailable" in limitation for limitation in limitations))
 
     def test_public_state_projection_adapter_joins_replay_and_release(self) -> None:
-        projected_result_id = result_id("alice", "Example Model v1", "alpha", 1)
+        projected_result_id = result_id("alice", "Example Model Revision A", "alpha", 1)
         raw = {
             "schema_version": 1,
             "environment": "production",
@@ -172,7 +174,7 @@ class LifecycleProjectionTests(unittest.TestCase):
                 "result_id": projected_result_id,
                 "problem_id": "alpha",
                 "statement_revision": 1,
-                "declared_model": "Example Model v1",
+                "declared_model": "Example Model Revision A",
                 "submitter": "alice",
                 "accepted_at": "2026-08-20T00:00:00Z",
                 "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",
@@ -202,7 +204,12 @@ class LifecycleProjectionTests(unittest.TestCase):
                 "public_solution": {"available": False, "url": None},
             }],
         }
-        aliases = {"Example Model v1": {"canonical_id": "example-model", "label": "Example Model"}}
+        aliases = {
+            "Example Model Revision A": {
+                "canonical_id": "example-model",
+                "label": "Example Model",
+            }
+        }
 
         adapted = adapt_state_projection(raw, aliases)
 

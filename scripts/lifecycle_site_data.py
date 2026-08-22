@@ -22,9 +22,9 @@ from typing import Any, Iterable
 from urllib.parse import quote
 
 try:
-    from scripts.results_v2 import result_id as expected_result_id
+    from scripts.results_schema import result_id as expected_result_id
 except ModuleNotFoundError:
-    from results_v2 import result_id as expected_result_id
+    from results_schema import result_id as expected_result_id
 
 
 GROUPS: tuple[dict[str, str], ...] = (

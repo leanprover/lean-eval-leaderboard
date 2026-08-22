@@ -10,7 +10,7 @@ from scripts.generate_site_data import (
     build_leaderboard_payload,
     build_problem_payload,
 )
-from scripts.results_v2 import result_id
+from scripts.results_schema import result_id
 
 
 SHA = "a" * 40
@@ -41,7 +41,7 @@ def problem(
     )
 
 
-def v1_document() -> dict:
+def schema_version_1_document() -> dict:
     return {
         "schema_version": 1,
         "user": "alice",
@@ -63,7 +63,10 @@ def v1_document() -> dict:
     }
 
 
-def v2_record(revision: int = 1, accepted_at: str = "2026-04-11T10:45:00Z") -> dict:
+def schema_version_2_record(
+    revision: int = 1,
+    accepted_at: str = "2026-04-11T10:45:00Z",
+) -> dict:
     model = "Claude Opus 4.6"
     problem_id = "two_plus_two"
     return {
@@ -84,8 +87,12 @@ def v2_record(revision: int = 1, accepted_at: str = "2026-04-11T10:45:00Z") -> d
     }
 
 
-def v2_document() -> dict:
-    return {"schema_version": 2, "user": "alice", "results": [v2_record()]}
+def schema_version_2_document() -> dict:
+    return {
+        "schema_version": 2,
+        "user": "alice",
+        "results": [schema_version_2_record()],
+    }
 
 
 def build(raw: list[dict]) -> dict:
@@ -102,12 +109,12 @@ def build(raw: list[dict]) -> dict:
 
 
 class ResultsCompatibilityTests(unittest.TestCase):
-    def test_v1_reader_behavior_and_v2_visible_payload_match(self) -> None:
-        v1 = build([v1_document()])
-        v2 = build([v2_document()])
-        self.assertEqual(v1["raw_results_schema_versions"], [1])
-        self.assertEqual(v2["raw_results_schema_versions"], [2])
-        for payload in (v1, v2):
+    def test_schema_versions_have_matching_visible_payloads(self) -> None:
+        schema_version_1 = build([schema_version_1_document()])
+        schema_version_2 = build([schema_version_2_document()])
+        self.assertEqual(schema_version_1["raw_results_schema_versions"], [1])
+        self.assertEqual(schema_version_2["raw_results_schema_versions"], [2])
+        for payload in (schema_version_1, schema_version_2):
             entry = payload["entries"][0]
             self.assertEqual(entry["model_name"], "Claude Opus 4.6")
             self.assertEqual(entry["score"]["solved_main"], 1)
@@ -118,8 +125,8 @@ class ResultsCompatibilityTests(unittest.TestCase):
             self.assertTrue(solved["public_solution"]["available"])
 
     def test_revision_records_do_not_double_count_current_problem_view(self) -> None:
-        document = v2_document()
-        later = copy.deepcopy(v2_record(2, "2026-05-01T00:00:00Z"))
+        document = schema_version_2_document()
+        later = copy.deepcopy(schema_version_2_record(2, "2026-05-01T00:00:00Z"))
         later["intake"]["issue_number"] = 43
         document["results"].append(later)
         payload = build([document])
@@ -130,8 +137,8 @@ class ResultsCompatibilityTests(unittest.TestCase):
             entry["solved_problems"][0]["solved_at"], "2026-04-11T10:45:00Z"
         )
 
-    def test_invalid_v2_fails_before_aggregation(self) -> None:
-        document = v2_document()
+    def test_invalid_schema_version_2_fails_before_aggregation(self) -> None:
+        document = schema_version_2_document()
         document["results"][0]["benchmark_commit"] = "mutable-main"
         with self.assertRaisesRegex(SystemExit, "benchmark_commit must be a SHA"):
             build([document])
@@ -139,12 +146,12 @@ class ResultsCompatibilityTests(unittest.TestCase):
     def test_hidden_catalog_problems_are_not_public_or_scored(self) -> None:
         visible = problem()
         hidden = problem("internal_fixture", visible=False)
-        hidden_only = v1_document()
+        hidden_only = schema_version_1_document()
         hidden_only["user"] = "bob"
         hidden_only["solved"] = {
             "Hidden-only Model": {
                 "internal_fixture": copy.deepcopy(
-                    v1_document()["solved"]["Claude Opus 4.6"]["two_plus_two"]
+                    schema_version_1_document()["solved"]["Claude Opus 4.6"]["two_plus_two"]
                 )
             }
         }
@@ -160,7 +167,7 @@ class ResultsCompatibilityTests(unittest.TestCase):
                 results_repo=pathlib.Path("results"),
                 benchmark_repo=pathlib.Path("benchmark"),
                 problems=[visible, hidden],
-                raw_results=[v1_document(), hidden_only],
+                raw_results=[schema_version_1_document(), hidden_only],
             )
             problem_payload = build_problem_payload(
                 pathlib.Path("benchmark"), [visible, hidden]

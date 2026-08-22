@@ -18,7 +18,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 try:
-    from scripts.results_v2 import ResultsV2Error, parse_v2_file
+    from scripts.results_schema import (
+        ResultsSchemaError,
+        parse_schema_version_2_file,
+    )
     from scripts.lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
@@ -28,7 +31,7 @@ try:
         merge_solutions,
     )
 except ModuleNotFoundError:
-    from results_v2 import ResultsV2Error, parse_v2_file
+    from results_schema import ResultsSchemaError, parse_schema_version_2_file
     from lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
@@ -348,9 +351,9 @@ def normalized_result_records(
 ) -> tuple[str, list[dict[str, Any]]]:
     """Return the normalized internal view of a schema-version-1/2 user file.
 
-    The v1 branch intentionally retains the original reader's permissive
-    behavior. The schema-version-2 branch validates the complete flat envelope
-    and stable identifiers before any value reaches aggregation.
+    The schema-version-1 branch intentionally retains the original reader's
+    permissive behavior. The schema-version-2 branch validates the complete
+    flat envelope and stable identifiers before any value reaches aggregation.
     """
 
     version = user_record.get("schema_version")
@@ -393,8 +396,8 @@ def normalized_result_records(
         return user, normalized
     if version == 2:
         try:
-            records = parse_v2_file(user_record, context=context)
-        except ResultsV2Error as exc:
+            records = parse_schema_version_2_file(user_record, context=context)
+        except ResultsSchemaError as exc:
             raise SystemExit(str(exc)) from exc
         return user_record["user"], records
     raise SystemExit(
@@ -1154,8 +1157,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--preview-fixture",
         default=None,
-        help="Optional schema-v1 lifecycle/alias fixture for local preview development. "
-        "Never inferred or enabled implicitly.",
+        help="Optional schema-version-1 lifecycle/alias fixture for local "
+        "preview development. Never inferred or enabled implicitly.",
     )
     parser.add_argument(
         "--site-base-url",

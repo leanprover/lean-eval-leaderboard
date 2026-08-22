@@ -263,7 +263,7 @@ jobs:
             '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id)) and all(.problems[]; .url | startswith("problems/"))' \
             _site/site-data/v2/groups/formalization-evaluation.json
           grep -F '<rss version="2.0">' _site/site-data/v2/recent-solutions.xml
-          python3 scripts/validate_site_data_v2.py --root _site/site-data/v2
+          python3 scripts/validate_lifecycle_site_data.py --root _site/site-data/v2
           diff \
             <(jq --sort-keys 'del(.preview)' _site/site-data/leaderboard-preview.json) \
             <(jq --sort-keys '.' _site/site-data/leaderboard.json)

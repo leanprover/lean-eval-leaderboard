@@ -293,8 +293,8 @@ def submitStep1Body : VersoDoc Page :=
   [install the lean-eval-bot GitHub App](https://github.com/apps/lean-eval-bot)
   on the repository first, so that the CI can clone it.
 
-  Secret (unlisted) gists are not supported in v1. Make your gist public,
-  or host the proof in a repository.
+  Secret (unlisted) gists are not supported by the current intake flow. Make
+  your gist public, or host the proof in a repository.
   :::
 
 def submitStep2Title  : String := "2. Lay out the proof so CI can find it"

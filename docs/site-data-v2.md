@@ -60,8 +60,9 @@ untrusted content with `textContent`, and RSS text is XML-escaped.
 ## Local fixture boundary
 
 State does not own catalog lifecycle histories or model-alias policy.
-`tests/fixtures/preview-domain-v1.json` exercises those presentation-only
-fixtures locally. It is loaded only via the explicit `--preview-fixture` flag
+`tests/fixtures/preview-domain-schema-version-1.json` exercises those
+presentation-only fixtures locally. It is loaded only via the explicit
+`--preview-fixture` flag
 and can never be inferred by a deploy build.
 
 Example local generation:
