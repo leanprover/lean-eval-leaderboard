@@ -1,4 +1,4 @@
-"""Strict raw-results v2 reader used by the leaderboard generator.
+"""Strict raw-results schema-version-2 reader used by the leaderboard.
 
 The stable identifier contract and envelope mirror
 ``lean-eval-submissions/docs/results-schema-v2.md``.  This module is vendored
@@ -38,7 +38,7 @@ V2_FIELDS = {
 
 
 class ResultsV2Error(ValueError):
-    """A schema-v2 results file violates the public contract."""
+    """A schema-version-2 results file violates the public contract."""
 
 
 def _canonical_identity(value: list[Any]) -> bytes:
@@ -134,7 +134,7 @@ def _validate_production_metadata(
 
 
 def parse_v2_file(document: Any, *, context: str) -> list[dict[str, Any]]:
-    """Validate a complete v2 file and return its records unchanged."""
+    """Validate a complete schema-version-2 file and return its records."""
 
     data = _object(document, context)
     if set(data) != {"schema_version", "user", "results"}:
@@ -142,7 +142,7 @@ def parse_v2_file(document: Any, *, context: str) -> list[dict[str, Any]]:
             f"{context} must contain only schema_version, user, and results"
         )
     if data.get("schema_version") != 2:
-        raise ResultsV2Error(f"{context} is not schema v2")
+        raise ResultsV2Error(f"{context} is not results schema version 2")
     user = _string(data.get("user"), f"{context}.user")
     if not LOGIN_RE.fullmatch(user):
         raise ResultsV2Error(f"{context}.user is not a valid GitHub login")

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://leanprover.github.io/lean-eval/schemas/results-v2.schema.json",
-  "title": "LeanEval per-user results file v2",
+  "title": "LeanEval per-user results file schema version 2",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "user", "results"],

@@ -17,7 +17,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('Dir.page "open-conjectures"', site)
         self.assertIn('Dir.page "recent"', site)
         self.assertIn("preview_problem_pages%", site)
-        self.assertIn("LeanEval leaderboard v2", page)
+        self.assertIn("LeanEval lifecycle-aware leaderboard", page)
         self.assertIn('aria-live="polite"', page)
         self.assertIn('href="."', page)
 

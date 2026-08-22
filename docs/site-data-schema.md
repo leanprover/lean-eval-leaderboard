@@ -92,8 +92,9 @@ This file is the benchmark catalog as consumed by the website.
 This file is the site-facing leaderboard representation. It is already
 aggregated, ranked, and enriched with provenance and notability metadata.
 
-The generator accepts raw results schemas v1 and v2. The `raw_results_schema_versions`
-top-level array records which versions contributed to a build. V2 is validated
+The generator accepts raw results schema versions 1 and 2. The
+`raw_results_schema_versions` top-level array records which versions
+contributed to a build. Schema version 2 is validated
 against the flat public contract, including recomputing every `result_id`,
 before aggregation. A new statement revision remains a distinct base record,
 while this compatibility view counts a model/user/problem only once.
@@ -113,9 +114,10 @@ therefore cannot create a leaderboard row or leak through the public site data.
 ```
 
 CI removes only `preview` and requires the remaining JSON to equal
-`leaderboard.json` exactly. The artifact is retained as a strict results-v2
-parity check. The richer local-only `/preview/` UI consumes the split v2
-materialized-domain projection documented in
+`leaderboard.json` exactly. The artifact is retained as a strict results
+schema-version-2 parity check. The richer local-only `/preview/` UI contains
+the lifecycle-aware leaderboard and consumes the split materialized-domain
+projection (wire schema version 2) documented in
 [`site-data-v2.md`](site-data-v2.md).
 
 ```json
