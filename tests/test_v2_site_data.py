@@ -4,6 +4,7 @@ import pathlib
 import unittest
 from types import SimpleNamespace
 
+from scripts.results_v2 import result_id
 from scripts.v2_site_data import (
     SetDefinition,
     Solution,
@@ -160,6 +161,7 @@ class V2ProjectionTests(unittest.TestCase):
         self.assertTrue(any("unavailable" in limitation for limitation in limitations))
 
     def test_public_state_projection_adapter_joins_replay_and_release(self) -> None:
+        projected_result_id = result_id("alice", "Example Model v1", "alpha", 1)
         raw = {
             "schema_version": 1,
             "environment": "production",
@@ -167,7 +169,7 @@ class V2ProjectionTests(unittest.TestCase):
             "source_event_count": 8,
             "source_digest": "f" * 64,
             "results": [{
-                "result_id": "r2_" + "b" * 64,
+                "result_id": projected_result_id,
                 "problem_id": "alpha",
                 "statement_revision": 1,
                 "declared_model": "Example Model v1",
@@ -220,6 +222,33 @@ class V2ProjectionTests(unittest.TestCase):
             "submissions": [],
         }
         with self.assertRaisesRegex(SystemExit, "top-level fields"):
+            adapt_state_projection(raw, {})
+
+    def test_public_state_projection_recomputes_result_identity(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "environment": "production",
+            "source_state_commit": "e" * 40,
+            "source_event_count": 1,
+            "source_digest": "f" * 64,
+            "results": [{
+                "result_id": "r2_" + "b" * 64,
+                "problem_id": "alpha",
+                "statement_revision": 1,
+                "declared_model": "Example Model v1",
+                "submitter": "alice",
+                "accepted_at": "2026-08-20T00:00:00.000Z",
+                "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",
+                "recorded_at": "2026-08-20T00:00:01.000Z",
+                "record_event_id": "0198abcd-0000-7000-8000-000000000002",
+                "benchmark_commit": "a" * 40,
+                "production_metadata": {},
+                "replay": None,
+                "release": None,
+                "public_solution": {"available": False, "url": None},
+            }],
+        }
+        with self.assertRaisesRegex(SystemExit, "result_id does not match"):
             adapt_state_projection(raw, {})
 
     def test_state_record_replaces_matching_legacy_base_record(self) -> None:

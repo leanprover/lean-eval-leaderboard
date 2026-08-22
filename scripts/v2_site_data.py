@@ -21,6 +21,11 @@ from html import escape as xml_escape
 from typing import Any, Iterable
 from urllib.parse import quote
 
+try:
+    from scripts.results_v2 import result_id as expected_result_id
+except ModuleNotFoundError:
+    from results_v2 import result_id as expected_result_id
+
 
 GROUPS: tuple[dict[str, str], ...] = (
     {
@@ -276,6 +281,13 @@ def adapt_state_projection(
         if not isinstance(result, dict) or set(result) != required:
             raise SystemExit("State projection: invalid result fields")
         declared = _normalized_model(str(result["declared_model"]))
+        if result["result_id"] != expected_result_id(
+            result["submitter"],
+            result["declared_model"],
+            result["problem_id"],
+            result["statement_revision"],
+        ):
+            raise SystemExit("State projection: result_id does not match its identity fields")
         canonical_id, canonical_label = _canonical_identity(declared, aliases)
         replay = result["replay"]
         if replay is None:
