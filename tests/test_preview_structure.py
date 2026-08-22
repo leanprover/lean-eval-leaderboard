@@ -22,13 +22,25 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('href="."', page)
 
     def test_client_uses_safe_dom_and_url_persistent_filters(self) -> None:
-        client = (REPO_ROOT / "static/v2-preview.js").read_text()
+        client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
         self.assertNotIn("innerHTML", client)
         self.assertIn("textContent", client)
         self.assertIn("history.replaceState", client)
         self.assertIn('tags:', client)
         self.assertIn('["unique", "first", "total"]', client)
         self.assertIn("recent-solutions.xml", client)
+
+    def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
+        sources = [
+            REPO_ROOT / "LeaderboardSite/Pages/Preview.lean",
+            REPO_ROOT / "SiteTheme.lean",
+            REPO_ROOT / "static/lifecycle-preview.js",
+            REPO_ROOT / "static/style.css",
+        ]
+        for source in sources:
+            with self.subTest(source=source.relative_to(REPO_ROOT)):
+                self.assertNotIn("v2-", source.read_text())
+        self.assertFalse((REPO_ROOT / "static/v2-preview.js").exists())
 
     def test_deploy_checks_preview_parity_and_links(self) -> None:
         workflow = (REPO_ROOT / ".github/workflows/deploy.yml").read_text()

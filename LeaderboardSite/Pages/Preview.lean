@@ -20,12 +20,12 @@ private def htmlBlob (html : Html) : Block Page :=
   .other (BlockExt.blob html) #[]
 
 private def groupTabs : Html := {{
-  <nav class="v2-group-tabs" aria-label="Leaderboard groups">
-    <a data-v2-group-tab="formalization-evaluation"
+  <nav class="lifecycle-group-tabs" aria-label="Leaderboard groups">
+    <a data-lifecycle-group-tab="formalization-evaluation"
        href="preview/formalization-evaluation/">{{textHtml "Formalization evaluation"}}</a>
-    <a data-v2-group-tab="software-verification"
+    <a data-lifecycle-group-tab="software-verification"
        href="preview/software-verification/">{{textHtml "Software verification"}}</a>
-    <a data-v2-group-tab="open-conjectures"
+    <a data-lifecycle-group-tab="open-conjectures"
        href="preview/open-conjectures/">{{textHtml "Open conjectures"}}</a>
     <a href="preview/recent/">{{textHtml "Recent solutions"}}</a>
   </nav>
@@ -33,21 +33,21 @@ private def groupTabs : Html := {{
 
 private def appShell (view : String) (identity : String := "") : Block Page :=
   htmlBlob {{
-    <section class="v2-app wrap" data-v2-app="true" data-v2-view={{view}}
-             data-v2-identity={{identity}} aria-labelledby="v2-preview-title">
-      <aside class="v2-preview-banner">
-        <span class="v2-preview-badge">{{textHtml "Preview"}}</span>
+    <section class="lifecycle-app wrap" data-lifecycle-app="true" data-lifecycle-view={{view}}
+             data-lifecycle-identity={{identity}} aria-labelledby="lifecycle-preview-title">
+      <aside class="lifecycle-preview-banner">
+        <span class="lifecycle-preview-badge">{{textHtml "Preview"}}</span>
         <div>
-          <h1 id="v2-preview-title">{{textHtml "LeanEval lifecycle-aware leaderboard"}}</h1>
+          <h1 id="lifecycle-preview-title">{{textHtml "LeanEval lifecycle-aware leaderboard"}}</h1>
           <p>{{textHtml "Local-only preview of the normalized materialized-domain contract."}}</p>
         </div>
         <a href=".">{{textHtml "Current leaderboard"}}</a>
       </aside>
       {{groupTabs}}
-      <div class="v2-app-status" role="status" aria-live="polite">
+      <div class="lifecycle-app-status" role="status" aria-live="polite">
         {{textHtml "Loading leaderboard data…"}}
       </div>
-      <div class="v2-app-content"></div>
+      <div class="lifecycle-app-content"></div>
       <noscript>
         <p>{{textHtml "This preview uses client-side tables. Enable JavaScript to inspect it; the current leaderboard remains available at the site root."}}</p>
       </noscript>

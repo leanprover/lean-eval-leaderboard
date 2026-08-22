@@ -80,7 +80,7 @@ def theme (_name : String) (siteName : String) : Theme := {
           <script src="static/theme-toggle.js"></script>
           <script defer="true" src="static/background.js"></script>
           <script defer="true" src="static/site.js"></script>
-          <script defer="true" src="static/v2-preview.js"></script>
+          <script defer="true" src="static/lifecycle-preview.js"></script>
         </head>
         <body class={{pageClass}}>
           <div class="site-shell">
