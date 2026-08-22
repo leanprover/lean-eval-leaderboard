@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from scripts.v2_site_data import (
     SetDefinition,
     Solution,
-    adapt_state_domain,
+    adapt_state_projection,
     build_v2_projection,
     load_preview_fixture,
     merge_solutions,
@@ -159,56 +159,68 @@ class V2ProjectionTests(unittest.TestCase):
 
         self.assertTrue(any("unavailable" in limitation for limitation in limitations))
 
-    def test_materialized_domain_adapter_joins_replay_and_release(self) -> None:
+    def test_public_state_projection_adapter_joins_replay_and_release(self) -> None:
         raw = {
             "schema_version": 1,
             "environment": "production",
+            "source_state_commit": "e" * 40,
             "source_event_count": 8,
             "source_digest": "f" * 64,
-            "submissions": [{
-                "submission_id": "0198abcd-1111-7000-8000-000000000001",
-                "actor": "alice",
-                "declared_model": "Example Model v1",
-                "evaluation": {
-                    "status": "accepted",
-                    "occurred_at": "2026-08-20T00:00:00Z",
-                    "event_id": "0198abcd-0000-7000-8000-000000000001",
-                    "benchmark_commit": "a" * 40,
-                },
-            }],
             "results": [{
                 "result_id": "r2_" + "b" * 64,
-                "submission_id": "0198abcd-1111-7000-8000-000000000001",
                 "problem_id": "alpha",
                 "statement_revision": 1,
                 "declared_model": "Example Model v1",
+                "submitter": "alice",
+                "accepted_at": "2026-08-20T00:00:00Z",
+                "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",
                 "recorded_at": "2026-08-20T00:00:01Z",
-                "event_id": "0198abcd-0000-7000-8000-000000000002",
-            }],
-            "replay_tasks": [{
-                "replay_task_id": "rt1_" + "c" * 64,
-                "result_id": "r2_" + "b" * 64,
-                "status": "accepted",
-                "occurred_at": "2026-08-21T00:00:00Z",
-                "attempt": 1,
-                "checker": "lean4lean",
-                "wall_time_ms": 20,
-                "retired_instructions": None,
-            }],
-            "release_tasks": [{
-                "result_id": "r2_" + "b" * 64,
-                "status": "scheduled",
-                "release_at": "2026-10-20T00:00:00Z",
+                "record_event_id": "0198abcd-0000-7000-8000-000000000002",
+                "benchmark_commit": "a" * 40,
+                "production_metadata": {},
+                "replay": {
+                    "status": "accepted",
+                    "reason": None,
+                    "attempt": 1,
+                    "checker": "lean4lean",
+                    "checker_wall_time_ms": 20,
+                    "checker_retired_instructions": None,
+                    "checker_retired_instructions_unavailable_reason": "counter_not_supported",
+                    "build_wall_time_ms": 40,
+                    "build_retired_instructions": 100,
+                    "build_retired_instructions_unavailable_reason": None,
+                    "lines_of_code": 12,
+                    "file_count": 1,
+                },
+                "release": {
+                    "status": "scheduled",
+                    "release_at": "2026-10-20T00:00:00Z",
+                    "reason": None,
+                },
+                "public_solution": {"available": False, "url": None},
             }],
         }
         aliases = {"Example Model v1": {"canonical_id": "example-model", "label": "Example Model"}}
 
-        adapted = adapt_state_domain(raw, aliases)
+        adapted = adapt_state_projection(raw, aliases)
 
         self.assertEqual(adapted[0].canonical_model_id, "example-model")
         self.assertEqual(adapted[0].replay["status"], "accepted")
         self.assertEqual(adapted[0].measurements[0]["status"], "unavailable")
         self.assertEqual(adapted[0].release["status"], "scheduled")
+
+    def test_public_state_projection_rejects_private_internal_fields(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "environment": "production",
+            "source_state_commit": "e" * 40,
+            "source_event_count": 1,
+            "source_digest": "f" * 64,
+            "results": [],
+            "submissions": [],
+        }
+        with self.assertRaisesRegex(SystemExit, "top-level fields"):
+            adapt_state_projection(raw, {})
 
     def test_state_record_replaces_matching_legacy_base_record(self) -> None:
         legacy = solution("legacy_a", "alpha", "model-a", "2026-08-20T00:00:00Z", "issue-1")

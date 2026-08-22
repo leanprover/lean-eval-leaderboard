@@ -21,7 +21,7 @@ try:
     from scripts.results_v2 import ResultsV2Error, parse_v2_file
     from scripts.v2_site_data import (
         adapt_results_store,
-        adapt_state_domain,
+        adapt_state_projection,
         build_v2_projection,
         load_preview_fixture,
         load_set_definitions,
@@ -31,7 +31,7 @@ except ModuleNotFoundError:
     from results_v2 import ResultsV2Error, parse_v2_file
     from v2_site_data import (
         adapt_results_store,
-        adapt_state_domain,
+        adapt_state_projection,
         build_v2_projection,
         load_preview_fixture,
         load_set_definitions,
@@ -1141,15 +1141,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output-dir", default=str(SITE_DATA_ROOT))
     parser.add_argument(
-        "--state-domain",
+        "--state-projection",
         default=None,
-        help="Optional lean-eval-state materialized/domain.json projection. "
-        "The preview never reads State events directly.",
+        help="Optional redacted public State projection. The site generator "
+        "never reads private State events or internal materialized views.",
     )
     parser.add_argument(
         "--state-repo",
         default=None,
-        help="State checkout whose HEAD produced --state-domain; recorded as provenance.",
+        help="State checkout whose HEAD produced --state-projection; checked against its provenance.",
     )
     parser.add_argument(
         "--preview-fixture",
@@ -1274,15 +1274,20 @@ def main() -> int:
         }
         for item in fixture.get("model_aliases", [])
     }
-    state_domain_path = (
-        pathlib.Path(args.state_domain).resolve() if args.state_domain else None
+    state_projection_path = (
+        pathlib.Path(args.state_projection).resolve() if args.state_projection else None
     )
-    state_domain = load_json(state_domain_path) if state_domain_path else None
+    state_projection = load_json(state_projection_path) if state_projection_path else None
     state_repo = pathlib.Path(args.state_repo).resolve() if args.state_repo else None
-    if state_domain_path is not None and state_repo is None:
-        raise SystemExit("--state-domain requires --state-repo for immutable provenance")
+    if state_projection_path is not None and state_repo is None:
+        raise SystemExit("--state-projection requires --state-repo for immutable provenance")
+    state_commit = git_head(state_repo) if state_repo else None
+    if state_projection is not None and state_projection.get("source_state_commit") != state_commit:
+        raise SystemExit("State projection source_state_commit does not match --state-repo HEAD")
+    if state_projection is not None:
+        write_json(output_dir / "public-state.json", state_projection)
     fallback_solutions = adapt_results_store(normalized_files, aliases)
-    state_solutions = adapt_state_domain(state_domain, aliases)
+    state_solutions = adapt_state_projection(state_projection, aliases)
     v2_files = build_v2_projection(
         problems=problems,
         solutions=merge_solutions(state_solutions, fallback_solutions),
@@ -1291,8 +1296,8 @@ def main() -> int:
         fixture=fixture,
         generated_at=leaderboard_payload["generated_at"],
         benchmark_commit=git_head(benchmark_repo),
-        state_commit=git_head(state_repo) if state_repo else None,
-        state_metadata=state_domain,
+        state_commit=state_commit,
+        state_metadata=state_projection,
         site_base_url=args.site_base_url,
     )
     for relative_path, payload in v2_files.items():

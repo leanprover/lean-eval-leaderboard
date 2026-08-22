@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build the split, client-facing lifecycle-aware leaderboard projection.
 
-The adapter deliberately consumes only materialized State data.  It never reads
-the append-only event log and it never executes submission source.  While the
-production State projection lacks lifecycle/amendment fields, catalog metadata
-and optional schema-versioned preview fixtures fill those presentation fields;
-every such fallback is recorded in ``data_limitations``.
+The adapter consumes only State's redacted public projection. It never reads
+the private append-only event log, internal materialized views, or submission
+source. Catalog metadata and optional schema-versioned preview fixtures fill
+presentation fields that State does not own; every fallback is recorded in
+``data_limitations``.
 """
 
 from __future__ import annotations
@@ -242,11 +242,11 @@ def adapt_results_store(
     return out
 
 
-def adapt_state_domain(
+def adapt_state_projection(
     raw: dict[str, Any] | None,
     aliases: dict[str, dict[str, str]],
 ) -> list[Solution]:
-    """Normalize the public ``materialized/domain.json`` State projection."""
+    """Normalize ``public-state-projection-v1`` without private State fields."""
 
     if raw is None:
         return []
@@ -258,29 +258,26 @@ def adapt_state_domain(
         raise SystemExit("State domain: invalid source_event_count")
     if not re.fullmatch(r"[0-9a-f]{64}", str(raw.get("source_digest", ""))):
         raise SystemExit("State domain: invalid source_digest")
-    submissions = {item["submission_id"]: item for item in raw.get("submissions", [])}
-    replay_by_result: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for replay in raw.get("replay_tasks", []):
-        replay_by_result[replay["result_id"]].append(replay)
-    release_by_result = {
-        item["result_id"]: item for item in raw.get("release_tasks", [])
-    }
+    if not re.fullmatch(r"[0-9a-f]{40}", str(raw.get("source_state_commit", ""))):
+        raise SystemExit("State projection: invalid source_state_commit")
+    if set(raw) != {
+        "schema_version", "environment", "source_state_commit",
+        "source_event_count", "source_digest", "results",
+    }:
+        raise SystemExit("State projection: invalid top-level fields")
     solutions: list[Solution] = []
     for result in raw.get("results", []):
-        submission = submissions.get(result["submission_id"])
-        if submission is None:
-            raise SystemExit(
-                f"State domain: result {result['result_id']} has no submission"
-            )
-        declared = _normalized_model(
-            str(result.get("declared_model", submission["declared_model"]))
-        )
+        required = {
+            "result_id", "problem_id", "statement_revision", "declared_model",
+            "submitter", "accepted_at", "acceptance_event_id", "recorded_at",
+            "record_event_id", "benchmark_commit", "production_metadata", "replay",
+            "release", "public_solution",
+        }
+        if not isinstance(result, dict) or set(result) != required:
+            raise SystemExit("State projection: invalid result fields")
+        declared = _normalized_model(str(result["declared_model"]))
         canonical_id, canonical_label = _canonical_identity(declared, aliases)
-        replay_tasks = sorted(
-            replay_by_result.get(result["result_id"], []),
-            key=lambda task: (task.get("occurred_at", ""), task["replay_task_id"]),
-        )
-        replay = replay_tasks[-1] if replay_tasks else None
+        replay = result["replay"]
         if replay is None:
             replay_view = {"status": "unavailable", "reason": "not-enqueued"}
             measurements: list[dict[str, Any]] = []
@@ -300,23 +297,32 @@ def adapt_state_domain(
                         else "available"
                     ),
                     "checker": replay.get("checker"),
-                    "wall_time_ms": replay.get("wall_time_ms"),
-                    "retired_instructions": replay.get("retired_instructions"),
+                    "checker_wall_time_ms": replay.get("checker_wall_time_ms"),
+                    "checker_retired_instructions": replay.get(
+                        "checker_retired_instructions"
+                    ),
+                    "checker_retired_instructions_unavailable_reason": replay.get(
+                        "checker_retired_instructions_unavailable_reason"
+                    ),
+                    "build_wall_time_ms": replay.get("build_wall_time_ms"),
+                    "build_retired_instructions": replay.get(
+                        "build_retired_instructions"
+                    ),
+                    "build_retired_instructions_unavailable_reason": replay.get(
+                        "build_retired_instructions_unavailable_reason"
+                    ),
+                    "lines_of_code": replay.get("lines_of_code"),
+                    "file_count": replay.get("file_count"),
                     "unavailable_reason": (
                         "performance-counter-unavailable"
-                        if replay.get("retired_instructions") is None
+                        if replay.get("checker_retired_instructions") is None
                         else None
                     ),
                     "attempt": replay.get("attempt", 0),
                 }
             ]
-        release = release_by_result.get(result["result_id"])
-        release_url = None
-        if release is not None and release.get("status") == "published":
-            release_url = (
-                "https://github.com/leanprover/lean-eval-releases/tree/"
-                f"{release.get('repository_commit', '')}/{quote(str(release.get('path', '')), safe='/')}"
-            )
+        release = result["release"]
+        release_url = result["public_solution"]["url"]
         release_view = (
             {
                 "status": release["status"],
@@ -327,9 +333,6 @@ def adapt_state_domain(
             if release is not None
             else {"status": "unavailable", "reason": "not-scheduled", "url": None}
         )
-        evaluation = submission.get("evaluation", {})
-        accepted_at = evaluation.get("occurred_at", result["recorded_at"])
-        acceptance_event_id = evaluation.get("event_id", result["event_id"])
         solutions.append(
             Solution(
                 result_id=result["result_id"],
@@ -338,24 +341,21 @@ def adapt_state_domain(
                 declared_model=declared,
                 canonical_model_id=canonical_id,
                 canonical_model_label=canonical_label,
-                submitter=submission["actor"],
-                accepted_at=accepted_at,
-                acceptance_event_id=acceptance_event_id,
+                submitter=result["submitter"],
+                accepted_at=result["accepted_at"],
+                acceptance_event_id=result["acceptance_event_id"],
                 retracted=bool(result.get("retracted", False)),
                 metadata=_metadata_fields(
-                    submission.get("production_metadata", {}),
+                    result.get("production_metadata", {}),
                     "declared-at-submission",
                 ),
                 provenance={
-                    "source": "state-materialized-domain",
-                    "state_event_id": result["event_id"],
-                    "submission_id": result["submission_id"],
-                    "benchmark_commit": submission.get("evaluation", {}).get(
-                        "benchmark_commit"
-                    ),
+                    "source": "public-state-projection",
+                    "state_event_id": result["record_event_id"],
+                    "benchmark_commit": result["benchmark_commit"],
                 },
                 public_solution={
-                    "available": release_view.get("status") == "published",
+                    "available": result["public_solution"]["available"],
                     "url": release_view.get("url"),
                 },
                 replay=replay_view,
@@ -624,22 +624,22 @@ def build_v2_projection(
     limitations: list[str] = []
     if not state_commit:
         limitations.append(
-            "Production State materialized-domain data was unavailable; base results were adapted and replay/release states are explicitly unavailable."
+            "The redacted production State projection was unavailable; base results were adapted and replay/release states are explicitly unavailable."
         )
     elif any(
         solution.provenance.get("source") == "base-results-store"
         for solution in solutions
     ):
         limitations.append(
-            "Results not yet present in the State materialized domain were adapted from the immutable base-results store; their replay/release states are explicitly unavailable."
+            "Results not yet present in the public State projection were adapted from the immutable base-results store; their replay/release states are explicitly unavailable."
         )
     if not fixture.get("problem_lifecycle"):
         limitations.append(
-            "Production State does not yet materialize lifecycle histories; the preview shows the current catalog status as a one-entry history."
+            "Catalog lifecycle history beyond the current pinned manifest is unavailable; the site shows the current status as a one-entry history."
         )
     if not fixture.get("model_aliases"):
         limitations.append(
-            "Production State does not yet materialize model aliases; normalized declared model labels are used as canonical credit identities."
+            "No reviewed model-alias policy is published; normalized declared model labels are used as canonical credit identities."
         )
 
     files: dict[str, Any] = {}

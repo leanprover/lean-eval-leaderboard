@@ -60,6 +60,12 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("Verify public catalog visibility", workflow)
         self.assertIn("all(.problems[]; .visible == true", workflow)
         self.assertIn("python3 scripts/check_links.py", workflow)
+        self.assertIn("PRODUCTION_STATE_READ_KEY", workflow)
+        self.assertIn("Checkout private production State for its redacted projection", workflow)
+        self.assertIn("persist-credentials: false", workflow)
+        self.assertIn("--state-projection", workflow)
+        self.assertIn("_site/site-data/public-state.json", workflow)
+        self.assertIn("Private State fields leaked", workflow)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v1.schema.json",
+  "title": "LeanEval public State projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_state_commit",
+    "source_event_count", "source_digest", "results"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "environment": { "enum": ["production", "staging"] },
+    "source_state_commit": { "$ref": "#/$defs/commit" },
+    "source_event_count": { "type": "integer", "minimum": 1 },
+    "source_digest": { "$ref": "#/$defs/digest" },
+    "results": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/result" }
+    }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "nullableText": {
+      "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+    },
+    "nullableNatural": {
+      "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "reason", "attempt", "checker", "checker_wall_time_ms",
+        "checker_retired_instructions", "checker_retired_instructions_unavailable_reason",
+        "build_wall_time_ms", "build_retired_instructions",
+        "build_retired_instructions_unavailable_reason", "lines_of_code", "file_count"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "queued", "running", "accepted", "rejected", "declined", "crashed",
+            "timed_out", "failed", "unavailable"
+          ]
+        },
+        "reason": { "$ref": "#/$defs/nullableText" },
+        "attempt": { "type": "integer", "minimum": 0 },
+        "checker": { "$ref": "#/$defs/nullableText" },
+        "checker_wall_time_ms": { "$ref": "#/$defs/nullableNatural" },
+        "checker_retired_instructions": { "$ref": "#/$defs/nullableNatural" },
+        "checker_retired_instructions_unavailable_reason": { "$ref": "#/$defs/nullableText" },
+        "build_wall_time_ms": { "$ref": "#/$defs/nullableNatural" },
+        "build_retired_instructions": { "$ref": "#/$defs/nullableNatural" },
+        "build_retired_instructions_unavailable_reason": { "$ref": "#/$defs/nullableText" },
+        "lines_of_code": { "$ref": "#/$defs/nullableNatural" },
+        "file_count": { "$ref": "#/$defs/nullableNatural" }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "release_at", "reason"],
+      "properties": {
+        "status": { "enum": ["scheduled", "running", "published", "failed", "cancelled"] },
+        "release_at": { "$ref": "#/$defs/nullableText" },
+        "reason": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id", "problem_id", "statement_revision", "declared_model", "submitter",
+        "accepted_at", "acceptance_event_id", "recorded_at", "record_event_id",
+        "benchmark_commit", "production_metadata", "replay", "release", "public_solution"
+      ],
+      "properties": {
+        "result_id": { "type": "string", "pattern": "^r2_[0-9a-f]{64}$" },
+        "problem_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "statement_revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "declared_model": { "type": "string", "minLength": 1 },
+        "submitter": { "type": "string", "minLength": 1 },
+        "accepted_at": { "type": "string", "minLength": 1 },
+        "acceptance_event_id": { "$ref": "#/$defs/eventId" },
+        "recorded_at": { "type": "string", "minLength": 1 },
+        "record_event_id": { "$ref": "#/$defs/eventId" },
+        "benchmark_commit": { "$ref": "#/$defs/commit" },
+        "production_metadata": { "type": "object" },
+        "replay": { "oneOf": [{ "$ref": "#/$defs/replay" }, { "type": "null" }] },
+        "release": { "oneOf": [{ "$ref": "#/$defs/release" }, { "type": "null" }] },
+        "public_solution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["available", "url"],
+          "properties": {
+            "available": { "type": "boolean" },
+            "url": { "$ref": "#/$defs/nullableText" }
+          }
+        }
+      }
+    }
+  }
+}
