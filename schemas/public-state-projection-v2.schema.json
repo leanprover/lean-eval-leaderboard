@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v2.schema.json",
+  "title": "lean-eval public State projection schema version 2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_state_commit",
+    "source_event_count", "source_digest", "results", "result_overlays"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "environment": { "enum": ["staging", "production"] },
+    "source_state_commit": { "$ref": "#/$defs/commit" },
+    "source_event_count": { "type": "integer", "minimum": 1 },
+    "source_digest": { "$ref": "#/$defs/digest" },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "public-state-projection-v1.schema.json#/$defs/result"
+      }
+    },
+    "result_overlays": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/overlay" }
+    }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "resultId": { "type": "string", "pattern": "^r2_[0-9a-f]{64}$" },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^(?!0000-)[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\.[0-9]{3}Z$"
+    },
+    "overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id", "owner_login", "declared_model", "problem_id",
+        "statement_revision", "claim_event_id", "mutation_event_id",
+        "claimed_at", "metadata"
+      ],
+      "properties": {
+        "result_id": { "$ref": "#/$defs/resultId" },
+        "owner_login": {
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$"
+        },
+        "declared_model": {
+          "type": "string", "minLength": 1, "maxLength": 256,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$",
+          "x-utf8-maxBytes": 256
+        },
+        "problem_id": {
+          "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "statement_revision": {
+          "type": "integer", "minimum": 1, "maximum": 9007199254740991
+        },
+        "claim_event_id": { "$ref": "#/$defs/eventId" },
+        "mutation_event_id": { "$ref": "#/$defs/eventId" },
+        "claimed_at": { "$ref": "#/$defs/timestamp" },
+        "metadata": {
+          "$ref": "result-overlays-v1.schema.json#/$defs/metadata"
+        }
+      }
+    }
+  }
+}

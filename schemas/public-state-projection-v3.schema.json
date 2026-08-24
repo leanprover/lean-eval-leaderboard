@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v3.schema.json",
+  "title": "lean-eval public State projection schema version 3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_state_commit",
+    "source_event_count", "source_digest", "results", "result_overlays"
+  ],
+  "properties": {
+    "schema_version": { "const": 3 },
+    "environment": {
+      "$ref": "public-state-projection-v2.schema.json#/properties/environment"
+    },
+    "source_state_commit": {
+      "$ref": "public-state-projection-v2.schema.json#/properties/source_state_commit"
+    },
+    "source_event_count": {
+      "$ref": "public-state-projection-v2.schema.json#/properties/source_event_count"
+    },
+    "source_digest": {
+      "$ref": "public-state-projection-v2.schema.json#/properties/source_digest"
+    },
+    "results": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/result" }
+    },
+    "result_overlays": {
+      "$ref": "public-state-projection-v2.schema.json#/properties/result_overlays"
+    }
+  },
+  "$defs": {
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "release_at", "reason"],
+      "properties": {
+        "status": {
+          "enum": [
+            "scheduled", "running", "published", "failed", "cancelled", "removed"
+          ]
+        },
+        "release_at": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/nullableText"
+        },
+        "reason": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/nullableText"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id", "problem_id", "statement_revision", "declared_model", "submitter",
+        "accepted_at", "acceptance_event_id", "recorded_at", "record_event_id",
+        "benchmark_commit", "production_metadata", "replay", "release", "public_solution"
+      ],
+      "properties": {
+        "result_id": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/result_id"
+        },
+        "problem_id": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/problem_id"
+        },
+        "statement_revision": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/statement_revision"
+        },
+        "declared_model": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/declared_model"
+        },
+        "submitter": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/submitter"
+        },
+        "accepted_at": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/accepted_at"
+        },
+        "acceptance_event_id": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/acceptance_event_id"
+        },
+        "recorded_at": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/recorded_at"
+        },
+        "record_event_id": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/record_event_id"
+        },
+        "benchmark_commit": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/benchmark_commit"
+        },
+        "production_metadata": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/production_metadata"
+        },
+        "replay": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/replay"
+        },
+        "release": {
+          "oneOf": [{ "$ref": "#/$defs/release" }, { "type": "null" }]
+        },
+        "public_solution": {
+          "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/public_solution"
+        }
+      }
+    }
+  }
+}

@@ -67,6 +67,9 @@ BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PROBLEM_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
 TAG_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+RESULT_USER_RE = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+)
 ROOT_DECLARATIONS_BY_PROBLEM = {
     "annals_dirichlet_weyl_bound": {"Nat.IsCubeFree"},
 }
@@ -342,7 +345,17 @@ def load_results(results_root: pathlib.Path) -> list[dict[str, Any]]:
         return []
     results: list[dict[str, Any]] = []
     for path in sorted(results_root.glob("*.json")):
-        results.append(load_json(path))
+        document = load_json(path)
+        user = document.get("user") if isinstance(document, dict) else None
+        if (
+            not isinstance(user, str)
+            or RESULT_USER_RE.fullmatch(user) is None
+            or user.lower() != path.stem.lower()
+        ):
+            raise SystemExit(
+                f"{path}: results owner must be a canonical login matching its filename"
+            )
+        results.append(document)
     return results
 
 
@@ -360,7 +373,9 @@ def normalized_result_records(
 
     version = user_record.get("schema_version")
     if version == 1:
-        user = str(user_record["user"])
+        user = user_record.get("user")
+        if not isinstance(user, str) or RESULT_USER_RE.fullmatch(user) is None:
+            raise SystemExit(f"{context}: user must be a canonical GitHub login")
         normalized: list[dict[str, Any]] = []
         solved_per_model = user_record.get("solved", {})
         for raw_model_name, problems_for_model in solved_per_model.items():

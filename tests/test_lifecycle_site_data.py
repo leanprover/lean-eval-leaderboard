@@ -376,6 +376,75 @@ class LifecycleProjectionTests(unittest.TestCase):
             adapted[0].canonical_model_label, "Canonical Model Renamed"
         )
         self.assertEqual(index.public_aliases[0]["canonical_id"], target_id)
+        files = build_lifecycle_projection(
+            problems=[problem("alpha")],
+            solutions=adapted,
+            set_definitions=[],
+            tag_registry={},
+            fixture={},
+            generated_at="2026-08-20T12:00:00Z",
+            benchmark_commit="a" * 40,
+            state_commit=raw["source_state_commit"],
+            state_metadata=raw,
+            site_base_url="https://example.test/eval/",
+            model_aliases=index.public_aliases,
+        )
+        published_alias = files["v2/index.json"]["model_aliases"][0]
+        self.assertEqual(published_alias["owner_login"], "alice")
+        self.assertEqual(published_alias["model_id"], raw["model_identities"][0]["model_id"])
+        self.assertFalse(
+            any(
+                "no reviewed State model alias" in limitation
+                for limitation in files["v2/index.json"]["data_limitations"]
+            )
+        )
+        mixed_files = build_lifecycle_projection(
+            problems=[problem("alpha")],
+            solutions=[
+                *adapted,
+                solution(
+                    "legacy-unreviewed",
+                    "alpha",
+                    "unreviewed-model",
+                    "2026-08-21T00:00:00Z",
+                    "issue-2",
+                ),
+            ],
+            set_definitions=[],
+            tag_registry={},
+            fixture={},
+            generated_at="2026-08-20T12:00:00Z",
+            benchmark_commit="a" * 40,
+            state_commit=raw["source_state_commit"],
+            state_metadata=raw,
+            site_base_url="https://example.test/eval/",
+            model_aliases=index.public_aliases,
+        )
+        self.assertTrue(
+            any(
+                "no reviewed State model alias" in limitation
+                for limitation in mixed_files["v2/index.json"]["data_limitations"]
+            )
+        )
+
+    def test_state_generated_v4_fixture_is_consumed_without_rewriting(self) -> None:
+        raw = json.loads(
+            (
+                ROOT
+                / "tests/fixtures/public-state-projection-v4-model-identity.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        index = build_model_identity_index(raw)
+        adapted = adapt_state_projection(raw, {}, index)
+
+        self.assertEqual(len(raw["model_identity_history"]), 10)
+        self.assertEqual(adapted[0].declared_model, "Example Model")
+        self.assertEqual(adapted[0].canonical_model_label, "Third")
+        self.assertEqual(
+            adapted[0].canonical_model_id,
+            index.aliases[("kim-em", "Example Model")][1],
+        )
 
     def test_projection_v4_aliases_are_owner_scoped(self) -> None:
         raw = identity_projection_v4()
@@ -471,6 +540,21 @@ class LifecycleProjectionTests(unittest.TestCase):
             raw["model_identities"][1]["model_id"],
         )
         self.assertEqual(adapted[0].declared_model, record["declared_model"])
+
+    def test_verbatim_alias_mismatch_stays_visible_and_falls_back(self) -> None:
+        raw = identity_projection_v4()
+        raw["results"][0]["declared_model"] = "Example  Model Revision A"
+        raw["results"][0]["result_id"] = result_id(
+            "alice", "Example  Model Revision A", "alpha", 1
+        )
+        raw["results"][0]["model_id"] = None
+        raw["results"][0]["resolved_model_id"] = None
+
+        adapted = adapt_state_projection(raw, {})
+
+        self.assertEqual(adapted[0].declared_model, "Example  Model Revision A")
+        self.assertEqual(adapted[0].canonical_model_id, "example-model-revision-a")
+        self.assertFalse(adapted[0].model_identity_reviewed)
 
     def test_state_record_replaces_matching_legacy_base_record(self) -> None:
         legacy = solution("legacy_a", "alpha", "model-a", "2026-08-20T00:00:00Z", "issue-1")

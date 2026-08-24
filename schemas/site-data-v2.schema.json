@@ -45,7 +45,7 @@
         "benchmark": {"type": "object", "required": ["repo", "commit"]},
         "state": {"type": "object", "required": ["repo", "commit", "materialized", "environment", "source_event_count", "source_digest"]},
         "default_group": {"$ref": "#/$defs/groupId"},
-        "model_aliases": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["declared_label", "canonical_id", "label"], "properties": {"declared_label": {"$ref": "#/$defs/nonempty"}, "canonical_id": {"$ref": "#/$defs/nonempty"}, "label": {"$ref": "#/$defs/nonempty"}}}},
+        "model_aliases": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["declared_label", "canonical_id", "label"], "properties": {"owner_login": {"$ref": "#/$defs/nonempty"}, "declared_label": {"$ref": "#/$defs/nonempty"}, "model_id": {"$ref": "#/$defs/nonempty"}, "canonical_id": {"$ref": "#/$defs/nonempty"}, "label": {"$ref": "#/$defs/nonempty"}, "assignment_event_id": {"$ref": "#/$defs/nonempty"}}}},
         "groups": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "required": ["id", "label", "policy", "default_scope", "problem_count", "solution_count", "data_url", "url"]}},
         "recent_solutions_url": {"$ref": "#/$defs/nonempty"},
         "recent_solutions_rss_url": {"$ref": "#/$defs/nonempty"},

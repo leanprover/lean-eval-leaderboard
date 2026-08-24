@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/result-overlays-v1.schema.json",
+  "title": "lean-eval deterministic legacy-result overlay view schema version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_event_count", "source_digest",
+    "overlays"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "environment": { "enum": ["staging", "production"] },
+    "source_event_count": { "type": "integer", "minimum": 1 },
+    "source_digest": { "$ref": "#/$defs/digest" },
+    "overlays": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/overlay" }
+    }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "resultId": { "type": "string", "pattern": "^r2_[0-9a-f]{64}$" },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^(?!0000-)[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "text": {
+      "type": "string", "minLength": 1,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "baseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "declared_model", "problem_id", "statement_revision",
+        "results_repository", "results_commit", "results_path",
+        "canonical_record_sha256"
+      ],
+      "properties": {
+        "declared_model": {
+          "x-utf8-maxBytes": 256,
+          "allOf": [
+            { "$ref": "#/$defs/text" },
+            { "type": "string", "maxLength": 256 }
+          ]
+        },
+        "problem_id": {
+          "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "statement_revision": {
+          "type": "integer", "minimum": 1, "maximum": 9007199254740991
+        },
+        "results_repository": { "const": "leanprover/lean-eval-submissions" },
+        "results_commit": { "$ref": "#/$defs/commit" },
+        "results_path": {
+          "type": "string", "pattern": "^results/[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?\\.json$"
+        },
+        "canonical_record_sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "provenance", "event_id", "recorded_at"],
+      "properties": {
+        "value": {},
+        "provenance": { "const": "backfilled" },
+        "event_id": { "$ref": "#/$defs/eventId" },
+        "recorded_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "text256Provenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "allOf": [
+                { "$ref": "#/$defs/text" },
+                { "type": "string", "maxLength": 256 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "text1024Provenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "allOf": [
+                { "$ref": "#/$defs/text" },
+                { "type": "string", "maxLength": 1024 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "text4096Provenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "allOf": [
+                { "$ref": "#/$defs/text" },
+                { "type": "string", "maxLength": 4096 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "text8192Provenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "allOf": [
+                { "$ref": "#/$defs/text" },
+                { "type": "string", "maxLength": 8192 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "componentModelsProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "array", "maxItems": 16,
+              "items": {
+                "allOf": [
+                  { "$ref": "#/$defs/text" },
+                  { "type": "string", "maxLength": 256 }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "booleanProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": { "value": { "type": "boolean" } }
+        }
+      ]
+    },
+    "wallTimeProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number", "minimum": 0, "maximum": 31536000 }
+          }
+        }
+      ]
+    },
+    "tokenProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "integer", "minimum": 0, "maximum": 9007199254740991
+            }
+          }
+        }
+      ]
+    },
+    "costProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number", "minimum": 0, "maximum": 1000000 }
+          }
+        }
+      ]
+    },
+    "billingProvenance": {
+      "allOf": [
+        { "$ref": "#/$defs/provenance" },
+        {
+          "type": "object",
+          "properties": {
+            "value": { "enum": ["api", "subscription", "unknown"] }
+          }
+        }
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "credit_identity": { "$ref": "#/$defs/text256Provenance" },
+        "component_models": { "$ref": "#/$defs/componentModelsProvenance" },
+        "harness": { "$ref": "#/$defs/text1024Provenance" },
+        "human_involvement": { "$ref": "#/$defs/text1024Provenance" },
+        "web_access": { "$ref": "#/$defs/booleanProvenance" },
+        "wall_time_seconds": { "$ref": "#/$defs/wallTimeProvenance" },
+        "input_tokens": { "$ref": "#/$defs/tokenProvenance" },
+        "output_tokens": { "$ref": "#/$defs/tokenProvenance" },
+        "cost_usd": { "$ref": "#/$defs/costProvenance" },
+        "billing_mode": { "$ref": "#/$defs/billingProvenance" },
+        "prompt": { "$ref": "#/$defs/text8192Provenance" },
+        "notes": { "$ref": "#/$defs/text4096Provenance" }
+      }
+    },
+    "overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "result_id", "owner_login", "claim_event_id",
+        "mutation_event_id", "claimed_at", "base_result", "metadata"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "result_id": { "$ref": "#/$defs/resultId" },
+        "owner_login": {
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$"
+        },
+        "claim_event_id": { "$ref": "#/$defs/eventId" },
+        "mutation_event_id": { "$ref": "#/$defs/eventId" },
+        "claimed_at": { "$ref": "#/$defs/timestamp" },
+        "base_result": { "$ref": "#/$defs/baseResult" },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    }
+  }
+}

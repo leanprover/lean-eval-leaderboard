@@ -14,10 +14,11 @@ import json
 import pathlib
 import re
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from html import escape as xml_escape
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import quote
 
@@ -90,11 +91,11 @@ class SetDefinition:
 
 @dataclass(frozen=True)
 class ModelIdentityIndex:
-    aliases: dict[tuple[str, str], tuple[str, str, str]]
+    aliases: Mapping[tuple[str, str], tuple[str, str, str]]
     public_aliases: tuple[dict[str, str], ...]
 
 
-EMPTY_MODEL_IDENTITY_INDEX = ModelIdentityIndex({}, ())
+EMPTY_MODEL_IDENTITY_INDEX = ModelIdentityIndex(MappingProxyType({}), ())
 
 
 @dataclass
@@ -115,6 +116,7 @@ class Solution:
     replay: dict[str, Any]
     measurements: list[dict[str, Any]] = field(default_factory=list)
     release: dict[str, Any] = field(default_factory=dict)
+    model_identity_reviewed: bool = False
 
 
 def load_preview_fixture(path: pathlib.Path | None) -> dict[str, Any]:
@@ -277,6 +279,21 @@ def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex
             raise SystemExit(
                 "State projection: incoherent model identity resolution"
             )
+        if status == "consolidated":
+            current = model_id
+            seen: set[str] = set()
+            while current != resolved_id:
+                if current in seen:
+                    raise SystemExit(
+                        "State projection: cyclic model identity consolidation"
+                    )
+                seen.add(current)
+                current_identity = identities.get(current)
+                if current_identity is None:
+                    raise SystemExit(
+                        "State projection: missing model identity consolidation target"
+                    )
+                current = current_identity["consolidated_into"]
 
     aliases: dict[tuple[str, str], tuple[str, str, str]] = {}
     summaries: list[dict[str, str]] = []
@@ -315,9 +332,12 @@ def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex
         aliases[key] = (model_id, resolved_id, label)
         summaries.append(
             {
+                "owner_login": owner,
                 "declared_label": declared,
+                "model_id": model_id,
                 "canonical_id": resolved_id,
                 "label": label,
+                "assignment_event_id": alias["assignment_event_id"],
             }
         )
     return ModelIdentityIndex(
@@ -326,7 +346,8 @@ def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex
             sorted(
                 summaries,
                 key=lambda item: (
-                    item["canonical_id"], item["declared_label"], item["label"]
+                    item["owner_login"], item["declared_label"],
+                    item["canonical_id"], item["label"]
                 ),
             )
         ),
@@ -337,9 +358,14 @@ def _canonical_identity(
     owner_login: str,
     declared_model: str,
     aliases: dict[str, dict[str, str]],
-    model_identities: ModelIdentityIndex = EMPTY_MODEL_IDENTITY_INDEX,
+    model_identities: ModelIdentityIndex | None = None,
 ) -> tuple[str, str]:
-    state_alias = model_identities.aliases.get(
+    identity_index = (
+        model_identities
+        if model_identities is not None
+        else EMPTY_MODEL_IDENTITY_INDEX
+    )
+    state_alias = identity_index.aliases.get(
         (owner_login.lower(), declared_model)
     )
     if state_alias is not None:
@@ -354,7 +380,7 @@ def _canonical_identity(
 def adapt_results_store(
     normalized_files: list[tuple[str, list[dict[str, Any]]]],
     aliases: dict[str, dict[str, str]],
-    model_identities: ModelIdentityIndex = EMPTY_MODEL_IDENTITY_INDEX,
+    model_identities: ModelIdentityIndex | None = None,
 ) -> list[Solution]:
     """Adapt the legacy/base results store into the materialized domain shape."""
 
@@ -362,9 +388,17 @@ def adapt_results_store(
     for user, records in normalized_files:
         for record in records:
             raw_declared = record["declared_model"]
-            declared = _normalized_model(raw_declared)
+            declared = raw_declared
+            identity_index = (
+                model_identities
+                if model_identities is not None
+                else EMPTY_MODEL_IDENTITY_INDEX
+            )
+            reviewed = (
+                user.lower(), raw_declared
+            ) in identity_index.aliases
             canonical_id, canonical_label = _canonical_identity(
-                user, raw_declared, aliases, model_identities
+                user, raw_declared, aliases, identity_index
             )
             intake = record["intake"]
             submission = record["submission"]
@@ -420,6 +454,7 @@ def adapt_results_store(
                         "url": url,
                         "reason": None if public else "not-materialized",
                     },
+                    model_identity_reviewed=reviewed,
                 )
             )
     return out
@@ -460,7 +495,11 @@ def adapt_state_projection(
     )
     if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
-    identity_index = model_identities or build_model_identity_index(raw)
+    identity_index = (
+        model_identities
+        if model_identities is not None
+        else build_model_identity_index(raw)
+    )
     solutions: list[Solution] = []
     for result in raw.get("results", []):
         required = {
@@ -474,7 +513,7 @@ def adapt_state_projection(
         if not isinstance(result, dict) or set(result) != required:
             raise SystemExit("State projection: invalid result fields")
         raw_declared = str(result["declared_model"])
-        declared = _normalized_model(raw_declared)
+        declared = raw_declared
         if result["result_id"] != expected_result_id(
             result["submitter"],
             result["declared_model"],
@@ -485,10 +524,10 @@ def adapt_state_projection(
         canonical_id, canonical_label = _canonical_identity(
             str(result["submitter"]), raw_declared, aliases, identity_index
         )
+        state_resolution = identity_index.aliases.get(
+            (str(result["submitter"]).lower(), raw_declared)
+        )
         if version == 4:
-            state_resolution = identity_index.aliases.get(
-                (str(result["submitter"]).lower(), raw_declared)
-            )
             projected_resolution = (
                 result["model_id"], result["resolved_model_id"]
             )
@@ -585,6 +624,7 @@ def adapt_state_projection(
                 replay=replay_view,
                 measurements=measurements,
                 release=release_view,
+                model_identity_reviewed=state_resolution is not None,
             )
         )
     return solutions
@@ -865,9 +905,9 @@ def build_lifecycle_projection(
     published_model_aliases = list(model_aliases) or fixture.get(
         "model_aliases", []
     )
-    if not published_model_aliases:
+    if any(not solution.model_identity_reviewed for solution in solutions):
         limitations.append(
-            "No reviewed model-alias policy is published; normalized declared model labels are used as canonical credit identities."
+            "Some results have no reviewed State model alias; their normalized declared model labels are used as fallback credit identities."
         )
 
     files: dict[str, Any] = {}
