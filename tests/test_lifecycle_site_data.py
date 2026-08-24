@@ -513,6 +513,29 @@ class LifecycleProjectionTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "invalid model display name"):
             build_model_identity_index(hostile_label)
 
+        cycle = identity_projection_v4()
+        terminal_request = "0198abcd-0000-7000-8000-000000000700"
+        terminal_id = model_id(terminal_request)
+        terminal = copy.deepcopy(cycle["model_identities"][1])
+        terminal.update(
+            model_id=terminal_id,
+            request_event_id=terminal_request,
+            requested_name="Terminal",
+            display_name="Terminal",
+            consolidated_into=None,
+            resolved_model_id=terminal_id,
+        )
+        source, target = cycle["model_identities"]
+        source["resolved_model_id"] = terminal_id
+        target.update(
+            status="consolidated",
+            consolidated_into=source["model_id"],
+            resolved_model_id=terminal_id,
+        )
+        cycle["model_identities"].append(terminal)
+        with self.assertRaisesRegex(SystemExit, "cyclic model identity"):
+            build_model_identity_index(cycle)
+
     def test_base_result_fallback_uses_state_identity_without_mutation(self) -> None:
         raw = identity_projection_v4()
         index = build_model_identity_index(raw)
