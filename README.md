@@ -68,11 +68,13 @@ results data repository.
 
 Production deploys additionally check out private production State through the
 read-only `PRODUCTION_STATE_READ_KEY` deploy key. They generate State's strict,
-redacted `public-state-projection-v1` artifact before site generation and
+redacted `public-state-projection-v4` artifact before site generation and
 publish that exact artifact as `site-data/public-state.json`. Pull-request
 builds receive no State credential and exercise the explicitly labelled
-base-results fallback. Neither raw State events nor the internal materialized
-domain enters the Pages artifact.
+base-results fallback. Projection version 4 carries the public, owner-scoped
+model-identity review history and resolved aliases used for standings credit;
+immutable result IDs and declared labels remain unchanged. Neither raw State
+events nor the internal materialized domain enters the Pages artifact.
 
 Benchmark catalog metadata is read from the required `group`, `status`,
 `visible`, `statement_revision`, and `tags` manifest fields. Problems marked
