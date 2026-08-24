@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
 import argparse
@@ -10,36 +9,39 @@ import shutil
 import subprocess
 import sys
 import time
-import tomllib
 import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+import tomllib
+
 try:
-    from scripts.results_schema import (
-        ResultsSchemaError,
-        parse_schema_version_2_file,
-    )
     from scripts.lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
         build_lifecycle_projection,
+        build_model_identity_index,
         load_preview_fixture,
         load_set_definitions,
         merge_solutions,
     )
+    from scripts.results_schema import (
+        ResultsSchemaError,
+        parse_schema_version_2_file,
+    )
 except ModuleNotFoundError:
-    from results_schema import ResultsSchemaError, parse_schema_version_2_file
     from lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
         build_lifecycle_projection,
+        build_model_identity_index,
         load_preview_fixture,
         load_set_definitions,
         merge_solutions,
     )
+    from results_schema import ResultsSchemaError, parse_schema_version_2_file
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -65,6 +67,9 @@ BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PROBLEM_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
 TAG_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+RESULT_USER_RE = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+)
 ROOT_DECLARATIONS_BY_PROBLEM = {
     "annals_dirichlet_weyl_bound": {"Nat.IsCubeFree"},
 }
@@ -340,7 +345,17 @@ def load_results(results_root: pathlib.Path) -> list[dict[str, Any]]:
         return []
     results: list[dict[str, Any]] = []
     for path in sorted(results_root.glob("*.json")):
-        results.append(load_json(path))
+        document = load_json(path)
+        user = document.get("user") if isinstance(document, dict) else None
+        if (
+            not isinstance(user, str)
+            or RESULT_USER_RE.fullmatch(user) is None
+            or user.lower() != path.stem.lower()
+        ):
+            raise SystemExit(
+                f"{path}: results owner must be a canonical login matching its filename"
+            )
+        results.append(document)
     return results
 
 
@@ -358,7 +373,9 @@ def normalized_result_records(
 
     version = user_record.get("schema_version")
     if version == 1:
-        user = str(user_record["user"])
+        user = user_record.get("user")
+        if not isinstance(user, str) or RESULT_USER_RE.fullmatch(user) is None:
+            raise SystemExit(f"{context}: user must be a canonical GitHub login")
         normalized: list[dict[str, Any]] = []
         solved_per_model = user_record.get("solved", {})
         for raw_model_name, problems_for_model in solved_per_model.items():
@@ -448,7 +465,7 @@ def collect_local_declarations(lines: list[str]) -> dict[str, str]:
     declarations: dict[str, str] = {}
     for line in lines:
         stripped = line.strip()
-        if not stripped or stripped.startswith("/-") or stripped.startswith("--"):
+        if not stripped or stripped.startswith(("/-", "--")):
             continue
         if stripped.startswith("namespace "):
             parts = stripped.split()
@@ -1012,7 +1029,6 @@ def build_leaderboard_payload(
 
         notable = sorted(solved_items, key=rarity_sort_key)
         for rank, item in enumerate(notable, start=1):
-            problem = problem_map.get(item["problem_id"])
             recency_component = int(timestamp_key(item["solved_at"]) // 86400)
             item["rarity_rank"] = rank
             item["rarity_score"] = (total_models - solving_model_counts[item["problem_id"]]) * 1_000_000 + recency_component
@@ -1289,8 +1305,13 @@ def main() -> int:
         raise SystemExit("State projection source_state_commit does not match --state-repo HEAD")
     if state_projection is not None:
         write_json(output_dir / "public-state.json", state_projection)
-    fallback_solutions = adapt_results_store(normalized_files, aliases)
-    state_solutions = adapt_state_projection(state_projection, aliases)
+    model_identities = build_model_identity_index(state_projection)
+    fallback_solutions = adapt_results_store(
+        normalized_files, aliases, model_identities
+    )
+    state_solutions = adapt_state_projection(
+        state_projection, aliases, model_identities
+    )
     lifecycle_files = build_lifecycle_projection(
         problems=problems,
         solutions=merge_solutions(state_solutions, fallback_solutions),
@@ -1302,6 +1323,7 @@ def main() -> int:
         state_commit=state_commit,
         state_metadata=state_projection,
         site_base_url=args.site_base_url,
+        model_aliases=model_identities.public_aliases,
     )
     for relative_path, payload in lifecycle_files.items():
         destination = output_dir / relative_path

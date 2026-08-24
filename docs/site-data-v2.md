@@ -6,16 +6,17 @@ files remain available to the preserved `/legacy/` surface and downstream
 consumers.
 
 The production generator reads State's redacted
-`public-state-projection-v1` artifact, never the private append-only events or
+`public-state-projection-v4` artifact, never the private append-only events or
 internal `materialized/domain.json`. The public artifact contains recorded
-results and public lifecycle evidence only; it excludes pending/rejected
-submissions, submission IDs, source and archive locators, and authentication
-nonces. Its source State commit, canonical event digest, and event count make
-the bytes reproducible by an authorized auditor. Presentation-only catalog
-fields come from the pinned benchmark checkout. If no State projection is
-provided, immutable base results are adapted instead. Every fallback appears
-in each payload's `data_limitations`; missing replay and release data is emitted
-as an explicit `unavailable` state rather than omitted or guessed.
+results, public lifecycle evidence, and public model-identity review history
+only; it excludes pending/rejected submissions, submission IDs, source and
+archive locators, and authentication nonces. Its source State commit, canonical
+event digest, and event count make the bytes reproducible by an authorized
+auditor. Presentation-only catalog fields come from the pinned benchmark
+checkout. If no State projection is provided, immutable base results are
+adapted instead. Every fallback appears in each payload's `data_limitations`;
+missing replay and release data is emitted as an explicit `unavailable` state
+rather than omitted or guessed.
 
 The split files are:
 
@@ -33,14 +34,17 @@ The authoritative structural contract is
 
 ## Credit and ordering
 
-An alias table maps declared labels to canonical credit identities before
-aggregation. Multiple base results that collide on `(canonical identity,
-problem)` retain their individual problem-page records but contribute one
-standings solve. Acceptance order is `(accepted_at, acceptance_event_id,
-result_id)`, so tied timestamps have a deterministic first solve. Unique means
-that exactly one canonical identity solved the problem in the selected scope;
-first means earliest acceptance order; total means distinct solved problems.
-The default order is unique, then first, then total.
+State aliases map the exact `(lowercase owner, verbatim declared label)` pair to
+an approved identity, then follow same-owner consolidation links to its current
+canonical identity. Renames change only the displayed canonical label. Multiple
+base results that resolve to the same `(canonical identity, problem)` retain
+their individual problem-page records but contribute one standings solve.
+Results without a reviewed State alias retain the legacy normalized-label
+fallback. Acceptance order is `(accepted_at, acceptance_event_id, result_id)`,
+so tied timestamps have a deterministic first solve. Unique means that exactly
+one canonical identity solved the problem in the selected scope; first means
+earliest acceptance order; total means distinct solved problems. The default
+order is unique, then first, then total.
 
 Standings are built and filtered inside one group payload. There is no
 cross-group score or ranking.
@@ -59,7 +63,9 @@ untrusted content with `textContent`, and RSS text is XML-escaped.
 
 ## Local fixture boundary
 
-State does not own catalog lifecycle histories or model-alias policy.
+State owns model-identity review and alias policy; it does not own catalog
+lifecycle histories. The fixture's aliases exercise fallback presentation when
+no State projection is supplied.
 `tests/fixtures/preview-domain-schema-version-1.json` exercises those
 presentation-only fixtures locally. It is loaded only via the explicit
 `--preview-fixture` flag

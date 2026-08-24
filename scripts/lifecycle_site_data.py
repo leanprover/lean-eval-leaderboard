@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build the split, client-facing lifecycle-aware leaderboard projection.
 
 The adapter consumes only State's redacted public projection. It never reads
@@ -15,10 +14,12 @@ import json
 import pathlib
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from html import escape as xml_escape
-from typing import Any, Iterable
+from types import MappingProxyType
+from typing import Any
 from urllib.parse import quote
 
 try:
@@ -52,6 +53,14 @@ STATUS_LABELS = {
     "resolved": "Resolved",
 }
 SLUG_RE = re.compile(r"[^a-z0-9]+")
+MODEL_ID_RE = re.compile(r"mi1_[0-9a-f]{64}")
+ALIAS_KEY_RE = re.compile(r"ma1_[0-9a-f]{64}")
+LOGIN_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?")
+EVENT_ID_RE = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
+MODEL_ID_DOMAIN = b"lean-eval-model-identity-v1\0"
+ALIAS_KEY_DOMAIN = b"lean-eval-model-alias-v1\0"
 
 
 def _slug(value: str) -> str:
@@ -67,7 +76,7 @@ def _stable_legacy_id(parts: Iterable[object]) -> str:
     return "legacy_" + hashlib.sha256(encoded).hexdigest()
 
 
-def _acceptance_key(solution: "Solution") -> tuple[str, str, str]:
+def _acceptance_key(solution: Solution) -> tuple[str, str, str]:
     return (solution.accepted_at, solution.acceptance_event_id, solution.result_id)
 
 
@@ -78,6 +87,15 @@ class SetDefinition:
     frozen: bool
     published_at: str | None
     members: tuple[tuple[str, int], ...]
+
+
+@dataclass(frozen=True)
+class ModelIdentityIndex:
+    aliases: Mapping[tuple[str, str], tuple[str, str, str]]
+    public_aliases: tuple[dict[str, str], ...]
+
+
+EMPTY_MODEL_IDENTITY_INDEX = ModelIdentityIndex(MappingProxyType({}), ())
 
 
 @dataclass
@@ -98,6 +116,7 @@ class Solution:
     replay: dict[str, Any]
     measurements: list[dict[str, Any]] = field(default_factory=list)
     release: dict[str, Any] = field(default_factory=dict)
+    model_identity_reviewed: bool = False
 
 
 def load_preview_fixture(path: pathlib.Path | None) -> dict[str, Any]:
@@ -167,9 +186,190 @@ def _metadata_fields(values: dict[str, Any], provenance: str) -> dict[str, dict[
     }
 
 
+def _model_identity_id(request_event_id: str) -> str:
+    return "mi1_" + hashlib.sha256(
+        MODEL_ID_DOMAIN + request_event_id.encode("ascii")
+    ).hexdigest()
+
+
+def _model_alias_key(owner_login: str, alias: str) -> str:
+    canonical = json.dumps(
+        [owner_login, alias],
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return "ma1_" + hashlib.sha256(ALIAS_KEY_DOMAIN + canonical).hexdigest()
+
+
+def _model_label(value: Any, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value.encode("utf-8")) > 256
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+    ):
+        raise SystemExit(f"State projection: invalid {label}")
+    return value
+
+
+def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex:
+    """Validate and index the owner-scoped identity subset of projection v4."""
+
+    if raw is None or raw.get("schema_version") == 1:
+        return EMPTY_MODEL_IDENTITY_INDEX
+    if raw.get("schema_version") != 4:
+        raise SystemExit("State domain: unsupported schema_version")
+    identities: dict[str, dict[str, Any]] = {}
+    identity_fields = {
+        "model_id", "owner_login", "requested_name", "display_name", "status",
+        "request_event_id", "requested_at", "decision_event_id", "decided_at",
+        "reviewer_login", "rejection_reason", "mutation_event_id",
+        "consolidated_into", "resolved_model_id",
+    }
+    for identity in raw.get("model_identities", []):
+        if not isinstance(identity, dict) or set(identity) != identity_fields:
+            raise SystemExit("State projection: invalid model identity fields")
+        model_id = identity["model_id"]
+        owner = identity["owner_login"]
+        request_event_id = identity["request_event_id"]
+        if (
+            not isinstance(model_id, str)
+            or MODEL_ID_RE.fullmatch(model_id) is None
+            or not isinstance(owner, str)
+            or LOGIN_RE.fullmatch(owner) is None
+            or not isinstance(request_event_id, str)
+            or EVENT_ID_RE.fullmatch(request_event_id) is None
+            or model_id in identities
+            or model_id != _model_identity_id(request_event_id)
+        ):
+            raise SystemExit("State projection: invalid model identity")
+        _model_label(identity["requested_name"], "requested model name")
+        _model_label(identity["display_name"], "model display name")
+        if identity["status"] not in {
+            "pending", "approved", "rejected", "consolidated"
+        }:
+            raise SystemExit("State projection: invalid model identity status")
+        identities[model_id] = identity
+
+    for model_id, identity in identities.items():
+        status = identity["status"]
+        consolidated_into = identity["consolidated_into"]
+        resolved_id = identity["resolved_model_id"]
+        if status == "approved":
+            valid = consolidated_into is None and resolved_id == model_id
+        elif status == "consolidated":
+            direct_target = identities.get(consolidated_into)
+            target = identities.get(resolved_id)
+            valid = (
+                isinstance(consolidated_into, str)
+                and MODEL_ID_RE.fullmatch(consolidated_into) is not None
+                and direct_target is not None
+                and target is not None
+                and direct_target["owner_login"] == identity["owner_login"]
+                and direct_target["resolved_model_id"] == resolved_id
+                and target["owner_login"] == identity["owner_login"]
+                and target["status"] == "approved"
+                and consolidated_into != model_id
+                and target["model_id"] == resolved_id
+            )
+        else:
+            valid = consolidated_into is None and resolved_id is None
+        if not valid:
+            raise SystemExit(
+                "State projection: incoherent model identity resolution"
+            )
+        if status == "consolidated":
+            current = model_id
+            seen: set[str] = set()
+            while current != resolved_id:
+                if current in seen:
+                    raise SystemExit(
+                        "State projection: cyclic model identity consolidation"
+                    )
+                seen.add(current)
+                current_identity = identities.get(current)
+                if current_identity is None:
+                    raise SystemExit(
+                        "State projection: missing model identity consolidation target"
+                    )
+                current = current_identity["consolidated_into"]
+
+    aliases: dict[tuple[str, str], tuple[str, str, str]] = {}
+    summaries: list[dict[str, str]] = []
+    alias_fields = {
+        "alias_key", "owner_login", "alias", "model_id", "resolved_model_id",
+        "assignment_event_id", "assigned_at",
+    }
+    for alias in raw.get("model_aliases", []):
+        if not isinstance(alias, dict) or set(alias) != alias_fields:
+            raise SystemExit("State projection: invalid model alias fields")
+        owner = alias["owner_login"]
+        declared = _model_label(alias["alias"], "model alias")
+        alias_key = alias["alias_key"]
+        model_id = alias["model_id"]
+        resolved_id = alias["resolved_model_id"]
+        source = identities.get(model_id)
+        target = identities.get(resolved_id)
+        key = (owner, declared)
+        if (
+            not isinstance(owner, str)
+            or LOGIN_RE.fullmatch(owner) is None
+            or not isinstance(alias_key, str)
+            or ALIAS_KEY_RE.fullmatch(alias_key) is None
+            or alias_key != _model_alias_key(owner, declared)
+            or key in aliases
+            or source is None
+            or target is None
+            or source["owner_login"] != owner
+            or target["owner_login"] != owner
+            or source["resolved_model_id"] != resolved_id
+            or target["resolved_model_id"] != resolved_id
+            or target["status"] != "approved"
+        ):
+            raise SystemExit("State projection: invalid model alias binding")
+        label = _model_label(target["display_name"], "resolved model display name")
+        aliases[key] = (model_id, resolved_id, label)
+        summaries.append(
+            {
+                "owner_login": owner,
+                "declared_label": declared,
+                "model_id": model_id,
+                "canonical_id": resolved_id,
+                "label": label,
+                "assignment_event_id": alias["assignment_event_id"],
+            }
+        )
+    return ModelIdentityIndex(
+        aliases,
+        tuple(
+            sorted(
+                summaries,
+                key=lambda item: (
+                    item["owner_login"], item["declared_label"],
+                    item["canonical_id"], item["label"]
+                ),
+            )
+        ),
+    )
+
+
 def _canonical_identity(
-    declared_model: str, aliases: dict[str, dict[str, str]]
+    owner_login: str,
+    declared_model: str,
+    aliases: dict[str, dict[str, str]],
+    model_identities: ModelIdentityIndex | None = None,
 ) -> tuple[str, str]:
+    identity_index = (
+        model_identities
+        if model_identities is not None
+        else EMPTY_MODEL_IDENTITY_INDEX
+    )
+    state_alias = identity_index.aliases.get(
+        (owner_login.lower(), declared_model)
+    )
+    if state_alias is not None:
+        return state_alias[1], state_alias[2]
     normalized = _normalized_model(declared_model)
     alias = aliases.get(normalized)
     if alias is None:
@@ -180,14 +380,26 @@ def _canonical_identity(
 def adapt_results_store(
     normalized_files: list[tuple[str, list[dict[str, Any]]]],
     aliases: dict[str, dict[str, str]],
+    model_identities: ModelIdentityIndex | None = None,
 ) -> list[Solution]:
     """Adapt the legacy/base results store into the materialized domain shape."""
 
     out: list[Solution] = []
     for user, records in normalized_files:
         for record in records:
-            declared = _normalized_model(record["declared_model"])
-            canonical_id, canonical_label = _canonical_identity(declared, aliases)
+            raw_declared = record["declared_model"]
+            declared = raw_declared
+            identity_index = (
+                model_identities
+                if model_identities is not None
+                else EMPTY_MODEL_IDENTITY_INDEX
+            )
+            reviewed = (
+                user.lower(), raw_declared
+            ) in identity_index.aliases
+            canonical_id, canonical_label = _canonical_identity(
+                user, raw_declared, aliases, identity_index
+            )
             intake = record["intake"]
             submission = record["submission"]
             result_id = record.get("result_id") or _stable_legacy_id(
@@ -242,6 +454,7 @@ def adapt_results_store(
                         "url": url,
                         "reason": None if public else "not-materialized",
                     },
+                    model_identity_reviewed=reviewed,
                 )
             )
     return out
@@ -250,12 +463,14 @@ def adapt_results_store(
 def adapt_state_projection(
     raw: dict[str, Any] | None,
     aliases: dict[str, dict[str, str]],
+    model_identities: ModelIdentityIndex | None = None,
 ) -> list[Solution]:
-    """Normalize ``public-state-projection-v1`` without private State fields."""
+    """Normalize redacted State projection v1 or identity-aware v4."""
 
     if raw is None:
         return []
-    if raw.get("schema_version") != 1:
+    version = raw.get("schema_version")
+    if version not in {1, 4}:
         raise SystemExit("State domain: unsupported schema_version")
     if raw.get("environment") not in {"production", "staging"}:
         raise SystemExit("State domain: invalid environment")
@@ -265,11 +480,26 @@ def adapt_state_projection(
         raise SystemExit("State domain: invalid source_digest")
     if not re.fullmatch(r"[0-9a-f]{40}", str(raw.get("source_state_commit", ""))):
         raise SystemExit("State projection: invalid source_state_commit")
-    if set(raw) != {
+    common_fields = {
         "schema_version", "environment", "source_state_commit",
         "source_event_count", "source_digest", "results",
-    }:
+    }
+    expected_top_fields = (
+        common_fields
+        if version == 1
+        else common_fields
+        | {
+            "result_overlays", "model_identities", "model_aliases",
+            "model_identity_history",
+        }
+    )
+    if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
+    identity_index = (
+        model_identities
+        if model_identities is not None
+        else build_model_identity_index(raw)
+    )
     solutions: list[Solution] = []
     for result in raw.get("results", []):
         required = {
@@ -278,9 +508,12 @@ def adapt_state_projection(
             "record_event_id", "benchmark_commit", "production_metadata", "replay",
             "release", "public_solution",
         }
+        if version == 4:
+            required |= {"model_id", "resolved_model_id"}
         if not isinstance(result, dict) or set(result) != required:
             raise SystemExit("State projection: invalid result fields")
-        declared = _normalized_model(str(result["declared_model"]))
+        raw_declared = str(result["declared_model"])
+        declared = raw_declared
         if result["result_id"] != expected_result_id(
             result["submitter"],
             result["declared_model"],
@@ -288,7 +521,25 @@ def adapt_state_projection(
             result["statement_revision"],
         ):
             raise SystemExit("State projection: result_id does not match its identity fields")
-        canonical_id, canonical_label = _canonical_identity(declared, aliases)
+        canonical_id, canonical_label = _canonical_identity(
+            str(result["submitter"]), raw_declared, aliases, identity_index
+        )
+        state_resolution = identity_index.aliases.get(
+            (str(result["submitter"]).lower(), raw_declared)
+        )
+        if version == 4:
+            projected_resolution = (
+                result["model_id"], result["resolved_model_id"]
+            )
+            expected_resolution = (
+                (None, None)
+                if state_resolution is None
+                else (state_resolution[0], state_resolution[1])
+            )
+            if projected_resolution != expected_resolution:
+                raise SystemExit(
+                    "State projection: result model identity binding is inconsistent"
+                )
         replay = result["replay"]
         if replay is None:
             replay_view = {"status": "unavailable", "reason": "not-enqueued"}
@@ -373,6 +624,7 @@ def adapt_state_projection(
                 replay=replay_view,
                 measurements=measurements,
                 release=release_view,
+                model_identity_reviewed=state_resolution is not None,
             )
         )
     return solutions
@@ -600,6 +852,7 @@ def build_lifecycle_projection(
     state_commit: str | None,
     state_metadata: dict[str, Any] | None,
     site_base_url: str,
+    model_aliases: tuple[dict[str, str], ...] = (),
 ) -> dict[str, Any]:
     """Return path→payload for every schema-version-2 JSON file and RSS."""
 
@@ -649,9 +902,12 @@ def build_lifecycle_projection(
         limitations.append(
             "Catalog lifecycle history beyond the current pinned manifest is unavailable; the site shows the current status as a one-entry history."
         )
-    if not fixture.get("model_aliases"):
+    published_model_aliases = list(model_aliases) or fixture.get(
+        "model_aliases", []
+    )
+    if any(not solution.model_identity_reviewed for solution in solutions):
         limitations.append(
-            "No reviewed model-alias policy is published; normalized declared model labels are used as canonical credit identities."
+            "Some results have no reviewed State model alias; their normalized declared model labels are used as fallback credit identities."
         )
 
     files: dict[str, Any] = {}
@@ -820,8 +1076,10 @@ def build_lifecycle_projection(
         },
         "default_group": "formalization-evaluation",
         "model_aliases": sorted(
-            fixture.get("model_aliases", []),
-            key=lambda alias: (alias["canonical_id"], alias["declared_label"]),
+            published_model_aliases,
+            key=lambda alias: (
+                alias["canonical_id"], alias["declared_label"], alias["label"]
+            ),
         ),
         "groups": group_indexes,
         "recent_solutions_url": "site-data/v2/recent-solutions.json",

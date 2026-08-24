@@ -1,21 +1,119 @@
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
 import pathlib
 import unittest
 from types import SimpleNamespace
 
-from scripts.results_schema import result_id
 from scripts.lifecycle_site_data import (
     SetDefinition,
     Solution,
+    adapt_results_store,
     adapt_state_projection,
     build_lifecycle_projection,
+    build_model_identity_index,
     load_preview_fixture,
     merge_solutions,
 )
-
+from scripts.results_schema import result_id
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+
+def model_id(request_event_id: str) -> str:
+    return "mi1_" + hashlib.sha256(
+        b"lean-eval-model-identity-v1\0" + request_event_id.encode("ascii")
+    ).hexdigest()
+
+
+def alias_key(owner: str, alias: str) -> str:
+    canonical = json.dumps(
+        [owner, alias], ensure_ascii=False, separators=(",", ":")
+    ).encode("utf-8")
+    return "ma1_" + hashlib.sha256(
+        b"lean-eval-model-alias-v1\0" + canonical
+    ).hexdigest()
+
+
+def identity_projection_v4() -> dict:
+    source_request = "0198abcd-0000-7000-8000-000000000100"
+    target_request = "0198abcd-0000-7000-8000-000000000200"
+    source_id = model_id(source_request)
+    target_id = model_id(target_request)
+    declared = "Example Model Revision A"
+    result = {
+        "result_id": result_id("alice", declared, "alpha", 1),
+        "problem_id": "alpha",
+        "statement_revision": 1,
+        "declared_model": declared,
+        "submitter": "alice",
+        "accepted_at": "2026-08-20T00:00:00.000Z",
+        "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",
+        "recorded_at": "2026-08-20T00:00:01.000Z",
+        "record_event_id": "0198abcd-0000-7000-8000-000000000002",
+        "benchmark_commit": "a" * 40,
+        "production_metadata": {},
+        "replay": None,
+        "release": None,
+        "public_solution": {"available": False, "url": None},
+        "model_id": source_id,
+        "resolved_model_id": target_id,
+    }
+    identity_common = {
+        "requested_at": "2026-08-20T00:00:00.000Z",
+        "decision_event_id": "0198abcd-0000-7000-8000-000000000300",
+        "decided_at": "2026-08-20T00:00:01.000Z",
+        "reviewer_login": "reviewer",
+        "rejection_reason": None,
+        "mutation_event_id": "0198abcd-0000-7000-8000-000000000400",
+    }
+    return {
+        "schema_version": 4,
+        "environment": "production",
+        "source_state_commit": "e" * 40,
+        "source_event_count": 8,
+        "source_digest": "f" * 64,
+        "results": [result],
+        "result_overlays": [],
+        "model_identities": [
+            {
+                **identity_common,
+                "model_id": source_id,
+                "owner_login": "alice",
+                "requested_name": "Original Model",
+                "display_name": "Renamed Before Consolidation",
+                "status": "consolidated",
+                "request_event_id": source_request,
+                "consolidated_into": target_id,
+                "resolved_model_id": target_id,
+            },
+            {
+                **identity_common,
+                "model_id": target_id,
+                "owner_login": "alice",
+                "requested_name": "Canonical Model",
+                "display_name": "Canonical Model Renamed",
+                "status": "approved",
+                "request_event_id": target_request,
+                "consolidated_into": None,
+                "resolved_model_id": target_id,
+            },
+        ],
+        "model_aliases": [
+            {
+                "alias_key": alias_key("alice", declared),
+                "owner_login": "alice",
+                "alias": declared,
+                "model_id": source_id,
+                "resolved_model_id": target_id,
+                "assignment_event_id": "0198abcd-0000-7000-8000-000000000500",
+                "assigned_at": "2026-08-20T00:00:02.000Z",
+            }
+        ],
+        "model_identity_history": [],
+    }
 
 
 def problem(
@@ -257,6 +355,229 @@ class LifecycleProjectionTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(SystemExit, "result_id does not match"):
             adapt_state_projection(raw, {})
+
+    def test_projection_v4_uses_owner_scoped_consolidated_identity(self) -> None:
+        raw = identity_projection_v4()
+        index = build_model_identity_index(raw)
+        adapted = adapt_state_projection(
+            raw,
+            {
+                "Example Model Revision A": {
+                    "canonical_id": "unreviewed-static-alias",
+                    "label": "Unreviewed Static Alias",
+                }
+            },
+            index,
+        )
+
+        target_id = raw["model_identities"][1]["model_id"]
+        self.assertEqual(adapted[0].canonical_model_id, target_id)
+        self.assertEqual(
+            adapted[0].canonical_model_label, "Canonical Model Renamed"
+        )
+        self.assertEqual(index.public_aliases[0]["canonical_id"], target_id)
+        files = build_lifecycle_projection(
+            problems=[problem("alpha")],
+            solutions=adapted,
+            set_definitions=[],
+            tag_registry={},
+            fixture={},
+            generated_at="2026-08-20T12:00:00Z",
+            benchmark_commit="a" * 40,
+            state_commit=raw["source_state_commit"],
+            state_metadata=raw,
+            site_base_url="https://example.test/eval/",
+            model_aliases=index.public_aliases,
+        )
+        published_alias = files["v2/index.json"]["model_aliases"][0]
+        self.assertEqual(published_alias["owner_login"], "alice")
+        self.assertEqual(published_alias["model_id"], raw["model_identities"][0]["model_id"])
+        self.assertFalse(
+            any(
+                "no reviewed State model alias" in limitation
+                for limitation in files["v2/index.json"]["data_limitations"]
+            )
+        )
+        mixed_files = build_lifecycle_projection(
+            problems=[problem("alpha")],
+            solutions=[
+                *adapted,
+                solution(
+                    "legacy-unreviewed",
+                    "alpha",
+                    "unreviewed-model",
+                    "2026-08-21T00:00:00Z",
+                    "issue-2",
+                ),
+            ],
+            set_definitions=[],
+            tag_registry={},
+            fixture={},
+            generated_at="2026-08-20T12:00:00Z",
+            benchmark_commit="a" * 40,
+            state_commit=raw["source_state_commit"],
+            state_metadata=raw,
+            site_base_url="https://example.test/eval/",
+            model_aliases=index.public_aliases,
+        )
+        self.assertTrue(
+            any(
+                "no reviewed State model alias" in limitation
+                for limitation in mixed_files["v2/index.json"]["data_limitations"]
+            )
+        )
+
+    def test_state_generated_v4_fixture_is_consumed_without_rewriting(self) -> None:
+        raw = json.loads(
+            (
+                ROOT
+                / "tests/fixtures/public-state-projection-v4-model-identity.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        index = build_model_identity_index(raw)
+        adapted = adapt_state_projection(raw, {}, index)
+
+        self.assertEqual(len(raw["model_identity_history"]), 10)
+        self.assertEqual(adapted[0].declared_model, "Example Model")
+        self.assertEqual(adapted[0].canonical_model_label, "Third")
+        self.assertEqual(
+            adapted[0].canonical_model_id,
+            index.aliases[("kim-em", "Example Model")][1],
+        )
+
+    def test_projection_v4_aliases_are_owner_scoped(self) -> None:
+        raw = identity_projection_v4()
+        bob_request = "0198abcd-0000-7000-8000-000000000600"
+        bob_id = model_id(bob_request)
+        bob_identity = copy.deepcopy(raw["model_identities"][1])
+        bob_identity.update(
+            model_id=bob_id,
+            owner_login="bob",
+            request_event_id=bob_request,
+            requested_name="Bob Canonical",
+            display_name="Bob Canonical",
+            consolidated_into=None,
+            resolved_model_id=bob_id,
+        )
+        raw["model_identities"].append(bob_identity)
+        bob_alias = copy.deepcopy(raw["model_aliases"][0])
+        bob_alias.update(
+            alias_key=alias_key("bob", bob_alias["alias"]),
+            owner_login="bob",
+            model_id=bob_id,
+            resolved_model_id=bob_id,
+        )
+        raw["model_aliases"].append(bob_alias)
+
+        index = build_model_identity_index(raw)
+
+        self.assertNotEqual(
+            index.aliases[("alice", "Example Model Revision A")][1],
+            index.aliases[("bob", "Example Model Revision A")][1],
+        )
+
+    def test_projection_v4_rejects_alias_collisions_and_spoofed_bindings(self) -> None:
+        duplicate = identity_projection_v4()
+        duplicate["model_aliases"].append(
+            copy.deepcopy(duplicate["model_aliases"][0])
+        )
+        with self.assertRaisesRegex(SystemExit, "invalid model alias binding"):
+            build_model_identity_index(duplicate)
+
+        hostile_key = identity_projection_v4()
+        hostile_key["model_aliases"][0]["alias_key"] = "ma1_" + "0" * 64
+        with self.assertRaisesRegex(SystemExit, "invalid model alias binding"):
+            build_model_identity_index(hostile_key)
+
+        spoofed_result = identity_projection_v4()
+        spoofed_result["results"][0]["model_id"] = spoofed_result[
+            "model_identities"
+        ][1]["model_id"]
+        with self.assertRaisesRegex(SystemExit, "binding is inconsistent"):
+            adapt_state_projection(spoofed_result, {})
+
+    def test_projection_v4_rejects_identity_and_resolution_drift(self) -> None:
+        wrong_id = identity_projection_v4()
+        wrong_id["model_identities"][0]["model_id"] = "mi1_" + "0" * 64
+        with self.assertRaisesRegex(SystemExit, "invalid model identity"):
+            build_model_identity_index(wrong_id)
+
+        cross_owner = identity_projection_v4()
+        cross_owner["model_identities"][1]["owner_login"] = "bob"
+        with self.assertRaisesRegex(SystemExit, "incoherent model identity"):
+            build_model_identity_index(cross_owner)
+
+        hostile_label = identity_projection_v4()
+        hostile_label["model_identities"][1]["display_name"] = "bad\nlabel"
+        with self.assertRaisesRegex(SystemExit, "invalid model display name"):
+            build_model_identity_index(hostile_label)
+
+        cycle = identity_projection_v4()
+        terminal_request = "0198abcd-0000-7000-8000-000000000700"
+        terminal_id = model_id(terminal_request)
+        terminal = copy.deepcopy(cycle["model_identities"][1])
+        terminal.update(
+            model_id=terminal_id,
+            request_event_id=terminal_request,
+            requested_name="Terminal",
+            display_name="Terminal",
+            consolidated_into=None,
+            resolved_model_id=terminal_id,
+        )
+        source, target = cycle["model_identities"]
+        source["resolved_model_id"] = terminal_id
+        target.update(
+            status="consolidated",
+            consolidated_into=source["model_id"],
+            resolved_model_id=terminal_id,
+        )
+        cycle["model_identities"].append(terminal)
+        with self.assertRaisesRegex(SystemExit, "cyclic model identity"):
+            build_model_identity_index(cycle)
+
+    def test_base_result_fallback_uses_state_identity_without_mutation(self) -> None:
+        raw = identity_projection_v4()
+        index = build_model_identity_index(raw)
+        record = {
+            "result_id": raw["results"][0]["result_id"],
+            "problem_id": "alpha",
+            "statement_revision": 1,
+            "declared_model": "Example Model Revision A",
+            "accepted_at": "2026-08-20T00:00:00Z",
+            "benchmark_commit": "a" * 40,
+            "intake": {"kind": "issue", "issue_number": 1},
+            "submission": {
+                "kind": "github_repo",
+                "repo": "alice/proofs",
+                "ref": "b" * 40,
+                "public": False,
+            },
+            "production_metadata": {},
+        }
+
+        adapted = adapt_results_store([("alice", [record])], {}, index)
+
+        self.assertEqual(
+            adapted[0].canonical_model_id,
+            raw["model_identities"][1]["model_id"],
+        )
+        self.assertEqual(adapted[0].declared_model, record["declared_model"])
+
+    def test_verbatim_alias_mismatch_stays_visible_and_falls_back(self) -> None:
+        raw = identity_projection_v4()
+        raw["results"][0]["declared_model"] = "Example  Model Revision A"
+        raw["results"][0]["result_id"] = result_id(
+            "alice", "Example  Model Revision A", "alpha", 1
+        )
+        raw["results"][0]["model_id"] = None
+        raw["results"][0]["resolved_model_id"] = None
+
+        adapted = adapt_state_projection(raw, {})
+
+        self.assertEqual(adapted[0].declared_model, "Example  Model Revision A")
+        self.assertEqual(adapted[0].canonical_model_id, "example-model-revision-a")
+        self.assertFalse(adapted[0].model_identity_reviewed)
 
     def test_state_record_replaces_matching_legacy_base_record(self) -> None:
         legacy = solution("legacy_a", "alpha", "model-a", "2026-08-20T00:00:00Z", "issue-1")

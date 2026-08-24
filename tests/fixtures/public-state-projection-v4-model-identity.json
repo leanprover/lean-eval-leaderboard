@@ -1,0 +1,241 @@
+{
+  "environment": "production",
+  "model_aliases": [
+    {
+      "alias": "Example Model",
+      "alias_key": "ma1_0695de8b4c324f8c0acea2ca20df6ec2e8347d0249a98899705629d5c900df75",
+      "assigned_at": "2026-11-20T06:07:26.000Z",
+      "assignment_event_id": "0198abcd-0000-7000-8000-00000000001a",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "owner_login": "kim-em",
+      "resolved_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d"
+    }
+  ],
+  "model_identities": [
+    {
+      "consolidated_into": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737",
+      "decided_at": "2026-11-20T06:07:21.000Z",
+      "decision_event_id": "0198abcd-0000-7000-8000-000000000015",
+      "display_name": "First Renamed",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "mutation_event_id": "0198abcd-0000-7000-8000-00000000001c",
+      "owner_login": "kim-em",
+      "rejection_reason": null,
+      "request_event_id": "0198abcd-0000-7000-8000-000000000014",
+      "requested_at": "2026-11-20T06:07:20.000Z",
+      "requested_name": "First",
+      "resolved_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "reviewer_login": "maintainer",
+      "status": "consolidated"
+    },
+    {
+      "consolidated_into": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "decided_at": "2026-11-20T06:07:23.000Z",
+      "decision_event_id": "0198abcd-0000-7000-8000-000000000017",
+      "display_name": "Second",
+      "model_id": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737",
+      "mutation_event_id": "0198abcd-0000-7000-8000-00000000001d",
+      "owner_login": "kim-em",
+      "rejection_reason": null,
+      "request_event_id": "0198abcd-0000-7000-8000-000000000016",
+      "requested_at": "2026-11-20T06:07:22.000Z",
+      "requested_name": "Second",
+      "resolved_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "reviewer_login": "maintainer",
+      "status": "consolidated"
+    },
+    {
+      "consolidated_into": null,
+      "decided_at": "2026-11-20T06:07:25.000Z",
+      "decision_event_id": "0198abcd-0000-7000-8000-000000000019",
+      "display_name": "Third",
+      "model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "mutation_event_id": "0198abcd-0000-7000-8000-000000000019",
+      "owner_login": "kim-em",
+      "rejection_reason": null,
+      "request_event_id": "0198abcd-0000-7000-8000-000000000018",
+      "requested_at": "2026-11-20T06:07:24.000Z",
+      "requested_name": "Third",
+      "resolved_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "reviewer_login": "maintainer",
+      "status": "approved"
+    }
+  ],
+  "model_identity_history": [
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": null,
+      "display_name": "First",
+      "event_id": "0198abcd-0000-7000-8000-000000000014",
+      "event_type": "model_identity.requested",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "occurred_at": "2026-11-20T06:07:20.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": null
+    },
+    {
+      "actor_login": null,
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-000000000014",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-000000000015",
+      "event_type": "model_identity.approved",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "occurred_at": "2026-11-20T06:07:21.000Z",
+      "reason_code": null,
+      "reviewer_login": "maintainer",
+      "target_model_id": null
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": null,
+      "display_name": "Second",
+      "event_id": "0198abcd-0000-7000-8000-000000000016",
+      "event_type": "model_identity.requested",
+      "model_id": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737",
+      "occurred_at": "2026-11-20T06:07:22.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": null
+    },
+    {
+      "actor_login": null,
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-000000000016",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-000000000017",
+      "event_type": "model_identity.approved",
+      "model_id": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737",
+      "occurred_at": "2026-11-20T06:07:23.000Z",
+      "reason_code": null,
+      "reviewer_login": "maintainer",
+      "target_model_id": null
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": null,
+      "display_name": "Third",
+      "event_id": "0198abcd-0000-7000-8000-000000000018",
+      "event_type": "model_identity.requested",
+      "model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "occurred_at": "2026-11-20T06:07:24.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": null
+    },
+    {
+      "actor_login": null,
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-000000000018",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-000000000019",
+      "event_type": "model_identity.approved",
+      "model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "occurred_at": "2026-11-20T06:07:25.000Z",
+      "reason_code": null,
+      "reviewer_login": "maintainer",
+      "target_model_id": null
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": "Example Model",
+      "causation_event_id": "0198abcd-0000-7000-8000-000000000015",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-00000000001a",
+      "event_type": "model_identity.alias_assigned",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "occurred_at": "2026-11-20T06:07:26.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": null
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-00000000001a",
+      "display_name": "First Renamed",
+      "event_id": "0198abcd-0000-7000-8000-00000000001b",
+      "event_type": "model_identity.renamed",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "occurred_at": "2026-11-20T06:07:27.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": null
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-00000000001b",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-00000000001c",
+      "event_type": "model_identity.consolidated",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "occurred_at": "2026-11-20T06:07:28.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737"
+    },
+    {
+      "actor_login": "kim-em",
+      "alias": null,
+      "causation_event_id": "0198abcd-0000-7000-8000-000000000017",
+      "display_name": null,
+      "event_id": "0198abcd-0000-7000-8000-00000000001d",
+      "event_type": "model_identity.consolidated",
+      "model_id": "mi1_842c104f0d93dd9324ecd4ba42e7bfea70b3d271bc67d44ad233a52e85e0a737",
+      "occurred_at": "2026-11-20T06:07:29.000Z",
+      "reason_code": null,
+      "reviewer_login": null,
+      "target_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d"
+    }
+  ],
+  "result_overlays": [],
+  "results": [
+    {
+      "acceptance_event_id": "0198abcd-0000-7000-8000-000000000005",
+      "accepted_at": "2026-08-20T06:07:05.000Z",
+      "benchmark_commit": "dddddddddddddddddddddddddddddddddddddddd",
+      "declared_model": "Example Model",
+      "model_id": "mi1_76d42eeee90389c2b0b8846cc170cb6916867a9e540628e505a10aff7d2e33f9",
+      "problem_id": "two_plus_two",
+      "production_metadata": {},
+      "public_solution": {
+        "available": false,
+        "url": null
+      },
+      "record_event_id": "0198abcd-0000-7000-8000-000000000006",
+      "recorded_at": "2026-08-20T06:07:06.000Z",
+      "release": {
+        "reason": "provider_error",
+        "release_at": "2026-10-20T06:07:05.000Z",
+        "status": "failed"
+      },
+      "replay": {
+        "attempt": 1,
+        "build_retired_instructions": 987654,
+        "build_retired_instructions_unavailable_reason": null,
+        "build_wall_time_ms": 4321,
+        "checker": "nanoda",
+        "checker_retired_instructions": null,
+        "checker_retired_instructions_unavailable_reason": "counter_not_supported",
+        "checker_wall_time_ms": 1234,
+        "file_count": 3,
+        "lines_of_code": 87,
+        "reason": null,
+        "status": "accepted"
+      },
+      "resolved_model_id": "mi1_bd8ea5404bc03695a793b49d5a3112e442e7dee8abeda7387465d1f10559c14d",
+      "result_id": "r2_80f02f892fb0b90474675aa0b572252a8758faf74b95400521e9da724583931f",
+      "statement_revision": 1,
+      "submitter": "kim-em"
+    }
+  ],
+  "schema_version": 4,
+  "source_digest": "0b5c7e51aa3f07e3ff9bb6f9d8d491a9d5f6fc8ab53d687588db6fafc31dd103",
+  "source_event_count": 22,
+  "source_state_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

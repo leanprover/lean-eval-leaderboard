@@ -167,6 +167,7 @@ jobs:
           python3 lean-eval-state/scripts/public_projection.py \
             --root lean-eval-state \
             --state-commit "$state_commit" \
+            --schema-version 4 \
             --output "$RUNNER_TEMP/public-state.json"
           python3 lean-eval-state/scripts/public_projection.py \
             --validate "$RUNNER_TEMP/public-state.json"
@@ -229,7 +230,7 @@ jobs:
           if [ "${{ github.ref }}" = 'refs/heads/main' ]; then
             test -f _site/site-data/public-state.json
             jq --exit-status \
-              '.schema_version == 1 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$"))' \
+              '.schema_version == 4 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array")' \
               _site/site-data/public-state.json
             if rg -n 'source_repository|source_commit|archive_|submission_id|nonce_digest' \
                 _site/site-data/public-state.json; then

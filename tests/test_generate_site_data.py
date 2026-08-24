@@ -1,3 +1,4 @@
+import json
 import pathlib
 import tempfile
 import unittest
@@ -7,6 +8,7 @@ from scripts.generate_site_data import (
     dedupe_universe_declarations,
     fetch_json_url,
     load_manifest,
+    load_results,
     preserve_root_declarations,
     qualify_probability_root_opens,
 )
@@ -69,6 +71,29 @@ submitter = "Alice"
                 load_manifest(manifest_dir, pathlib.Path("benchmark"))
 
 
+class ResultOwnerBindingTests(unittest.TestCase):
+    def test_results_owner_must_match_canonical_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / "bob.json").write_text(
+                json.dumps({"schema_version": 1, "user": "alice", "solved": {}}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(SystemExit, "matching its filename"):
+                load_results(root)
+
+    def test_results_owner_filename_match_is_case_insensitive(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = {"schema_version": 1, "user": "Alice", "solved": {}}
+            (root / "alice.json").write_text(
+                json.dumps(document), encoding="utf-8"
+            )
+
+            self.assertEqual(load_results(root), [document])
+
+
 class SnapshotTransformationTests(unittest.TestCase):
     def test_deduplicates_universes_across_inlined_modules(self) -> None:
         fragments = [
@@ -85,42 +110,34 @@ class SnapshotTransformationTests(unittest.TestCase):
         )
 
     def test_roots_only_explicitly_selected_dotted_declarations(self) -> None:
-        fragment = "\n".join(
-            [
-                "def Nat.IsCubeFree (n : Nat) : Prop := True",
-                "noncomputable def Local.helper : Nat := 1",
-                "def _root_.Nat.AlreadyRooted : Nat := 2",
-            ]
+        fragment = (
+            "def Nat.IsCubeFree (n : Nat) : Prop := True\n"
+            "noncomputable def Local.helper : Nat := 1\n"
+            "def _root_.Nat.AlreadyRooted : Nat := 2"
         )
 
         self.assertEqual(
             preserve_root_declarations(fragment, {"Nat.IsCubeFree"}),
-            "\n".join(
-                [
-                    "def _root_.Nat.IsCubeFree (n : Nat) : Prop := True",
-                    "noncomputable def Local.helper : Nat := 1",
-                    "def _root_.Nat.AlreadyRooted : Nat := 2",
-                ]
+            (
+                "def _root_.Nat.IsCubeFree (n : Nat) : Prop := True\n"
+                "noncomputable def Local.helper : Nat := 1\n"
+                "def _root_.Nat.AlreadyRooted : Nat := 2"
             ),
         )
 
     def test_qualifies_only_ordinary_probability_opens(self) -> None:
-        fragment = "\n".join(
-            [
-                "  open  ProbabilityTheory MeasureTheory -- needed for measures",
-                "open scoped ProbabilityTheory",
-                "namespace ProbabilityTheory",
-            ]
+        fragment = (
+            "  open  ProbabilityTheory MeasureTheory -- needed for measures\n"
+            "open scoped ProbabilityTheory\n"
+            "namespace ProbabilityTheory"
         )
 
         self.assertEqual(
             qualify_probability_root_opens(fragment),
-            "\n".join(
-                [
-                    "  open  _root_.ProbabilityTheory MeasureTheory -- needed for measures",
-                    "open scoped ProbabilityTheory",
-                    "namespace ProbabilityTheory",
-                ]
+            (
+                "  open  _root_.ProbabilityTheory MeasureTheory -- needed for measures\n"
+                "open scoped ProbabilityTheory\n"
+                "namespace ProbabilityTheory"
             ),
         )
 
