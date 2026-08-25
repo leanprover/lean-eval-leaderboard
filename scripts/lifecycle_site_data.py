@@ -556,7 +556,7 @@ def adapt_state_projection(
                     "kind": "checker-replay",
                     "status": (
                         "unavailable"
-                        if replay.get("retired_instructions") is None
+                        if replay.get("checker_retired_instructions") is None
                         else "available"
                     ),
                     "checker": replay.get("checker"),

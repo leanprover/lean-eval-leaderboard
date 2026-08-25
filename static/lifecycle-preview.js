@@ -330,7 +330,13 @@
           solution.measurements.forEach(function (measurement) {
             card.appendChild(definitionList([
               ["Checker", measurement.checker], ["Status", measurement.status],
-              ["Retired instructions", measurement.retired_instructions], ["Wall time (ms)", measurement.wall_time_ms]
+              ["Checker wall time (ms)", measurement.checker_wall_time_ms],
+              ["Checker retired instructions", measurement.checker_retired_instructions],
+              ["Checker counter unavailable reason", measurement.checker_retired_instructions_unavailable_reason],
+              ["Build wall time (ms)", measurement.build_wall_time_ms],
+              ["Build retired instructions", measurement.build_retired_instructions],
+              ["Build counter unavailable reason", measurement.build_retired_instructions_unavailable_reason],
+              ["Lines of code", measurement.lines_of_code], ["File count", measurement.file_count]
             ]));
           });
         } else {
