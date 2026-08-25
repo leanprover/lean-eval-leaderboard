@@ -313,8 +313,50 @@ class LifecycleProjectionTests(unittest.TestCase):
 
         self.assertEqual(adapted[0].canonical_model_id, "example-model")
         self.assertEqual(adapted[0].replay["status"], "accepted")
-        self.assertEqual(adapted[0].measurements[0]["status"], "unavailable")
+        expected_measurement = {
+            "kind": "checker-replay",
+            "status": "unavailable",
+            "checker": "lean4lean",
+            "checker_wall_time_ms": 20,
+            "checker_retired_instructions": None,
+            "checker_retired_instructions_unavailable_reason": (
+                "counter_not_supported"
+            ),
+            "build_wall_time_ms": 40,
+            "build_retired_instructions": 100,
+            "build_retired_instructions_unavailable_reason": None,
+            "lines_of_code": 12,
+            "file_count": 1,
+            "unavailable_reason": "performance-counter-unavailable",
+            "attempt": 1,
+        }
+        self.assertEqual(
+            adapted[0].measurements[0],
+            expected_measurement,
+        )
         self.assertEqual(adapted[0].release["status"], "scheduled")
+        files = build_lifecycle_projection(
+            problems=[problem("alpha")],
+            solutions=adapted,
+            set_definitions=[],
+            tag_registry={},
+            fixture={},
+            generated_at="2026-08-20T12:00:00Z",
+            benchmark_commit="a" * 40,
+            state_commit=raw["source_state_commit"],
+            state_metadata=raw,
+            site_base_url="https://example.test/eval/",
+        )
+        published = files["v2/problems/alpha.json"]["solutions"][0]
+        self.assertEqual(published["measurements"], [expected_measurement])
+
+        raw["results"][0]["replay"]["checker_retired_instructions"] = 200
+        raw["results"][0]["replay"][
+            "checker_retired_instructions_unavailable_reason"
+        ] = None
+        available = adapt_state_projection(raw, aliases)[0].measurements[0]
+        self.assertEqual(available["status"], "available")
+        self.assertIsNone(available["unavailable_reason"])
 
     def test_public_state_projection_rejects_private_internal_fields(self) -> None:
         raw = {

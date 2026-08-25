@@ -61,6 +61,23 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('["unique", "first", "total"]', client)
         self.assertIn("recent-solutions.xml", client)
 
+    def test_client_renders_current_replay_measurement_fields(self) -> None:
+        client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
+        for field in (
+            "checker_wall_time_ms",
+            "checker_retired_instructions",
+            "checker_retired_instructions_unavailable_reason",
+            "build_wall_time_ms",
+            "build_retired_instructions",
+            "build_retired_instructions_unavailable_reason",
+            "lines_of_code",
+            "file_count",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(f"measurement.{field}", client)
+        self.assertNotIn("measurement.wall_time_ms", client)
+        self.assertNotIn("measurement.retired_instructions", client)
+
     def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
         sources = [
             REPO_ROOT / "LeaderboardSite/Pages/Preview.lean",
