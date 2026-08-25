@@ -209,6 +209,19 @@ class LifecycleProjectionTests(unittest.TestCase):
         files = self.build()
         formal = files["v2/groups/formalization-evaluation.json"]
         software = files["v2/groups/software-verification.json"]
+        open_problems = files["v2/groups/open-problems.json"]
+        index = files["v2/index.json"]
+
+        self.assertEqual(
+            [group["id"] for group in index["groups"]],
+            ["formalization-evaluation", "software-verification", "open-problems"],
+        )
+        self.assertEqual(open_problems["problems"], [])
+        self.assertEqual(open_problems["standings"], [])
+        self.assertIn(
+            "independently of external catalogs",
+            open_problems["group"]["policy"],
+        )
 
         self.assertEqual(formal["default_scope"], "v1")
         self.assertTrue(formal["scopes"][0]["flagship"])

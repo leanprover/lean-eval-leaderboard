@@ -40,9 +40,9 @@ GROUPS: tuple[dict[str, str], ...] = (
         "policy": "Private-source submissions; draft standings are provisional until the first frozen set.",
     },
     {
-        "id": "open-conjectures",
-        "label": "Open conjectures",
-        "policy": "Public-source submissions; resolved statements retain their frozen-set history.",
+        "id": "open-problems",
+        "label": "Open problems",
+        "policy": "LeanEval-owned open problems, reviewed and published independently of external catalogs.",
     },
 )
 GROUP_BY_ID = {group["id"]: group for group in GROUPS}

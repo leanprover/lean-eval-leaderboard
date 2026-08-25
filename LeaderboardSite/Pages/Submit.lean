@@ -24,7 +24,7 @@ private def pagePart
 private def htmlBlob (h : Verso.Output.Html) : Block Page :=
   Verso.Doc.Block.other (BlockExt.blob h) #[]
 
-/-- Big "Submit benchmark solution" button at the top of the page. -/
+/-- Link from the static site to the authenticated production intake origin. -/
 private def ctaBlock : Block Page :=
   htmlBlob {{
     <a class="cta-button" href={{submitCtaUrl}}>
@@ -33,7 +33,7 @@ private def ctaBlock : Block Page :=
     </a>
   }}
 
-/-- Three-step TL;DR paragraph between the CTA and the lead. The HTML
+/-- Submission TL;DR paragraph between the CTA and the lead. The HTML
 weaves a `<code>` and an `<a>` mid-sentence so its prose is broken
 into chunks rather than authored as a single string. -/
 private def tldrBlock : Block Page :=

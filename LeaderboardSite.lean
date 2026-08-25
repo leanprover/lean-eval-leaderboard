@@ -36,9 +36,14 @@ def leaderboardSite : Site :=
     Dir.page "software-verification"
       (%docName? LeaderboardSite.Pages.LifecycleSoftware)
       (%doc? LeaderboardSite.Pages.LifecycleSoftware) #[],
+    Dir.page "open-problems"
+      (%docName? LeaderboardSite.Pages.LifecycleOpenProblems)
+      (%doc? LeaderboardSite.Pages.LifecycleOpenProblems) #[],
+    -- Keep the former public URL as a neutral compatibility alias. It has no
+    -- independent group identity and is intentionally absent from navigation.
     Dir.page "open-conjectures"
-      (%docName? LeaderboardSite.Pages.LifecycleConjectures)
-      (%doc? LeaderboardSite.Pages.LifecycleConjectures) #[],
+      (%docName? LeaderboardSite.Pages.LifecycleOpenProblemsCompatibility)
+      (%doc? LeaderboardSite.Pages.LifecycleOpenProblemsCompatibility) #[],
     Dir.page "recent"
       (%docName? LeaderboardSite.Pages.LifecycleRecent)
       (%doc? LeaderboardSite.Pages.LifecycleRecent) #[],
@@ -65,9 +70,9 @@ def leaderboardSite : Site :=
         Dir.page "software-verification"
           (%docName? LeaderboardSite.Pages.PreviewSoftware)
           (%doc? LeaderboardSite.Pages.PreviewSoftware) #[],
-        Dir.page "open-conjectures"
-          (%docName? LeaderboardSite.Pages.PreviewConjectures)
-          (%doc? LeaderboardSite.Pages.PreviewConjectures) #[],
+        Dir.page "open-problems"
+          (%docName? LeaderboardSite.Pages.PreviewOpenProblems)
+          (%doc? LeaderboardSite.Pages.PreviewOpenProblems) #[],
         Dir.page "recent"
           (%docName? LeaderboardSite.Pages.PreviewRecent)
           (%doc? LeaderboardSite.Pages.PreviewRecent) #[],

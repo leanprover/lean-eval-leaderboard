@@ -32,8 +32,8 @@ private def groupTabs : Html := {{
        href="formalization-evaluation/">{{textHtml "Formalization evaluation"}}</a>
     <a data-lifecycle-group-tab="software-verification"
        href="software-verification/">{{textHtml "Software verification"}}</a>
-    <a data-lifecycle-group-tab="open-conjectures"
-       href="open-conjectures/">{{textHtml "Open conjectures"}}</a>
+    <a data-lifecycle-group-tab="open-problems"
+       href="open-problems/">{{textHtml "Open problems"}}</a>
     <a href="recent/">{{textHtml "Recent solutions"}}</a>
   </nav>
 }}
@@ -88,8 +88,14 @@ def _root_.LeaderboardSite.Pages.LifecycleFormalization : VersoDoc Page :=
 def _root_.LeaderboardSite.Pages.LifecycleSoftware : VersoDoc Page :=
   .mk (fun _ => pagePart false "Software verification" "group" "software-verification") "{}"
 
-def _root_.LeaderboardSite.Pages.LifecycleConjectures : VersoDoc Page :=
-  .mk (fun _ => pagePart false "Open conjectures" "group" "open-conjectures") "{}"
+def _root_.LeaderboardSite.Pages.LifecycleOpenProblems : VersoDoc Page :=
+  .mk (fun _ => pagePart false "Open problems" "group" "open-problems") "{}"
+
+/-- Neutral compatibility page for the former public route. It deliberately
+uses the canonical open-problems identity and copy rather than preserving the
+retired product concept in navigation or data. -/
+def _root_.LeaderboardSite.Pages.LifecycleOpenProblemsCompatibility : VersoDoc Page :=
+  .mk (fun _ => pagePart false "Open problems" "group" "open-problems") "{}"
 
 def _root_.LeaderboardSite.Pages.LifecycleRecent : VersoDoc Page :=
   .mk (fun _ => pagePart false "Recent solutions" "recent") "{}"
@@ -106,8 +112,8 @@ def _root_.LeaderboardSite.Pages.PreviewFormalization : VersoDoc Page :=
 def _root_.LeaderboardSite.Pages.PreviewSoftware : VersoDoc Page :=
   .mk (fun _ => pagePart true "Software verification" "group" "software-verification") "{}"
 
-def _root_.LeaderboardSite.Pages.PreviewConjectures : VersoDoc Page :=
-  .mk (fun _ => pagePart true "Open conjectures" "group" "open-conjectures") "{}"
+def _root_.LeaderboardSite.Pages.PreviewOpenProblems : VersoDoc Page :=
+  .mk (fun _ => pagePart true "Open problems" "group" "open-problems") "{}"
 
 def _root_.LeaderboardSite.Pages.PreviewRecent : VersoDoc Page :=
   .mk (fun _ => pagePart true "Recent solutions" "recent") "{}"

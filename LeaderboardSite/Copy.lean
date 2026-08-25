@@ -269,41 +269,42 @@ def submitTitle : String := "Submit"
 def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
-  Submissions are made by opening a GitHub issue on the
-  [lean-eval submissions repository](https://github.com/leanprover/lean-eval-submissions).
+  The authenticated submission application is hosted at
+  [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
+  This separate origin is intentional: GitHub OAuth callbacks and the
+  application session are scoped to the Worker that handles private intake.
+  After submitting, you can
+  [return to the leaderboard](https://lean-lang.org/eval/).
+
+  During the temporary transition, the
+  [legacy GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  remains available as a secondary path for existing users. New submissions
+  should use the authenticated application above.
   :::
 
 def submitStep1Title  : String :=
-  "1. Put your proof somewhere the lean-eval CI can fetch it"
+  "1. Prepare a source LeanEval can fetch"
 def submitStep1HtmlId : String := "step-1"
 
 def submitStep1Body : VersoDoc Page :=
   verso (Page) "submitStep1"
   :::
-  Accepted submission sources are URLs of one of these shapes:
-
-  - a GitHub repository: `https://github.com/<owner>/<repo>`
-  - a GitHub repository pinned to a branch, tag, or commit:
-    `https://github.com/<owner>/<repo>/tree/<ref>` or
-    `https://github.com/<owner>/<repo>/commit/<sha>`
-  - a public gist: `https://gist.github.com/<user>/<gist-id>`
-    (optionally with a revision suffix)
-
-  Private GitHub repositories are supported. To use one,
-  [install the lean-eval-bot GitHub App](https://github.com/apps/lean-eval-bot)
-  on the repository first, so that the CI can clone it.
-
-  Secret (unlisted) gists are not supported by the current intake flow. Make
-  your gist public, or host the proof in a repository.
+  Launch intake requires a private GitHub repository in `owner/repository`
+  form and the exact 40-character source commit to evaluate. Before submitting,
+  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
+  on that repository so that LeanEval can clone it.
   :::
 
-def submitStep2Title  : String := "2. Lay out the proof so CI can find it"
+def submitStep2Title  : String := "2. Submit through the authenticated application"
 def submitStep2HtmlId : String := "step-2"
 
 def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
-  The CI walks whatever you submit and tries every directory containing a
+  [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
+  and sign in with GitHub. Choose the source and identify the model or system
+  that produced the proof. The application walks the submitted source and
+  tries every directory containing a
   `lakefile.toml` whose `name` field matches a benchmark problem id, and
   which has a `Submission.lean` next to it. For example:
 
@@ -313,81 +314,55 @@ def submitStep2Body : VersoDoc Page :=
     relevant `generated/<problem_id>/` directories
   - a custom repository containing several benchmark workspaces side by
     side
-  - a gist containing a two-file minimum: a `lakefile.toml` with
-    `name = "<problem_id>"` and a `Submission.lean`
 
-  For each matched directory the CI overlays only your `Submission.lean`
+  For each matched directory LeanEval overlays only your `Submission.lean`
   and any files under `Submission/**/*.lean` onto a pristine copy of the
   benchmark's workspace for that problem. Every other file in your
   submission is ignored, including `Solution.lean`, `Challenge.lean`, or
   any modified `lakefile.toml`. The CI then runs
   [comparator](https://github.com/leanprover/comparator) to check the
   proof.
+
+  Before evaluation, LeanEval records the exact source revision and digest
+  and stores a private encrypted archive bound to that submission. Submission
+  source and credentials are not exposed through public workflow artifacts or
+  logs.
   :::
 
-def submitStep3Title  : String := "3. Open a submission issue"
+def submitStep3Title  : String := "3. Confirm the release terms"
 def submitStep3HtmlId : String := "step-3"
 
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  Click [Submit benchmark solution](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  to open a pre-filled issue. The form asks for:
+  The submission action includes this acknowledgement:
 
-  - a submission URL in one of the shapes above
-  - a free-form model identifier that identifies the model or system that
-    produced the proof
-  - whether the exact solutions are public, planned for publication, or
-    private with no current publication plan
-  - an actual or intended publication date in `YYYY-MM-DD` format when
-    applicable
+  > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation, publish evaluation metadata and results, and, two UTC calendar months after acceptance, publish the submitted source under the Apache License 2.0. I will not submit secrets or material I am not authorized to disclose.
 
-  You can also provide an optional description of how the solution was
-  produced.
-
-  When you submit the issue, the lean-eval CI takes over. It clones your
-  content, scans for benchmark workspaces, runs comparator on every
-  match, and records any newly-solved problems in the leaderboard
-  repository. The CI comments on your issue with a per-problem pass/fail
-  summary and closes it when done. Any problem that passes is added to
-  your `results/<your-github-login>.json` record.
-
-  Submissions are cumulative. Every success is sticky, and there is no
-  limit on how many times you can submit. Resubmit whenever you have new
-  proofs.
+  Accepted source is scheduled for publication by default. You may opt out in
+  the submission application, or ask to opt out at any time before release.
+  The public result then remains visible with its solution marked as withheld.
   :::
 
-def submitWhatPublicTitle  : String := "What becomes public"
+def submitWhatPublicTitle  : String := "What becomes public, and when"
 def submitWhatPublicHtmlId : String := "what-becomes-public"
 
 def submitWhatPublicBody : VersoDoc Page :=
   verso (Page) "submitWhatPublic"
   :::
-  Only the information you enter on the submission form, plus the list of
-  problems your submission solved, becomes public. Your proof is never
-  copied out of the ephemeral workflow runner into any public artifact.
-  The public results store records submission provenance, timestamps, and
-  your submission-time publication declaration.
+  Submission metadata and evaluation results may become public when the
+  result is recorded. Private source remains in the encrypted archive during
+  the release delay.
 
-  If your submission source was a public repository or a public gist, the
-  leaderboard may link to it so that others can inspect your solution. If
-  the source was private, no link is published.
+  Unless you opt out, LeanEval automatically publishes the exact accepted
+  `Submission.lean` and files under `Submission/` under the Apache License 2.0
+  two UTC calendar months after acceptance. Repository metadata, credentials,
+  challenge files, modified build files, and unrelated source files are not
+  included in that release.
 
-  LeanEval supports open science and does not prohibit publishing exact
-  solutions. Making solutions public can help library development and let
-  others study and build on your work. However, it also lets solutions be
-  copied directly and may cause them to enter future model-training data,
-  reducing our ability to treat those problems as unseen evaluation data.
-
-  Please consider these tradeoffs when deciding whether and when to
-  publish. You can freely publish methods, tooling, prompts, aggregate
-  results, and reusable library contributions without publishing the exact
-  benchmark solutions. There is no required embargo: the decision remains
-  yours.
-
-  The intended date requested for planned publication is your current best
-  estimate. It records your intention when you submit and is not a
-  commitment.
+  Only submit files that you have authority to provide and license. Do not
+  include secrets. If you opt out before release, the public leaderboard keeps
+  the evaluation result but shows that the solution is withheld.
   :::
 
 /-! ### Submit-page CTA + TL;DR widgets
@@ -398,21 +373,19 @@ paragraph splices a `<code>` and an `<a>` mid-sentence, so its prose is
 broken into chunks rather than authored as a single string. -/
 
 def submitCtaUrl    : String :=
-  "https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml"
-def submitCtaLabel  : String := "Submit benchmark solution"
+  "https://lean-eval-submission-server.lean-eval.workers.dev/"
+def submitCtaLabel  : String := "Continue to secure submission service"
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Three steps: host your proof on GitHub or in a public gist, lay it \
-   out so CI can match each "
+  "Sign in with GitHub, choose the exact source snapshot, and confirm the "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
-  " to a problem id, and open a pre-filled issue. CI runs the proof \
-   through "
+  " archive and release terms. LeanEval verifies each matching proof with "
 def submitTldrComparatorLabel : String := "comparator"
 def submitTldrComparatorUrl   : String :=
   "https://github.com/leanprover/comparator"
 def submitTldrPart3 : String :=
-  " and updates the leaderboard automatically."
+  " before recording an accepted result."
 
 end LeaderboardSite.Copy
