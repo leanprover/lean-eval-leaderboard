@@ -270,6 +270,14 @@ body::before {
 .lifecycle-app-content h2 { font-size: var(--fs-xl); }
 .lifecycle-app-content h3 { font-size: var(--fs-lg); }
 
+.lifecycle-problem-statement {
+  margin-top: var(--space-8);
+}
+
+.lifecycle-problem-statement > h2 {
+  font-size: var(--fs-xl);
+}
+
 .lifecycle-policy,
 .lifecycle-limitations,
 .lifecycle-panel,
