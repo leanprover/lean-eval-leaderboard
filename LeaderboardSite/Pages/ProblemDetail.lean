@@ -117,6 +117,18 @@ private def sourceParagraph (value : Option String) : Block Page :=
       paragraph #[textInline s!"{problemsSourcePrefix}{s}"]
   | none => paragraph #[textInline s!"{problemsSourcePrefix}{unavailable}"]
 
+/-- The authored context and highlighted Lean declarations that constitute a
+problem statement. Kept as one shared renderer so the lifecycle-aware and
+legacy detail routes cannot silently diverge again. -/
+def problemStatementBlocks
+    (notesText sourceText informalSolution : Option String)
+    (anchors : Array (Block Page)) : Array (Block Page) :=
+  #[
+    optionalParagraph problemsNotesLabel notesText,
+    sourceParagraph sourceText,
+    optionalParagraph problemsInformalSolutionLabel informalSolution
+  ] ++ anchors.map holeWrap
+
 private def backLink : Block Page :=
   -- Verso emits a `<base href>` pointing at the site root, so a plain
   -- `problems/` href resolves to `<root>/problems/` rather than back up
@@ -135,14 +147,11 @@ private def assembleDetailPart
   let prelude : Array (Block Page) := #[
     backLink,
     paragraph #[codeInline id],
-    paragraph #[textInline submitterText],
-    optionalParagraph problemsNotesLabel notesText,
-    sourceParagraph sourceText,
-    optionalParagraph problemsInformalSolutionLabel informalSolution
+    paragraph #[textInline submitterText]
   ]
   let body :=
     prelude
-    ++ anchors.map holeWrap
+    ++ problemStatementBlocks notesText sourceText informalSolution anchors
     ++ solversSection solvers
   Verso.Doc.Part.mk #[textInline title] title none body #[]
 

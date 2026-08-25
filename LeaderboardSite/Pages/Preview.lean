@@ -1,6 +1,7 @@
 import Lean
 import VersoBlog
 import LeaderboardSite.Data
+import LeaderboardSite.Pages.ProblemDetail
 
 set_option maxRecDepth 65536
 
@@ -18,6 +19,12 @@ private def textHtml (text : String) : Html := Html.text true text
 
 private def htmlBlob (html : Html) : Block Page :=
   .other (BlockExt.blob html) #[]
+
+private def headingBlock (text : String) : Block Page :=
+  .other (BlockExt.blob {{ <h2>{{textHtml text}}</h2> }}) #[]
+
+private def divBlock (classes : String) (contents : Array (Block Page)) : Block Page :=
+  .other (BlockExt.htmlDiv classes) contents
 
 private def groupTabs : Html := {{
   <nav class="lifecycle-group-tabs" aria-label="Leaderboard groups">
@@ -108,8 +115,16 @@ def _root_.LeaderboardSite.Pages.PreviewRecent : VersoDoc Page :=
 def _root_.LeaderboardSite.Pages.PreviewProblems : VersoDoc Page :=
   .mk (fun _ => pagePart true "Problem comparisons" "group" "formalization-evaluation") "{}"
 
-private def problemPart (preview : Bool) (title problemId : String) : Part Page :=
-  pagePart preview title "problem" problemId
+private def problemPart
+    (preview : Bool)
+    (title problemId : String)
+    (notesText sourceText informalSolution : Option String)
+    (anchors : Array (Block Page)) : Part Page :=
+  let statement := divBlock "wrap prose lifecycle-problem-statement" <|
+    #[headingBlock "Problem statement"] ++
+      LeaderboardSite.Pages.ProblemDetail.problemStatementBlocks
+        notesText sourceText informalSolution anchors
+  .mk #[textInline title] title none #[appShell preview "problem" problemId, statement] #[]
 
 private def previewPageName (namePrefix problemId : String) : Lean.Name :=
   ((`LeaderboardSite.Pages.Preview).str namePrefix).str problemId
@@ -122,7 +137,15 @@ private def problemPageTerms (preview : Bool) (namePrefix : String) : TermElabM 
   let mut terms : Array (TSyntax `term) := #[]
   for problem in problems do
     let pageName := previewPageName namePrefix problem.id
-    let part ← `(problemPart $(quote preview) $(quote problem.title) $(quote problem.id))
+    let anchors : TSyntaxArray `term := anchorBlockTerms problem
+    let part ← `(problemPart
+      $(quote preview)
+      $(quote problem.title)
+      $(quote problem.id)
+      $(quote problem.notesText)
+      $(quote problem.sourceText)
+      $(quote problem.informalSolution)
+      #[$anchors,*])
     terms := terms.push (← `(Dir.page $(quote problem.id) $(quote pageName) $part #[]))
   let result : TSyntax `term ← `(#[$[$terms],*])
   let expected ← Lean.Elab.Term.elabTerm (← `(Array Dir)) none

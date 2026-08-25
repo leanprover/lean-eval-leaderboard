@@ -30,6 +30,20 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('href="legacy/"', page)
         self.assertNotIn("Local-only preview", page)
 
+    def test_lifecycle_problem_pages_retain_the_complete_problem_statement(self) -> None:
+        page = (REPO_ROOT / "LeaderboardSite/Pages/Preview.lean").read_text()
+        detail = (
+            REPO_ROOT / "LeaderboardSite/Pages/ProblemDetail.lean"
+        ).read_text()
+        self.assertIn("anchorBlockTerms problem", page)
+        self.assertIn('headingBlock "Problem statement"', page)
+        self.assertIn('"wrap prose lifecycle-problem-statement"', page)
+        self.assertIn("problemStatementBlocks", page)
+        self.assertIn("def problemStatementBlocks", detail)
+        self.assertIn("optionalParagraph problemsNotesLabel notesText", detail)
+        self.assertIn("sourceParagraph sourceText", detail)
+        self.assertIn("anchors.map holeWrap", detail)
+
     def test_site_data_uses_stable_cutover_routes(self) -> None:
         generator = (REPO_ROOT / "scripts/lifecycle_site_data.py").read_text()
         self.assertIn('"url": f"problems/', generator)

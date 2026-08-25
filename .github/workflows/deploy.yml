@@ -244,6 +244,16 @@ jobs:
             test -f "_site/problems/$problem_id/index.html"
             test -f "_site/legacy/problems/$problem_id/index.html"
             test -f "_site/site-data/v2/problems/$problem_id.json"
+            grep -F 'data-lifecycle-view="problem"' \
+              "_site/problems/$problem_id/index.html"
+            grep -F 'class="wrap prose lifecycle-problem-statement"' \
+              "_site/problems/$problem_id/index.html"
+            grep -F 'class="hl lean block"' \
+              "_site/problems/$problem_id/index.html"
+            grep -F 'data-lifecycle-view="problem"' \
+              "_site/preview/problems/$problem_id/index.html"
+            grep -F 'class="hl lean block"' \
+              "_site/preview/problems/$problem_id/index.html"
           done < <(jq -r '.problems[].id' _site/site-data/problems.json)
           grep -F "LeanEval leaderboard" _site/index.html
           grep -F 'data-lifecycle-app="true"' _site/index.html
