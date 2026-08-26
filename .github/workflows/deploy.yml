@@ -289,6 +289,26 @@ jobs:
           grep -F 'automatically publishes' _site/submit/index.html
           grep -F 'Apache License 2.0' _site/submit/index.html
           grep -F 'legacy GitHub issue form' _site/submit/index.html
+          grep -F 'Production server intake is not enabled' \
+            _site/submit/index.html
+          grep -F 'it is not accepting submissions' \
+            _site/submit/index.html
+          grep -F 'current functioning' _site/submit/index.html
+          grep -F 'submission path until production server intake launches' \
+            _site/submit/index.html
+          grep -F 'Server intake prelaunch — not accepting submissions' \
+            _site/submit/index.html
+          grep -F 'Submit now through the GitHub issue form' \
+            _site/submit/index.html
+          if grep -F 'secondary path' _site/submit/index.html; then
+            echo "::error::The submit page calls functioning issue intake secondary."
+            exit 1
+          fi
+          if grep -F 'New submissions should use the authenticated application' \
+              _site/submit/index.html; then
+            echo "::error::The prelaunch submit page directs users to disabled server intake."
+            exit 1
+          fi
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
             _site/submit/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
