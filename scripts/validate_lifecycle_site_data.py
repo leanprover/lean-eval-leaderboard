@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Validate lifecycle-aware site-data schema version 2 without dependencies."""
 
 from __future__ import annotations
