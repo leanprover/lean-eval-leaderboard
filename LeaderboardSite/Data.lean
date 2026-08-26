@@ -349,7 +349,7 @@ def anchorSourceText (snapshotModule : String) (fileText : String)
 def runPageDocElab (act : DocElabM α) : TermElabM α := do
   let ctx ← DocElabContext.fromGenreTerm (← `(Page))
   let initDocState : DocElabM.State := { highlightDeduplicationTable := .some {} }
-  let initPartState : PartElabM.State := .init (Syntax.mkStrLit "Page")
+  let initPartState : PartElabM.State := .init (Syntax.mkStrLit "Page") (Syntax.mkStrLit "Page")
   let (result, _) ← DocElabM.run ctx initDocState initPartState act
   pure result
 
