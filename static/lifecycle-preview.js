@@ -176,7 +176,10 @@
       var title = heading(2, data.group.label);
       var policy = node("p", { className: "lifecycle-policy", text: data.group.policy });
       if (!scope) {
-        var emptyChildren = [title, policy, node("p", { text: "No visible problems are published in this group yet." })];
+        var emptyText = data.group.id === "open-problems"
+          ? "No open problems are published in this group yet."
+          : "No visible problems are published in this group yet.";
+        var emptyChildren = [title, policy, node("p", { text: emptyText })];
         var emptyNote = limitations(data.data_limitations);
         if (emptyNote) emptyChildren.push(emptyNote);
         content.replaceChildren.apply(content, emptyChildren);
@@ -248,7 +251,7 @@
         node("option", { value: "all", text: "All groups" }),
         node("option", { value: "formalization-evaluation", text: "Formalization evaluation" }),
         node("option", { value: "software-verification", text: "Software verification" }),
-        node("option", { value: "open-conjectures", text: "Open conjectures" })
+        node("option", { value: "open-problems", text: "Open problems" })
       ]);
       select.value = selected;
       var list = node("ol", { className: "lifecycle-recent-list" });

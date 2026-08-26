@@ -214,14 +214,17 @@ jobs:
           test -f _site/index.html
           test -f _site/formalization-evaluation/index.html
           test -f _site/software-verification/index.html
+          test -f _site/open-problems/index.html
+          # Former public URL retained only as a neutral compatibility alias.
           test -f _site/open-conjectures/index.html
           test -f _site/recent/index.html
+          test -f _site/submit/index.html
           test -f _site/legacy/index.html
           test -f _site/legacy/problems/index.html
           test -f _site/preview/index.html
           test -f _site/preview/formalization-evaluation/index.html
           test -f _site/preview/software-verification/index.html
-          test -f _site/preview/open-conjectures/index.html
+          test -f _site/preview/open-problems/index.html
           test -f _site/preview/recent/index.html
           test -f _site/site-data/leaderboard-preview.json
           test -f _site/site-data/v2/index.json
@@ -265,10 +268,33 @@ jobs:
           fi
           grep -F "LeanEval lifecycle-aware leaderboard" _site/preview/index.html
           grep -F 'aria-live="polite"' _site/preview/index.html
+          grep -F 'data-lifecycle-identity="open-problems"' \
+            _site/open-conjectures/index.html
+          if grep -F 'data-lifecycle-group-tab="open-conjectures"' \
+              _site/open-conjectures/index.html; then
+            echo "::error::The compatibility route leaked into canonical group navigation."
+            exit 1
+          fi
+          grep -F 'https://lean-eval-submission-server.lean-eval.workers.dev/' \
+            _site/submit/index.html
+          grep -F 'https://github.com/apps/lean-eval-source-reader' \
+            _site/submit/index.html
+          if grep -F 'https://github.com/apps/lean-eval-bot' \
+              _site/submit/index.html; then
+            echo "::error::The server intake page points at the legacy issue-workflow App."
+            exit 1
+          fi
+          grep -F 'GitHub OAuth callbacks' _site/submit/index.html
+          grep -F 'two UTC calendar months after acceptance' _site/submit/index.html
+          grep -F 'automatically publishes' _site/submit/index.html
+          grep -F 'Apache License 2.0' _site/submit/index.html
+          grep -F 'legacy GitHub issue form' _site/submit/index.html
+          grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
+            _site/submit/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
             _site/site-data/leaderboard-preview.json
           jq --exit-status \
-            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-conjectures", "software-verification"] and all(.groups[]; (.url | startswith("preview/") | not))' \
+            '.schema_version == 2 and .default_group == "formalization-evaluation" and (.groups | map(.id) | sort) == ["formalization-evaluation", "open-problems", "software-verification"] and all(.groups[]; (.url | startswith("preview/") | not))' \
             _site/site-data/v2/index.json
           jq --exit-status \
             '.problems as $problems | .schema_version == 2 and .standings_default_sort == "unique" and all(.credits[]; .problem_id as $id | any($problems[]; .id == $id)) and all(.problems[]; .url | startswith("problems/"))' \

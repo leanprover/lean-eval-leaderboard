@@ -40,6 +40,7 @@ def theme (_name : String) (siteName : String) : Theme := {
       path[0]? == some "problems" ||
       path[0]? == some "formalization-evaluation" ||
       path[0]? == some "software-verification" ||
+      path[0]? == some "open-problems" ||
       path[0]? == some "open-conjectures" ||
       path[0]? == some "recent"
     let isWide := isLifecycleAware || isLegacyFront

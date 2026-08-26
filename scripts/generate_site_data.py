@@ -180,7 +180,7 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
         if raw["group"] not in {
             "formalization-evaluation",
             "software-verification",
-            "open-conjectures",
+            "open-problems",
         }:
             raise SystemExit(f"{path}: unsupported group {raw['group']!r}")
         if raw["status"] not in {"draft", "active", "archived"}:

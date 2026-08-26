@@ -15,7 +15,7 @@ from typing import Any
 GROUPS = {
     "formalization-evaluation",
     "software-verification",
-    "open-conjectures",
+    "open-problems",
 }
 
 
