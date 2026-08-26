@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Validate lifecycle-aware site-data schema version 2 without dependencies."""
 
 from __future__ import annotations
@@ -6,16 +5,27 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from datetime import date
 from typing import Any
-
 
 GROUPS = {
     "formalization-evaluation",
     "software-verification",
     "open-problems",
+}
+CATALOG_DATE_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+STATEMENT_DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}")
+CATALOG_REASONS = {
+    "initial",
+    "statement-change",
+    "policy",
+    "correction",
+    "retraction",
+    "restoration",
 }
 
 
@@ -36,6 +46,19 @@ def load_json(path: pathlib.Path) -> dict[str, Any]:
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ContractError(message)
+
+
+def catalog_date(value: Any, message: str) -> str:
+    require(
+        isinstance(value, str) and CATALOG_DATE_RE.fullmatch(value) is not None,
+        message,
+    )
+    try:
+        parsed = date.fromisoformat(value)
+    except ValueError as error:
+        raise ContractError(message) from error
+    require(parsed.isoformat() == value, message)
+    return value
 
 
 def scope_ids(group: dict[str, Any]) -> set[tuple[str, int]]:
@@ -71,6 +94,103 @@ def recompute_counts(group: dict[str, Any]) -> dict[str, dict[str, int]]:
         current["unique"] += len(solvers[credit["problem_id"]]) == 1
         current["first"] += bool(credit["first_solve"])
     return dict(counts)
+
+
+def validate_problem_lifecycle(
+    path: pathlib.Path, problem: dict[str, Any], lifecycle: dict[str, Any]
+) -> None:
+    require(
+        set(lifecycle) == {"status_history", "statement_revisions"},
+        f"{path}: invalid lifecycle fields",
+    )
+    status_history = lifecycle["status_history"]
+    revisions = lifecycle["statement_revisions"]
+    require(isinstance(status_history, list), f"{path}: invalid status history")
+    require(isinstance(revisions, list), f"{path}: invalid revision history")
+
+    previous_date = ""
+    for entry in status_history:
+        require(
+            isinstance(entry, dict)
+            and set(entry) == {"status", "effective_at", "reason", "source"},
+            f"{path}: invalid status history entry",
+        )
+        require(
+            entry["status"] in {"draft", "active", "archived", "resolved"},
+            f"{path}: invalid historical status",
+        )
+        effective_at = catalog_date(
+            entry["effective_at"], f"{path}: status history date is invalid"
+        )
+        require(
+            effective_at > previous_date,
+            f"{path}: status history order is invalid",
+        )
+        require(
+            entry["reason"] in CATALOG_REASONS,
+            f"{path}: invalid status reason",
+        )
+        require(
+            isinstance(entry["source"], str) and bool(entry["source"]),
+            f"{path}: invalid status source",
+        )
+        previous_date = effective_at
+    if status_history:
+        require(
+            status_history[-1]["status"] == problem["current_status"],
+            f"{path}: terminal status history differs from current status",
+        )
+
+    previous_date = ""
+    previous_revision = 0
+    for index, entry in enumerate(revisions):
+        require(
+            isinstance(entry, dict)
+            and set(entry)
+            == {
+                "revision",
+                "status",
+                "effective_at",
+                "reason",
+                "statement_digest",
+                "source",
+            },
+            f"{path}: invalid revision history entry",
+        )
+        revision = entry["revision"]
+        effective_at = catalog_date(
+            entry["effective_at"], f"{path}: revision history date is invalid"
+        )
+        require(
+            type(revision) is int
+            and revision > previous_revision
+            and effective_at > previous_date,
+            f"{path}: revision history order is invalid",
+        )
+        expected_status = (
+            "current" if index == len(revisions) - 1 else "superseded"
+        )
+        require(entry["status"] == expected_status, f"{path}: invalid revision state")
+        require(
+            entry["reason"] in CATALOG_REASONS,
+            f"{path}: invalid revision reason",
+        )
+        require(
+            isinstance(entry["statement_digest"], str)
+            and STATEMENT_DIGEST_RE.fullmatch(entry["statement_digest"]) is not None,
+            f"{path}: invalid statement digest",
+        )
+        require(
+            isinstance(entry["source"], str) and bool(entry["source"]),
+            f"{path}: invalid revision source",
+        )
+        previous_revision = revision
+        previous_date = effective_at
+    if revisions:
+        require(
+            revisions[-1]["revision"] == problem["statement_revision"],
+            f"{path}: terminal revision history differs from current revision",
+        )
 
 
 def validate(root: pathlib.Path) -> None:
@@ -114,8 +234,8 @@ def validate(root: pathlib.Path) -> None:
         require(problem.get("group") == problem_group[problem_id], f"{path}: group mismatch")
         require(problem.get("visible") is True, f"{path}: hidden problem leaked")
         lifecycle = payload.get("lifecycle", {})
-        require(bool(lifecycle.get("status_history")), f"{path}: missing status history")
-        require(bool(lifecycle.get("statement_revisions")), f"{path}: missing revisions")
+        require(isinstance(lifecycle, dict), f"{path}: lifecycle must be an object")
+        validate_problem_lifecycle(path, problem, lifecycle)
         for solution in payload.get("solutions", []):
             require(solution.get("problem_id") == problem_id, f"{path}: solution problem mismatch")
             require("status" in solution.get("replay", {}), f"{path}: replay state omitted")

@@ -49,6 +49,21 @@ order is unique, then first, then total.
 Standings are built and filtered inside one group payload. There is no
 cross-group score or ranking.
 
+## Catalog history
+
+Problem lifecycle history comes from the pinned benchmark manifest's
+append-only `status_history` and `revision_history` tables. The projection
+preserves each calendar date, reason category, and statement digest exactly.
+Revision rows are labeled `superseded` except for the terminal revision, which
+must equal the manifest's current `statement_revision` and is labeled
+`current`. The terminal status row must likewise equal `current_status`.
+
+The initial catalog migration intentionally has no synthetic history rows. If
+a problem manifest has no recorded history, its history arrays remain empty;
+the separately projected current status and statement revision remain visible,
+and the problem payload records the limitation. Presentation-only test fixtures
+are used only when the canonical manifest has no history.
+
 ## Scope and URLs
 
 The newest published frozen set is the group's flagship/default scope. Before

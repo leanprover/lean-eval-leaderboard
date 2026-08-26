@@ -11,6 +11,9 @@
   "$defs": {
     "nonempty": {"type": "string", "minLength": 1},
     "timestamp": {"type": "string", "format": "date-time"},
+    "catalogDate": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "statementDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "catalogReason": {"enum": ["initial", "statement-change", "policy", "correction", "retraction", "restoration"]},
     "limitations": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
     "groupId": {
       "enum": ["formalization-evaluation", "software-verification", "open-problems"]
@@ -129,7 +132,43 @@
         "schema_version": {"const": 2},
         "generated_at": {"$ref": "#/$defs/timestamp"},
         "problem": {"type": "object", "required": ["id", "title", "group", "current_status", "visible", "statement_revision", "tags", "stable_url", "preview_url"]},
-        "lifecycle": {"type": "object", "required": ["status_history", "statement_revisions"]},
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status_history", "statement_revisions"],
+          "properties": {
+            "status_history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status", "effective_at", "reason", "source"],
+                "properties": {
+                  "status": {"enum": ["draft", "active", "archived", "resolved"]},
+                  "effective_at": {"$ref": "#/$defs/catalogDate"},
+                  "reason": {"$ref": "#/$defs/catalogReason"},
+                  "source": {"$ref": "#/$defs/nonempty"}
+                }
+              }
+            },
+            "statement_revisions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["revision", "status", "effective_at", "reason", "statement_digest", "source"],
+                "properties": {
+                  "revision": {"type": "integer", "minimum": 1},
+                  "status": {"enum": ["superseded", "current"]},
+                  "effective_at": {"$ref": "#/$defs/catalogDate"},
+                  "reason": {"$ref": "#/$defs/catalogReason"},
+                  "statement_digest": {"$ref": "#/$defs/statementDigest"},
+                  "source": {"$ref": "#/$defs/nonempty"}
+                }
+              }
+            }
+          }
+        },
         "sets": {"type": "array", "items": {"type": "object", "required": ["id", "title", "frozen", "published_at", "statement_revision"]}},
         "solutions": {"type": "array", "items": {"$ref": "#/$defs/solution"}},
         "data_limitations": {"$ref": "#/$defs/limitations"}

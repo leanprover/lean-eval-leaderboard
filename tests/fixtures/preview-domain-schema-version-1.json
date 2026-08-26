@@ -22,12 +22,14 @@
       "status_history": [
         {
           "status": "draft",
-          "effective_at": "2026-07-01T00:00:00Z",
+          "effective_at": "2026-07-01",
+          "reason": "initial",
           "source": "fixture-event-1"
         },
         {
           "status": "active",
-          "effective_at": "2026-08-01T00:00:00Z",
+          "effective_at": "2026-08-01",
+          "reason": "correction",
           "source": "fixture-event-2"
         }
       ],
@@ -35,6 +37,9 @@
         {
           "revision": 1,
           "status": "current",
+          "effective_at": "2026-08-01",
+          "reason": "correction",
+          "statement_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
           "source": "fixture-event-2"
         }
       ]
