@@ -4,7 +4,7 @@ defaultTargets = ["BenchmarkProblems"]
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4.git"
-rev = "6f1ef4e5dd604a435bddba4747b13970cd65d2a1"
+rev = "v4.33.1"
 
 [[require]]
 name = "subverso"
@@ -12,7 +12,7 @@ git = "https://github.com/leanprover/subverso"
 # Pinned to the SubVerso revision Verso pulls into LeaderboardSite, so the
 # highlighted JSON this snapshot emits stays decodable by the site. Derived
 # from the site lakefile's Verso pin by scripts/generate_site_data.py.
-rev = "ce893b9042128037e2d3c0158b9567fab9fae268"
+rev = "3a75ede05278806fd3249bb0c97a6fb5777a4f7d"
 
 [[lean_lib]]
 name = "BenchmarkProblems"
