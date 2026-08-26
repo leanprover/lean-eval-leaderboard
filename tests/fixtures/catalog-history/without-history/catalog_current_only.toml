@@ -1,0 +1,10 @@
+id = "catalog_current_only"
+title = "Catalog current-state-only fixture"
+group = "formalization-evaluation"
+status = "draft"
+visible = true
+statement_revision = 1
+tags = []
+module = "LeanEval.CatalogCurrentOnly"
+holes = ["catalog_current_only"]
+submitter = "LeanEval maintainers"

@@ -1,0 +1,32 @@
+id = "catalog_history_fixture"
+title = "Catalog history fixture"
+group = "formalization-evaluation"
+status = "active"
+visible = true
+statement_revision = 3
+tags = []
+module = "LeanEval.CatalogHistoryFixture"
+holes = ["catalog_history_fixture"]
+submitter = "LeanEval maintainers"
+
+[[status_history]]
+status = "draft"
+effective_date = "2026-07-01"
+reason = "initial"
+
+[[status_history]]
+status = "active"
+effective_date = "2026-08-20"
+reason = "policy"
+
+[[revision_history]]
+revision = 2
+effective_date = "2026-07-15"
+reason = "statement-change"
+statement_digest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+[[revision_history]]
+revision = 3
+effective_date = "2026-08-21"
+reason = "correction"
+statement_digest = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

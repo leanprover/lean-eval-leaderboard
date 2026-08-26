@@ -799,20 +799,40 @@ def _standings(
 
 def _problem_lifecycle(problem: Any, fixture: dict[str, Any]) -> dict[str, Any]:
     override = fixture.get("problem_lifecycle", {}).get(problem.id, {})
-    history = override.get("status_history") or [
-        {
-            "status": problem.status,
-            "effective_at": None,
-            "source": "catalog-current-state",
-        }
-    ]
-    revisions = override.get("statement_revisions") or [
-        {
-            "revision": problem.statement_revision,
-            "status": "current",
-            "source": "catalog-current-state",
-        }
-    ]
+    catalog_status_history = getattr(problem, "status_history", ())
+    catalog_revision_history = getattr(problem, "revision_history", ())
+    history = (
+        [
+            {
+                "status": entry["status"],
+                "effective_at": entry["effective_date"],
+                "reason": entry["reason"],
+                "source": "catalog-manifest",
+            }
+            for entry in catalog_status_history
+        ]
+        if catalog_status_history
+        else [dict(entry) for entry in override.get("status_history", [])]
+    )
+    revisions = (
+        [
+            {
+                "revision": entry["revision"],
+                "status": (
+                    "current"
+                    if entry["revision"] == problem.statement_revision
+                    else "superseded"
+                ),
+                "effective_at": entry["effective_date"],
+                "reason": entry["reason"],
+                "statement_digest": entry["statement_digest"],
+                "source": "catalog-manifest",
+            }
+            for entry in catalog_revision_history
+        ]
+        if catalog_revision_history
+        else [dict(entry) for entry in override.get("statement_revisions", [])]
+    )
     return {"status_history": history, "statement_revisions": revisions}
 
 
@@ -886,6 +906,9 @@ def build_lifecycle_projection(
     solutions = [solution for solution in solutions if solution.problem_id in visible_ids]
     credits = _deduplicated_credits(solutions)
     first_ids = _first_result_ids(solutions)
+    problem_lifecycles = {
+        problem.id: _problem_lifecycle(problem, fixture) for problem in visible
+    }
     limitations: list[str] = []
     if not state_commit:
         limitations.append(
@@ -898,9 +921,12 @@ def build_lifecycle_projection(
         limitations.append(
             "Results not yet present in the public State projection were adapted from the immutable base-results store; their replay/release states are explicitly unavailable."
         )
-    if not fixture.get("problem_lifecycle"):
+    if not any(
+        lifecycle["status_history"] or lifecycle["statement_revisions"]
+        for lifecycle in problem_lifecycles.values()
+    ):
         limitations.append(
-            "Catalog lifecycle history beyond the current pinned manifest is unavailable; the site shows the current status as a one-entry history."
+            "The pinned catalog records no lifecycle history for any visible problem; current fields are reported separately and no history entry is fabricated."
         )
     published_model_aliases = list(model_aliases) or fixture.get(
         "model_aliases", []
@@ -1007,7 +1033,16 @@ def build_lifecycle_projection(
 
     for problem in visible:
         problem_solutions = [item for item in solutions if item.problem_id == problem.id]
-        lifecycle = _problem_lifecycle(problem, fixture)
+        lifecycle = problem_lifecycles[problem.id]
+        problem_limitations = list(limitations)
+        if not lifecycle["status_history"]:
+            problem_limitations.append(
+                "No status transition history is recorded for this problem; current_status is reported separately and no history entry is fabricated."
+            )
+        if not lifecycle["statement_revisions"]:
+            problem_limitations.append(
+                "No statement revision history is recorded for this problem; statement_revision is reported separately and no history entry is fabricated."
+            )
         files[f"v2/problems/{problem.id}.json"] = {
             "schema_version": 2,
             "generated_at": generated_at,
@@ -1042,7 +1077,7 @@ def build_lifecycle_projection(
                 _solution_payload(solution, first_ids)
                 for solution in sorted(problem_solutions, key=_acceptance_key)
             ],
-            "data_limitations": limitations,
+            "data_limitations": problem_limitations,
         }
 
     recent = sorted(solutions, key=_acceptance_key, reverse=True)

@@ -34,7 +34,10 @@
   }
 
   function formattedDate(value) {
-    var date = new Date(value);
+    var calendar = typeof value === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    var date = calendar
+      ? new Date(Number(calendar[1]), Number(calendar[2]) - 1, Number(calendar[3]))
+      : new Date(value);
     return Number.isNaN(date.valueOf()) ? value : date.toLocaleDateString(undefined, {
       year: "numeric", month: "short", day: "numeric"
     });
@@ -296,9 +299,11 @@
       status.hidden = true;
       var problem = data.problem;
       markGroupTab(problem.group);
-      var history = node("ol", { className: "lifecycle-history" }, data.lifecycle.status_history.map(function (entry) {
-        return node("li", { text: entry.status + (entry.effective_at ? " · " + formattedDate(entry.effective_at) : " · date unavailable") });
-      }));
+      var historyEntries = data.lifecycle.status_history.map(function (entry) {
+        return node("li", { text: entry.status + (entry.effective_at ? " · " + formattedDate(entry.effective_at) : " · date unavailable") + (entry.reason ? " · " + entry.reason : "") });
+      });
+      if (!historyEntries.length) historyEntries.push(node("li", { text: "No recorded status transitions." }));
+      var history = node("ol", { className: "lifecycle-history" }, historyEntries);
       var sets = node("ul", {}, data.sets.length ? data.sets.map(function (set) {
         return node("li", { text: set.title + " · statement r" + set.statement_revision + (set.frozen ? " · frozen" : " · draft") });
       }) : [node("li", { text: "No named set membership." })]);

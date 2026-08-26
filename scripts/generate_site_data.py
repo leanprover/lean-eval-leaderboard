@@ -12,7 +12,7 @@ import time
 import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 import tomllib
@@ -67,6 +67,15 @@ BENCHMARK_COMMIT_FILE = REPO_ROOT / "benchmark-snapshot" / ".benchmark-commit"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 PROBLEM_ID_RE = re.compile(r"^[A-Za-z0-9_]+$")
 TAG_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+STATEMENT_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+CATALOG_HISTORY_REASONS = {
+    "initial",
+    "statement-change",
+    "policy",
+    "correction",
+    "retraction",
+    "restoration",
+}
 RESULT_USER_RE = re.compile(
     r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
 )
@@ -103,6 +112,8 @@ class Problem:
     holes: tuple[Hole, ...]
     challenge_path: str
     sort_index: int
+    status_history: tuple[dict[str, str], ...] = ()
+    revision_history: tuple[dict[str, Any], ...] = ()
 
 
 def run(cmd: list[str], cwd: pathlib.Path) -> str:
@@ -154,6 +165,109 @@ def load_holes(benchmark_repo: pathlib.Path, problem_id: str) -> tuple[Hole, ...
     return tuple(holes)
 
 
+def _catalog_effective_date(value: Any, path: pathlib.Path, label: str) -> str:
+    if not isinstance(value, str):
+        raise SystemExit(f"{path}: {label} must be an ISO calendar date")
+    try:
+        parsed = date.fromisoformat(value)
+    except ValueError as error:
+        raise SystemExit(f"{path}: {label} must be an ISO calendar date") from error
+    if parsed.isoformat() != value:
+        raise SystemExit(f"{path}: {label} must be an ISO calendar date")
+    return value
+
+
+def _catalog_reason(value: Any, path: pathlib.Path, label: str) -> str:
+    if not isinstance(value, str) or value not in CATALOG_HISTORY_REASONS:
+        raise SystemExit(f"{path}: {label} has an unsupported category")
+    return value
+
+
+def _load_status_history(
+    raw: dict[str, Any], path: pathlib.Path
+) -> tuple[dict[str, str], ...]:
+    rows = raw.get("status_history", [])
+    if not isinstance(rows, list):
+        raise SystemExit(f"{path}: status_history must be an array")
+    history: list[dict[str, str]] = []
+    previous_date = ""
+    for index, row in enumerate(rows):
+        label = f"status_history[{index}]"
+        if not isinstance(row, dict) or set(row) != {
+            "status",
+            "effective_date",
+            "reason",
+        }:
+            raise SystemExit(f"{path}: {label} has invalid fields")
+        status = row["status"]
+        if status not in {"draft", "active", "archived"}:
+            raise SystemExit(f"{path}: {label}.status has an unsupported value")
+        effective_date = _catalog_effective_date(
+            row["effective_date"], path, f"{label}.effective_date"
+        )
+        if effective_date <= previous_date:
+            raise SystemExit(f"{path}: status_history dates must increase strictly")
+        previous_date = effective_date
+        history.append(
+            {
+                "status": status,
+                "effective_date": effective_date,
+                "reason": _catalog_reason(row["reason"], path, f"{label}.reason"),
+            }
+        )
+    if history and history[-1]["status"] != raw["status"]:
+        raise SystemExit(f"{path}: final status_history entry must equal current status")
+    return tuple(history)
+
+
+def _load_revision_history(
+    raw: dict[str, Any], path: pathlib.Path
+) -> tuple[dict[str, Any], ...]:
+    rows = raw.get("revision_history", [])
+    if not isinstance(rows, list):
+        raise SystemExit(f"{path}: revision_history must be an array")
+    history: list[dict[str, Any]] = []
+    previous_date = ""
+    previous_revision = 0
+    for index, row in enumerate(rows):
+        label = f"revision_history[{index}]"
+        if not isinstance(row, dict) or set(row) != {
+            "revision",
+            "effective_date",
+            "reason",
+            "statement_digest",
+        }:
+            raise SystemExit(f"{path}: {label} has invalid fields")
+        revision = row["revision"]
+        if type(revision) is not int or revision <= previous_revision:
+            raise SystemExit(
+                f"{path}: revision_history revisions must increase strictly"
+            )
+        effective_date = _catalog_effective_date(
+            row["effective_date"], path, f"{label}.effective_date"
+        )
+        if effective_date <= previous_date:
+            raise SystemExit(f"{path}: revision_history dates must increase strictly")
+        digest = row["statement_digest"]
+        if not isinstance(digest, str) or STATEMENT_DIGEST_RE.fullmatch(digest) is None:
+            raise SystemExit(f"{path}: {label}.statement_digest is invalid")
+        previous_revision = revision
+        previous_date = effective_date
+        history.append(
+            {
+                "revision": revision,
+                "effective_date": effective_date,
+                "reason": _catalog_reason(row["reason"], path, f"{label}.reason"),
+                "statement_digest": digest,
+            }
+        )
+    if history and history[-1]["revision"] != raw["statement_revision"]:
+        raise SystemExit(
+            f"{path}: final revision_history entry must equal statement_revision"
+        )
+    return tuple(history)
+
+
 def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> list[Problem]:
     """Load every `manifests/problems/<id>.toml` file as a `Problem`.
 
@@ -189,6 +303,8 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
         if not PROBLEM_ID_RE.fullmatch(problem_id):
             raise SystemExit(f"{path}: invalid problem id {problem_id!r}")
         holes = load_holes(benchmark_repo, problem_id)
+        status_history = _load_status_history(raw, path)
+        revision_history = _load_revision_history(raw, path)
         problems.append(
             Problem(
                 id=problem_id,
@@ -206,6 +322,8 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
                 holes=holes,
                 challenge_path=f"generated/{problem_id}",
                 sort_index=index,
+                status_history=status_history,
+                revision_history=revision_history,
             )
         )
     return problems
