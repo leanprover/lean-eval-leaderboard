@@ -412,20 +412,13 @@ def adapt_results_store(
                     intake,
                 )
             )
-            public = bool(submission.get("public"))
-            url = None
-            if public and submission.get("kind") == "gist":
-                url = f"https://gist.github.com/{submission['repo']}/{submission['ref']}"
-            elif public:
-                url = (
-                    f"https://github.com/{submission['repo']}/tree/"
-                    f"{submission['ref']}/generated/{record['problem_id']}"
-                )
             order_id = (
                 f"issue-{intake['issue_number']:010d}"
                 if intake.get("kind") == "issue"
                 else str(intake.get("submission_id", result_id))
             )
+            # `submission.public` records source visibility at intake, not a
+            # durable release. Only State supplies materialized release evidence.
             out.append(
                 Solution(
                     result_id=result_id,
@@ -447,12 +440,12 @@ def adapt_results_store(
                         "intake": intake,
                         "submission": submission,
                     },
-                    public_solution={"available": public, "url": url},
+                    public_solution={"available": False, "url": None},
                     replay={"status": "unavailable", "reason": "not-materialized"},
                     release={
-                        "status": "released" if public else "unavailable",
-                        "url": url,
-                        "reason": None if public else "not-materialized",
+                        "status": "unavailable",
+                        "url": None,
+                        "reason": "not-materialized",
                     },
                     model_identity_reviewed=reviewed,
                 )
