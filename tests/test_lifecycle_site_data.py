@@ -371,6 +371,24 @@ class LifecycleProjectionTests(unittest.TestCase):
         self.assertEqual(available["status"], "available")
         self.assertIsNone(available["unavailable_reason"])
 
+        release_url = "https://releases.example.test/result/alpha"
+        raw["results"][0]["release"] = {
+            "status": "released",
+            "release_at": "2026-10-20T00:00:00Z",
+            "reason": None,
+        }
+        raw["results"][0]["public_solution"] = {
+            "available": True,
+            "url": release_url,
+        }
+        released = adapt_state_projection(raw, aliases)[0]
+        self.assertEqual(
+            released.public_solution,
+            {"available": True, "url": release_url},
+        )
+        self.assertEqual(released.release["status"], "released")
+        self.assertEqual(released.release["url"], release_url)
+
     def test_public_state_projection_rejects_private_internal_fields(self) -> None:
         raw = {
             "schema_version": 1,
@@ -618,6 +636,42 @@ class LifecycleProjectionTests(unittest.TestCase):
             raw["model_identities"][1]["model_id"],
         )
         self.assertEqual(adapted[0].declared_model, record["declared_model"])
+
+    def test_base_result_public_source_does_not_claim_materialized_release(self) -> None:
+        record = {
+            "result_id": result_id("alice", "Example Model", "alpha", 1),
+            "problem_id": "alpha",
+            "statement_revision": 1,
+            "declared_model": "Example Model",
+            "accepted_at": "2026-08-20T00:00:00Z",
+            "benchmark_commit": "a" * 40,
+            "intake": {"kind": "issue", "issue_number": 1},
+            "submission": {
+                "kind": "github_repo",
+                "repo": "alice/proofs",
+                "ref": "b" * 40,
+                "public": True,
+            },
+            "production_metadata": {
+                "solution_publication_status": "published",
+                "solution_publication_date": "2026-08-20",
+            },
+        }
+
+        adapted = adapt_results_store([("alice", [record])], {})
+
+        self.assertEqual(
+            adapted[0].public_solution,
+            {"available": False, "url": None},
+        )
+        self.assertEqual(
+            adapted[0].release,
+            {
+                "status": "unavailable",
+                "url": None,
+                "reason": "not-materialized",
+            },
+        )
 
     def test_verbatim_alias_mismatch_stays_visible_and_falls_back(self) -> None:
         raw = identity_projection_v4()

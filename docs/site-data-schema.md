@@ -251,6 +251,11 @@ The website should show one row per `model_id`, not one row per user.
 - `public_solution.url`: final website-ready URL, if public
 - `provenance`: first-success audit information used for this row/problem pair
 
+The compatibility payload has no State release evidence, so base Results emit
+`public_solution.available = false` even when their source was public at intake.
+Release links appear only in lifecycle data backed by a materialized State
+release record.
+
 ## Aggregation rules
 
 These rules resolve the mismatch between the raw append-only user records and

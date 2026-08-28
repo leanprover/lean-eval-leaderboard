@@ -122,7 +122,16 @@ class ResultsCompatibilityTests(unittest.TestCase):
             solved = entry["solved_problems"][0]
             self.assertEqual(solved["problem_id"], "two_plus_two")
             self.assertEqual(solved["production_description"], "Agent harness.")
-            self.assertTrue(solved["public_solution"]["available"])
+            self.assertEqual(
+                solved["public_solution"],
+                {
+                    "available": False,
+                    "kind": None,
+                    "repo": None,
+                    "ref": None,
+                    "url": None,
+                },
+            )
 
     def test_revision_records_do_not_double_count_current_problem_view(self) -> None:
         document = schema_version_2_document()

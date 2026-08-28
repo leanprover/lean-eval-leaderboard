@@ -955,16 +955,6 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     write_text(BENCHMARK_SNAPSHOT_ROOT / ".benchmark-commit", git_head(benchmark_repo) + "\n")
 
 
-def public_solution_url(
-    kind: str, repo: str, ref: str, problem_id: str, public: bool
-) -> str | None:
-    if not public:
-        return None
-    if kind == "gist":
-        return f"https://gist.github.com/{repo}/{ref}"
-    return f"https://github.com/{repo}/tree/{ref}/generated/{problem_id}"
-
-
 def timestamp_key(value: str) -> float:
     return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
 
@@ -1078,22 +1068,18 @@ def build_leaderboard_payload(
                 provenance["result_id"] = record["result_id"]
             if intake["kind"] == "issue":
                 provenance["issue_number"] = intake["issue_number"]
+            # Compatibility data has no State release evidence. Intake-time
+            # source visibility is provenance, not proof of a durable release.
             candidate = {
                 "problem_id": problem_id,
                 "solved_at": record["accepted_at"],
                 "provenance": provenance,
                 "public_solution": {
-                    "available": submission["public"],
-                    "kind": submission_kind if submission["public"] else None,
-                    "repo": submission["repo"] if submission["public"] else None,
-                    "ref": submission["ref"] if submission["public"] else None,
-                    "url": public_solution_url(
-                        submission_kind,
-                        submission["repo"],
-                        submission["ref"],
-                        problem_id,
-                        submission["public"],
-                    ),
+                    "available": False,
+                    "kind": None,
+                    "repo": None,
+                    "ref": None,
+                    "url": None,
                 },
                 "production_description": production_description,
             }
