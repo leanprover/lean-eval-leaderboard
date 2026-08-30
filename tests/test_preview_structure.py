@@ -69,7 +69,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
 
-    def test_submit_page_marks_server_prelaunch_and_keeps_issue_intake_current(self) -> None:
+    def test_submit_page_makes_server_primary_during_issue_intake_overlap(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
         worker = "https://lean-eval-submission-server.lean-eval.workers.dev/"
         issue_form = (
@@ -78,22 +78,22 @@ class PreviewStructureTests(unittest.TestCase):
         )
         self.assertIn(worker, copy)
         self.assertIn(issue_form, copy)
-        self.assertIn("Production server intake is not enabled", copy)
-        self.assertIn("it is not accepting submissions", copy)
-        self.assertIn("current functioning\n  submission path", copy)
+        self.assertIn("28-day launch overlap", copy)
+        self.assertIn("remains available as a fallback", copy)
         self.assertIn(
-            "Server intake prelaunch — not accepting submissions",
+            "New submissions should\n  use the authenticated application",
             copy,
         )
         self.assertIn(
-            "Submit now through the GitHub issue form",
+            "Continue to secure submission service",
             copy,
         )
-        self.assertNotIn("secondary path", copy)
         self.assertNotIn(
-            "New submissions\n  should use the authenticated application",
+            "Production server intake is not enabled",
             copy,
         )
+        self.assertNotIn("it is not accepting submissions", copy)
+        self.assertNotIn("prelaunch", copy.lower())
         self.assertIn("GitHub OAuth callbacks", copy)
         self.assertIn("private encrypted archive", copy)
         self.assertIn("two UTC calendar months after acceptance", copy)
@@ -111,7 +111,7 @@ class PreviewStructureTests(unittest.TestCase):
             copy,
         )
         self.assertIn("exact 40-character source commit", copy)
-        self.assertIn("will require a private GitHub repository", copy)
+        self.assertIn("require a private GitHub repository", copy)
         self.assertNotIn("Public repositories need no extra setup", copy)
         self.assertNotIn("https://github.com/apps/lean-eval-bot", copy)
         self.assertNotIn("Secret (unlisted) gists", copy)

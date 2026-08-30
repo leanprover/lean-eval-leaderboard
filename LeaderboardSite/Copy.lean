@@ -269,52 +269,43 @@ def submitTitle : String := "Submit"
 def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
-  Production server intake is not enabled. The authenticated application at
-  [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/)
-  is visible for prelaunch review, but it is not accepting submissions.
-
-  To submit now, use the
-  [legacy GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  in `leanprover/lean-eval-submissions`. It remains the current functioning
-  submission path until production server intake launches. You can then
+  The authenticated submission application is hosted at
+  [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
+  This separate origin is intentional: GitHub OAuth callbacks and the
+  application session are scoped to the Worker that handles private intake.
+  After submitting, you can
   [return to the leaderboard](https://lean-lang.org/eval/).
 
-  After launch, GitHub OAuth callbacks and the application session will be
-  scoped to the separate Worker origin that handles private intake.
+  During the 28-day launch overlap, the
+  [legacy GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  remains available as a fallback for existing users. New submissions should
+  use the authenticated application above.
   :::
 
 def submitStep1Title  : String :=
-  "1. Submit through the current GitHub issue intake"
+  "1. Prepare a source LeanEval can fetch"
 def submitStep1HtmlId : String := "step-1"
 
 def submitStep1Body : VersoDoc Page :=
   verso (Page) "submitStep1"
   :::
-  Open the
-  [legacy GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  and follow its current source and metadata instructions. Do not use the
-  prelaunch Worker application to submit a solution while server intake is
-  disabled.
+  Submissions through this service require a private GitHub repository in
+  `owner/repository` form and the exact 40-character source commit to evaluate.
+  Before submitting,
+  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
+  on that repository so that LeanEval can clone it.
   :::
 
-def submitStep2Title  : String := "2. Preview the planned authenticated workflow"
+def submitStep2Title  : String := "2. Submit through the authenticated application"
 def submitStep2HtmlId : String := "step-2"
 
 def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
-  The
-  [secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
-  is in prelaunch and is not accepting submissions. When production intake
-  launches, it will require a private GitHub repository in `owner/repository`
-  form and the exact 40-character source commit to evaluate. Submitters will
-  first
-  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
-  on that repository, then sign in with GitHub, choose the source, and identify
-  the model or system that produced the proof.
-
-  The application will walk the submitted source and
-  try every directory containing a
+  [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
+  and sign in with GitHub. Choose the source and identify the model or system
+  that produced the proof. The application walks the submitted source and
+  tries every directory containing a
   `lakefile.toml` whose `name` field matches a benchmark problem id, and
   which has a `Submission.lean` next to it. For example:
 
@@ -325,18 +316,18 @@ def submitStep2Body : VersoDoc Page :=
   - a custom repository containing several benchmark workspaces side by
     side
 
-  For each matched directory LeanEval will overlay only your `Submission.lean`
+  For each matched directory LeanEval overlays only your `Submission.lean`
   and any files under `Submission/**/*.lean` onto a pristine copy of the
   benchmark's workspace for that problem. Every other file in your
-  submission will be ignored, including `Solution.lean`, `Challenge.lean`, or
-  any modified `lakefile.toml`. The CI will then run
+  submission is ignored, including `Solution.lean`, `Challenge.lean`, or
+  any modified `lakefile.toml`. The CI then runs
   [comparator](https://github.com/leanprover/comparator) to check the
   proof.
 
-  Before evaluation, LeanEval will record the exact source revision and digest
-  and store a private encrypted archive bound to that submission. Submission
-  source and credentials will not be exposed through public workflow artifacts
-  or logs.
+  Before evaluation, LeanEval records the exact source revision and digest
+  and stores a private encrypted archive bound to that submission. Submission
+  source and credentials are not exposed through public workflow artifacts or
+  logs.
   :::
 
 def submitStep3Title  : String := "3. Confirm the release terms"
@@ -345,15 +336,13 @@ def submitStep3HtmlId : String := "step-3"
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  When production server intake launches, the submission action will include
-  this acknowledgement:
+  The submission action includes this acknowledgement:
 
   > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation, publish evaluation metadata and results, and, two UTC calendar months after acceptance, publish the submitted source under the Apache License 2.0. I will not submit secrets or material I am not authorized to disclose.
 
-  Source accepted through that application will be scheduled for publication
-  by default. Submitters may opt out at any time before release, either in the
-  application or by asking later. The public result then remains visible with
-  its solution marked as withheld.
+  Accepted source is scheduled for publication by default. You may opt out in
+  the submission application, or ask to opt out at any time before release.
+  The public result then remains visible with its solution marked as withheld.
   :::
 
 def submitWhatPublicTitle  : String := "What becomes public, and when"
@@ -363,8 +352,8 @@ def submitWhatPublicBody : VersoDoc Page :=
   verso (Page) "submitWhatPublic"
   :::
   The following release policy applies to submissions made through the
-  authenticated application after production intake launches. Current issue
-  intake retains its existing policy.
+  authenticated application. Submissions through the fallback issue intake
+  retain their existing policy during the 28-day launch overlap.
 
   Submission metadata and evaluation results may become public when the result
   is recorded. Private source remains in the encrypted archive during the
@@ -391,14 +380,14 @@ broken into chunks rather than authored as a single string. -/
 def submitCtaUrl    : String :=
   "https://lean-eval-submission-server.lean-eval.workers.dev/"
 def submitCtaLabel  : String :=
-  "Server intake prelaunch — not accepting submissions"
+  "Continue to secure submission service"
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Production server intake is disabled. Submit now through the GitHub issue form with your "
+  "Sign in with GitHub, choose the exact source snapshot, and confirm the "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
-  " source; the existing workflow verifies each matching proof with "
+  " archive and release terms. LeanEval verifies each matching proof with "
 def submitTldrComparatorLabel : String := "comparator"
 def submitTldrComparatorUrl   : String :=
   "https://github.com/leanprover/comparator"

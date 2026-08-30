@@ -289,24 +289,22 @@ jobs:
           grep -F 'automatically publishes' _site/submit/index.html
           grep -F 'Apache License 2.0' _site/submit/index.html
           grep -F 'legacy GitHub issue form' _site/submit/index.html
-          grep -F 'Production server intake is not enabled' \
+          grep -F 'During the 28-day launch overlap' \
             _site/submit/index.html
-          grep -F 'it is not accepting submissions' \
+          grep -F 'remains available as a fallback for existing users' \
             _site/submit/index.html
-          grep -F 'current functioning' _site/submit/index.html
-          grep -F 'submission path until production server intake launches' \
+          grep -F 'New submissions should' _site/submit/index.html
+          grep -F 'use the authenticated application above' \
             _site/submit/index.html
-          grep -F 'Server intake prelaunch — not accepting submissions' \
+          grep -F 'Continue to secure submission service' \
             _site/submit/index.html
-          grep -F 'Submit now through the GitHub issue form' \
-            _site/submit/index.html
-          if grep -F 'secondary path' _site/submit/index.html; then
-            echo "::error::The submit page calls functioning issue intake secondary."
+          if grep -Fi 'prelaunch' _site/submit/index.html; then
+            echo "::error::The launch submit page still describes server intake as prelaunch."
             exit 1
           fi
-          if grep -F 'New submissions should use the authenticated application' \
+          if grep -F 'Production server intake is not enabled' \
               _site/submit/index.html; then
-            echo "::error::The prelaunch submit page directs users to disabled server intake."
+            echo "::error::The launch submit page still describes server intake as disabled."
             exit 1
           fi
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
