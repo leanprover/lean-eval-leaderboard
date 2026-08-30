@@ -20,6 +20,29 @@ GROUPS = {
 }
 CATALOG_DATE_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 STATEMENT_DIGEST_RE = re.compile(r"sha256:[0-9a-f]{64}")
+REPLAY_TASK_ID_RE = re.compile(r"rt1_[0-9a-f]{64}")
+DIGEST_RE = re.compile(r"[0-9a-f]{64}")
+EVENT_ID_RE = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+)
+STATE_TIMESTAMP_RE = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z"
+)
+REPLAY_STATUSES = {
+    "queued", "running", "accepted", "rejected", "declined", "crashed",
+    "timed_out", "failed", "unavailable",
+}
+MEASUREMENT_CORE_FIELDS = {
+    "kind", "replay_status", "replay_reason", "status", "checker",
+    "checker_wall_time_ms", "checker_retired_instructions",
+    "checker_retired_instructions_unavailable_reason", "build_wall_time_ms",
+    "build_retired_instructions", "build_retired_instructions_unavailable_reason",
+    "lines_of_code", "file_count", "unavailable_reason", "attempt",
+}
+MEASUREMENT_SERIES_FIELDS = {
+    "source_visibility", "replay_task_id", "measurement_config_digest",
+    "execution_profile_digest", "updated_at", "transition_event_id",
+}
 CATALOG_REASONS = {
     "initial",
     "statement-change",
@@ -60,6 +83,111 @@ def catalog_date(value: Any, message: str) -> str:
         raise ContractError(message) from error
     require(parsed.isoformat() == value, message)
     return value
+
+
+def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
+    measurements = solution.get("measurements")
+    require(isinstance(measurements, list), f"{path}: measurements must be an array")
+    series_order: list[tuple[str, str, str]] = []
+    replay_task_ids: set[str] = set()
+    transition_event_ids: set[str] = set()
+    for index, measurement in enumerate(measurements):
+        label = f"{path}: measurement {index}"
+        require(isinstance(measurement, dict), f"{label} must be an object")
+        fields = set(measurement)
+        require(
+            fields == MEASUREMENT_CORE_FIELDS
+            or fields == MEASUREMENT_CORE_FIELDS | MEASUREMENT_SERIES_FIELDS,
+            f"{label} fields are invalid",
+        )
+        require(measurement["kind"] == "checker-replay", f"{label} kind is invalid")
+        require(
+            measurement["replay_status"] in REPLAY_STATUSES,
+            f"{label} replay status is invalid",
+        )
+        require(
+            measurement["replay_reason"] is None
+            or isinstance(measurement["replay_reason"], str)
+            and bool(measurement["replay_reason"]),
+            f"{label} replay reason is invalid",
+        )
+        require(
+            measurement["status"] in {"available", "unavailable"},
+            f"{label} counter status is invalid",
+        )
+        require(
+            measurement["checker"] is None
+            or isinstance(measurement["checker"], str)
+            and bool(measurement["checker"]),
+            f"{label} checker is invalid",
+        )
+        require(
+            type(measurement["attempt"]) is int and measurement["attempt"] >= 0,
+            f"{label} attempt is invalid",
+        )
+        for field in (
+            "checker_wall_time_ms", "checker_retired_instructions",
+            "build_wall_time_ms", "build_retired_instructions", "lines_of_code",
+            "file_count",
+        ):
+            value = measurement[field]
+            require(
+                value is None or type(value) is int and value >= 0,
+                f"{label} {field} is invalid",
+            )
+        for field in (
+            "checker_retired_instructions_unavailable_reason",
+            "build_retired_instructions_unavailable_reason", "unavailable_reason",
+        ):
+            value = measurement[field]
+            require(
+                value is None or isinstance(value, str) and bool(value),
+                f"{label} {field} is invalid",
+            )
+        if fields == MEASUREMENT_CORE_FIELDS:
+            continue
+        require(
+            measurement["source_visibility"] in {"public", "private"},
+            f"{label} source visibility is invalid",
+        )
+        replay_task_id = measurement["replay_task_id"]
+        transition_event_id = measurement["transition_event_id"]
+        require(
+            isinstance(replay_task_id, str)
+            and REPLAY_TASK_ID_RE.fullmatch(replay_task_id) is not None,
+            f"{label} replay task is invalid",
+        )
+        require(
+            isinstance(transition_event_id, str)
+            and EVENT_ID_RE.fullmatch(transition_event_id) is not None,
+            f"{label} transition event is invalid",
+        )
+        require(replay_task_id not in replay_task_ids, f"{label} replay task is duplicated")
+        require(
+            transition_event_id not in transition_event_ids,
+            f"{label} transition event is duplicated",
+        )
+        replay_task_ids.add(replay_task_id)
+        transition_event_ids.add(transition_event_id)
+        for field in ("measurement_config_digest", "execution_profile_digest"):
+            value = measurement[field]
+            require(
+                isinstance(value, str) and DIGEST_RE.fullmatch(value) is not None,
+                f"{label} {field} is invalid",
+            )
+        require(
+            isinstance(measurement["updated_at"], str)
+            and STATE_TIMESTAMP_RE.fullmatch(measurement["updated_at"]) is not None,
+            f"{label} updated_at is invalid",
+        )
+        series_order.append(
+            (
+                replay_task_id,
+                measurement["measurement_config_digest"],
+                measurement["execution_profile_digest"],
+            )
+        )
+    require(series_order == sorted(series_order), f"{path}: measurement series order is invalid")
 
 
 def scope_ids(group: dict[str, Any]) -> set[tuple[str, int]]:
@@ -241,6 +369,7 @@ def validate(root: pathlib.Path) -> None:
             require(solution.get("problem_id") == problem_id, f"{path}: solution problem mismatch")
             require("status" in solution.get("replay", {}), f"{path}: replay state omitted")
             require("status" in solution.get("release", {}), f"{path}: release state omitted")
+            validate_measurements(path, solution)
             result_id = solution["result_id"]
             require(result_id not in problem_result_ids, f"{path}: duplicate base result")
             problem_result_ids.add(result_id)

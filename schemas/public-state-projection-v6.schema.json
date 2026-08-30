@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v6.schema.json",
+  "title": "lean-eval public State projection schema version 6",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_state_commit", "source_event_count",
+    "source_digest", "results", "result_overlays", "model_identities",
+    "model_aliases", "model_identity_history", "result_amendment_history",
+    "historical_replay_series", "historical_replay_unavailability"
+  ],
+  "properties": {
+    "schema_version": { "const": 6 },
+    "environment": { "$ref": "public-state-projection-v5.schema.json#/properties/environment" },
+    "source_state_commit": { "$ref": "public-state-projection-v5.schema.json#/properties/source_state_commit" },
+    "source_event_count": { "$ref": "public-state-projection-v5.schema.json#/properties/source_event_count" },
+    "source_digest": { "$ref": "public-state-projection-v5.schema.json#/properties/source_digest" },
+    "results": { "$ref": "public-state-projection-v5.schema.json#/properties/results" },
+    "result_overlays": { "$ref": "public-state-projection-v5.schema.json#/properties/result_overlays" },
+    "model_identities": { "$ref": "public-state-projection-v5.schema.json#/properties/model_identities" },
+    "model_aliases": { "$ref": "public-state-projection-v5.schema.json#/properties/model_aliases" },
+    "model_identity_history": { "$ref": "public-state-projection-v5.schema.json#/properties/model_identity_history" },
+    "result_amendment_history": { "$ref": "public-state-projection-v5.schema.json#/properties/result_amendment_history" },
+    "historical_replay_series": {
+      "type": "array", "items": { "$ref": "#/$defs/replaySeries" }
+    },
+    "historical_replay_unavailability": {
+      "type": "array", "items": { "$ref": "#/$defs/unavailability" }
+    }
+  },
+  "$defs": {
+    "historicalTimestamp": {
+      "type": "string", "format": "date-time",
+      "pattern": "^(?!0000-)[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "identityProperties": {
+      "result_id": { "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/result_id" },
+      "owner_login": { "$ref": "public-state-projection-v4.schema.json#/$defs/login" },
+      "declared_model": { "$ref": "public-state-projection-v4.schema.json#/$defs/label" },
+      "problem_id": { "$ref": "public-state-projection-v5.schema.json#/$defs/problemId" },
+      "statement_revision": { "$ref": "public-state-projection-v5.schema.json#/$defs/positive" },
+      "historical_accepted_at": { "$ref": "#/$defs/historicalTimestamp" },
+      "source_visibility": { "enum": ["public", "private"] }
+    },
+    "replaySeries": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "result_id", "owner_login", "declared_model", "problem_id",
+        "statement_revision", "historical_accepted_at", "source_visibility",
+        "replay_task_id", "measurement_config_digest", "execution_profile_digest",
+        "transition_event_id", "updated_at", "replay"
+      ],
+      "properties": {
+        "result_id": { "$ref": "#/$defs/identityProperties/result_id" },
+        "owner_login": { "$ref": "#/$defs/identityProperties/owner_login" },
+        "declared_model": { "$ref": "#/$defs/identityProperties/declared_model" },
+        "problem_id": { "$ref": "#/$defs/identityProperties/problem_id" },
+        "statement_revision": { "$ref": "#/$defs/identityProperties/statement_revision" },
+        "historical_accepted_at": { "$ref": "#/$defs/identityProperties/historical_accepted_at" },
+        "source_visibility": { "$ref": "#/$defs/identityProperties/source_visibility" },
+        "replay_task_id": { "type": "string", "pattern": "^rt1_[0-9a-f]{64}$" },
+        "measurement_config_digest": { "$ref": "public-state-projection-v1.schema.json#/$defs/digest" },
+        "execution_profile_digest": { "$ref": "public-state-projection-v1.schema.json#/$defs/digest" },
+        "transition_event_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+        "updated_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp" },
+        "replay": { "$ref": "public-state-projection-v1.schema.json#/$defs/replay" }
+      }
+    },
+    "unavailability": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "result_id", "owner_login", "declared_model", "problem_id",
+        "statement_revision", "historical_accepted_at", "source_visibility",
+        "disposition_event_id", "disposed_at", "reason", "rationale"
+      ],
+      "properties": {
+        "result_id": { "$ref": "#/$defs/identityProperties/result_id" },
+        "owner_login": { "$ref": "#/$defs/identityProperties/owner_login" },
+        "declared_model": { "$ref": "#/$defs/identityProperties/declared_model" },
+        "problem_id": { "$ref": "#/$defs/identityProperties/problem_id" },
+        "statement_revision": { "$ref": "#/$defs/identityProperties/statement_revision" },
+        "historical_accepted_at": { "$ref": "#/$defs/identityProperties/historical_accepted_at" },
+        "source_visibility": { "$ref": "#/$defs/identityProperties/source_visibility" },
+        "disposition_event_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+        "disposed_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp" },
+        "reason": {
+          "enum": ["source_ref_permanently_unavailable", "archive_not_found"]
+        },
+        "rationale": {
+          "oneOf": [
+            { "const": "accepted_immutable_source_ref_unavailable_without_archive" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source_visibility": { "const": "public" } } },
+          "then": {
+            "properties": {
+              "reason": { "const": "source_ref_permanently_unavailable" },
+              "rationale": { "const": "accepted_immutable_source_ref_unavailable_without_archive" }
+            }
+          },
+          "else": {
+            "properties": {
+              "reason": { "const": "archive_not_found" },
+              "rationale": { "type": "null" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

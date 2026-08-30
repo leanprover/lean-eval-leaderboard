@@ -1,0 +1,86 @@
+{
+  "environment": "production",
+  "historical_replay_series": [
+    {
+      "declared_model": "Historical Model",
+      "execution_profile_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "historical_accepted_at": "2025-02-03T04:05:06Z",
+      "measurement_config_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+      "owner_login": "a-m-berns",
+      "problem_id": "two_plus_two",
+      "replay": {
+        "attempt": 0,
+        "build_retired_instructions": null,
+        "build_retired_instructions_unavailable_reason": null,
+        "build_wall_time_ms": null,
+        "checker": "nanoda",
+        "checker_retired_instructions": null,
+        "checker_retired_instructions_unavailable_reason": null,
+        "checker_wall_time_ms": null,
+        "file_count": null,
+        "lines_of_code": null,
+        "reason": null,
+        "status": "queued"
+      },
+      "replay_task_id": "rt1_65508db251b118fb71793d07ca3fb4930a18bbccee9d1e2fe4df95184cbbfff5",
+      "result_id": "r2_ffb75ab57160fb4a272ad11c7caf9c812d547f5b8fa1384ce4ea55e4ab0f884f",
+      "source_visibility": "public",
+      "statement_revision": 1,
+      "transition_event_id": "0198abcd-0000-7000-8000-00000000001a",
+      "updated_at": "2026-10-20T06:08:26.000Z"
+    },
+    {
+      "declared_model": "Historical Model",
+      "execution_profile_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "historical_accepted_at": "2025-02-03T04:05:06Z",
+      "measurement_config_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "owner_login": "a-m-berns",
+      "problem_id": "two_plus_two",
+      "replay": {
+        "attempt": 0,
+        "build_retired_instructions": null,
+        "build_retired_instructions_unavailable_reason": null,
+        "build_wall_time_ms": null,
+        "checker": "nanoda",
+        "checker_retired_instructions": null,
+        "checker_retired_instructions_unavailable_reason": null,
+        "checker_wall_time_ms": null,
+        "file_count": null,
+        "lines_of_code": null,
+        "reason": null,
+        "status": "queued"
+      },
+      "replay_task_id": "rt1_d2bdd51b202de8d1b422326c4ca2d44857fa2b36240941aafb35e8e5afcd6b1e",
+      "result_id": "r2_ffb75ab57160fb4a272ad11c7caf9c812d547f5b8fa1384ce4ea55e4ab0f884f",
+      "source_visibility": "public",
+      "statement_revision": 1,
+      "transition_event_id": "0198abcd-0000-7000-8000-000000000016",
+      "updated_at": "2026-10-20T06:08:22.000Z"
+    }
+  ],
+  "historical_replay_unavailability": [
+    {
+      "declared_model": "Unavailable Private Model",
+      "disposed_at": "2026-10-22T06:08:41.000Z",
+      "disposition_event_id": "0198abcd-0000-7000-8000-000000000029",
+      "historical_accepted_at": "2025-02-03T04:05:06Z",
+      "owner_login": "private-owner",
+      "problem_id": "private_problem",
+      "rationale": null,
+      "reason": "archive_not_found",
+      "result_id": "r2_4f3bdb6031dd0444f73a5dd39b1c60c2289b380a3720f561277e010a68f1e900",
+      "source_visibility": "private",
+      "statement_revision": 1
+    }
+  ],
+  "model_aliases": [],
+  "model_identities": [],
+  "model_identity_history": [],
+  "result_amendment_history": [],
+  "result_overlays": [],
+  "results": [],
+  "schema_version": 6,
+  "source_digest": "19f0a288ad8954a1fee30f3c46688c8e28f6d11f9049a9180e101426ef1d2252",
+  "source_event_count": 7,
+  "source_state_commit": "0000000000000000000000000000000000000000"
+}

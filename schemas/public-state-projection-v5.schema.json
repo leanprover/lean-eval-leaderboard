@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v5.schema.json",
+  "title": "lean-eval public State projection schema version 5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "environment", "source_state_commit", "source_event_count",
+    "source_digest", "results", "result_overlays", "model_identities",
+    "model_aliases", "model_identity_history", "result_amendment_history"
+  ],
+  "properties": {
+    "schema_version": { "const": 5 },
+    "environment": { "$ref": "public-state-projection-v4.schema.json#/properties/environment" },
+    "source_state_commit": { "$ref": "public-state-projection-v4.schema.json#/properties/source_state_commit" },
+    "source_event_count": { "$ref": "public-state-projection-v4.schema.json#/properties/source_event_count" },
+    "source_digest": { "$ref": "public-state-projection-v4.schema.json#/properties/source_digest" },
+    "results": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "result_overlays": { "type": "array", "items": { "$ref": "#/$defs/overlay" } },
+    "model_identities": { "$ref": "public-state-projection-v4.schema.json#/properties/model_identities" },
+    "model_aliases": { "$ref": "public-state-projection-v4.schema.json#/properties/model_aliases" },
+    "model_identity_history": { "$ref": "public-state-projection-v4.schema.json#/properties/model_identity_history" },
+    "result_amendment_history": { "type": "array", "items": { "$ref": "#/$defs/amendmentHistory" } }
+  },
+  "$defs": {
+    "nullableEventId": {
+      "oneOf": [
+        { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+        { "type": "null" }
+      ]
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        { "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "nullableLogin": {
+      "oneOf": [
+        { "$ref": "public-state-projection-v4.schema.json#/$defs/login" },
+        { "type": "null" }
+      ]
+    },
+    "nullableReason": { "$ref": "public-state-projection-v4.schema.json#/$defs/nullableReason" },
+    "positive": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "nullablePositive": { "oneOf": [{ "$ref": "#/$defs/positive" }, { "type": "null" }] },
+    "problemId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$" },
+    "nullableProblemId": { "oneOf": [{ "$ref": "#/$defs/problemId" }, { "type": "null" }] },
+    "problemRepair": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "revision", "status", "request_event_id", "requested_at",
+            "corrected_problem_id", "corrected_statement_revision",
+            "decision_event_id", "decided_at", "reviewer_login", "reason_code"
+          ],
+          "properties": {
+            "revision": { "$ref": "#/$defs/positive" },
+            "status": { "enum": ["pending", "applied", "rejected"] },
+            "request_event_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+            "requested_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp" },
+            "corrected_problem_id": { "$ref": "#/$defs/problemId" },
+            "corrected_statement_revision": { "$ref": "#/$defs/positive" },
+            "decision_event_id": { "$ref": "#/$defs/nullableEventId" },
+            "decided_at": { "$ref": "#/$defs/nullableTimestamp" },
+            "reviewer_login": { "$ref": "#/$defs/nullableLogin" },
+            "reason_code": { "$ref": "#/$defs/nullableReason" }
+          }
+        }
+      ]
+    },
+    "appliedProblemRepair": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/problemRepair" },
+            { "type": "object", "properties": { "status": { "const": "applied" } } }
+          ]
+        }
+      ]
+    },
+    "retraction": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "revision", "status", "request_event_id", "requested_at",
+            "decision_event_id", "decided_at", "retraction_event_id",
+            "retracted_at", "reviewer_login", "reason_code",
+            "release_disposition", "overridden"
+          ],
+          "properties": {
+            "revision": { "$ref": "#/$defs/positive" },
+            "status": { "enum": ["pending", "approved", "rejected", "retracted"] },
+            "request_event_id": { "$ref": "#/$defs/nullableEventId" },
+            "requested_at": { "$ref": "#/$defs/nullableTimestamp" },
+            "decision_event_id": { "$ref": "#/$defs/nullableEventId" },
+            "decided_at": { "$ref": "#/$defs/nullableTimestamp" },
+            "retraction_event_id": { "$ref": "#/$defs/nullableEventId" },
+            "retracted_at": { "$ref": "#/$defs/nullableTimestamp" },
+            "reviewer_login": { "$ref": "#/$defs/nullableLogin" },
+            "reason_code": { "$ref": "#/$defs/nullableReason" },
+            "release_disposition": {
+              "oneOf": [
+                { "enum": ["not_published", "removal_required", "already_removed"] },
+                { "type": "null" }
+              ]
+            },
+            "overridden": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "result_id", "problem_id", "statement_revision", "declared_model", "submitter",
+        "accepted_at", "acceptance_event_id", "recorded_at", "record_event_id",
+        "benchmark_commit", "production_metadata", "replay", "release", "public_solution",
+        "model_id", "resolved_model_id", "effective_problem_id",
+        "effective_statement_revision", "problem_repair", "applied_problem_repair", "retraction",
+        "leaderboard_eligible"
+      ],
+      "properties": {
+        "result_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/result_id" },
+        "problem_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/problem_id" },
+        "statement_revision": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/statement_revision" },
+        "declared_model": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/declared_model" },
+        "submitter": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/submitter" },
+        "accepted_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/accepted_at" },
+        "acceptance_event_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/acceptance_event_id" },
+        "recorded_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/recorded_at" },
+        "record_event_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/record_event_id" },
+        "benchmark_commit": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/benchmark_commit" },
+        "production_metadata": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/production_metadata" },
+        "replay": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/replay" },
+        "release": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/release" },
+        "public_solution": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/public_solution" },
+        "model_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/model_id" },
+        "resolved_model_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/resolved_model_id" },
+        "effective_problem_id": { "$ref": "#/$defs/problemId" },
+        "effective_statement_revision": { "$ref": "#/$defs/positive" },
+        "problem_repair": { "$ref": "#/$defs/problemRepair" },
+        "applied_problem_repair": { "$ref": "#/$defs/appliedProblemRepair" },
+        "retraction": { "$ref": "#/$defs/retraction" },
+        "leaderboard_eligible": { "type": "boolean" }
+      }
+    },
+    "overlay": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "result_id", "owner_login", "declared_model", "problem_id",
+        "statement_revision", "claim_event_id", "mutation_event_id", "claimed_at",
+        "metadata", "model_id", "resolved_model_id", "effective_problem_id",
+        "effective_statement_revision", "problem_repair", "applied_problem_repair", "retraction",
+        "leaderboard_eligible"
+      ],
+      "properties": {
+        "result_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/result_id" },
+        "owner_login": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/owner_login" },
+        "declared_model": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/declared_model" },
+        "problem_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/problem_id" },
+        "statement_revision": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/statement_revision" },
+        "claim_event_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/claim_event_id" },
+        "mutation_event_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/mutation_event_id" },
+        "claimed_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/claimed_at" },
+        "metadata": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/metadata" },
+        "model_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/model_id" },
+        "resolved_model_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/overlay/properties/resolved_model_id" },
+        "effective_problem_id": { "$ref": "#/$defs/problemId" },
+        "effective_statement_revision": { "$ref": "#/$defs/positive" },
+        "problem_repair": { "$ref": "#/$defs/problemRepair" },
+        "applied_problem_repair": { "$ref": "#/$defs/appliedProblemRepair" },
+        "retraction": { "$ref": "#/$defs/retraction" },
+        "leaderboard_eligible": { "type": "boolean" }
+      }
+    },
+    "amendmentHistory": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "event_id", "event_type", "result_id", "occurred_at",
+        "causation_event_id", "actor_login", "reviewer_login", "repair_revision",
+        "retraction_revision", "corrected_problem_id",
+        "corrected_statement_revision", "decision", "reason_code",
+        "release_disposition"
+      ],
+      "properties": {
+        "event_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+        "event_type": {
+          "enum": [
+            "result.metadata_backfilled",
+            "result.problem_repair_requested", "result.problem_repaired",
+            "result.problem_repair_rejected", "result.retraction_requested",
+            "result.retraction_decided", "result.retraction_overridden",
+            "result.retracted"
+          ]
+        },
+        "result_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/result/properties/result_id" },
+        "occurred_at": { "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp" },
+        "causation_event_id": { "$ref": "public-state-projection-v1.schema.json#/$defs/eventId" },
+        "actor_login": { "$ref": "#/$defs/nullableLogin" },
+        "reviewer_login": { "$ref": "#/$defs/nullableLogin" },
+        "repair_revision": { "$ref": "#/$defs/nullablePositive" },
+        "retraction_revision": { "$ref": "#/$defs/nullablePositive" },
+        "corrected_problem_id": { "$ref": "#/$defs/nullableProblemId" },
+        "corrected_statement_revision": { "$ref": "#/$defs/nullablePositive" },
+        "decision": { "oneOf": [{ "enum": ["approve", "reject"] }, { "type": "null" }] },
+        "reason_code": { "$ref": "#/$defs/nullableReason" },
+        "release_disposition": {
+          "oneOf": [
+            { "enum": ["not_published", "removal_required", "already_removed"] },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  }
+}
