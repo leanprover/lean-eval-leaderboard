@@ -82,6 +82,13 @@ State schema v6 must land before the leaderboard starts requesting it; the
 leaderboard deploy otherwise fails closed rather than publishing a partial
 historical view.
 
+State-only lifecycle changes do not advance the public results store. The
+lightweight `Refresh State projection` workflow therefore compares protected
+State `main` with the commit named by the live `site-data/v2/index.json` every
+five minutes (and on manual dispatch). It starts the existing Pages workflow
+only when those commits differ, and leaves any active Pages build to finish
+before checking again.
+
 Benchmark catalog metadata is read from the required `group`, `status`,
 `visible`, `statement_revision`, and `tags` manifest fields. Problems marked
 `visible = false` and their results are excluded before any public catalog or

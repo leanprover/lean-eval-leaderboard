@@ -1,0 +1,87 @@
+name: Refresh State projection
+
+# State-only lifecycle changes do not advance the public results store, so they
+# do not emit the results-advanced dispatch that normally rebuilds Pages. Keep
+# the published redacted projection current without running a full site build
+# on every poll.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: refresh-state-projection
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout private production State
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-08-06).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: leanprover/lean-eval-state
+          ref: main
+          path: lean-eval-state
+          ssh-key: ${{ secrets.PRODUCTION_STATE_READ_KEY }}
+          persist-credentials: false
+
+      - name: Compare protected State with the live projection
+        id: drift
+        env:
+          LIVE_INDEX_URL: https://lean-lang.org/eval/site-data/v2/index.json
+        run: |
+          set -euo pipefail
+          target_commit="$(git -C lean-eval-state rev-parse HEAD)"
+          published_commit="$({
+            curl \
+              --fail \
+              --location \
+              --silent \
+              --show-error \
+              --retry 3 \
+              --retry-all-errors \
+              --get \
+              --data-urlencode "freshness-check=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              "$LIVE_INDEX_URL"
+          } | jq --raw-output --exit-status \
+            '.state.commit | strings | select(test("^[0-9a-f]{40}$"))')"
+
+          echo "Protected State main: $target_commit"
+          echo "Published State:      $published_commit"
+          if [ "$published_commit" = "$target_commit" ]; then
+            echo "refresh=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "refresh=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for an active Pages build
+        if: steps.drift.outputs.refresh == 'true'
+        id: active
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          active_count="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy.yml/runs?per_page=20" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | length'
+          )"
+          echo "Active Pages builds: $active_count"
+          if [ "$active_count" -eq 0 ]; then
+            echo "dispatch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dispatch=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch the existing Pages workflow
+        if: steps.active.outputs.dispatch == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
