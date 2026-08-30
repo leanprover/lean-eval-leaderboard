@@ -336,8 +336,16 @@
         if (solution.measurements.length) {
           card.appendChild(heading(5, "Measurements"));
           solution.measurements.forEach(function (measurement) {
-            card.appendChild(definitionList([
-              ["Checker", measurement.checker], ["Status", measurement.status],
+            var measurementFields = [
+              ["Checker", measurement.checker],
+              ["Replay outcome", measurement.replay_status],
+              ["Performance counters", measurement.status]
+            ];
+            if (measurement.replay_reason) measurementFields.push(["Replay reason", measurement.replay_reason]);
+            if (measurement.measurement_config_digest) measurementFields.push(["Measurement series", measurement.measurement_config_digest]);
+            if (measurement.execution_profile_digest) measurementFields.push(["Execution profile", measurement.execution_profile_digest]);
+            if (measurement.updated_at) measurementFields.push(["Replay updated", formattedDate(measurement.updated_at)]);
+            measurementFields.push(
               ["Checker wall time (ms)", measurement.checker_wall_time_ms],
               ["Checker retired instructions", measurement.checker_retired_instructions],
               ["Checker counter unavailable reason", measurement.checker_retired_instructions_unavailable_reason],
@@ -345,7 +353,8 @@
               ["Build retired instructions", measurement.build_retired_instructions],
               ["Build counter unavailable reason", measurement.build_retired_instructions_unavailable_reason],
               ["Lines of code", measurement.lines_of_code], ["File count", measurement.file_count]
-            ]));
+            );
+            card.appendChild(definitionList(measurementFields));
           });
         } else {
           card.appendChild(node("p", { className: "lifecycle-unavailable", text: "Replay measurements unavailable." }));

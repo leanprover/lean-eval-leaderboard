@@ -38,6 +38,66 @@
         "total": {"type": "integer", "minimum": 0}
       }
     },
+    "nullableNat": {
+      "oneOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+    },
+    "nullableText": {
+      "oneOf": [{"$ref": "#/$defs/nonempty"}, {"type": "null"}]
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "replay_status", "replay_reason", "status", "checker",
+        "checker_wall_time_ms", "checker_retired_instructions",
+        "checker_retired_instructions_unavailable_reason", "build_wall_time_ms",
+        "build_retired_instructions", "build_retired_instructions_unavailable_reason",
+        "lines_of_code", "file_count", "unavailable_reason", "attempt"
+      ],
+      "properties": {
+        "kind": {"const": "checker-replay"},
+        "replay_status": {"enum": ["queued", "running", "accepted", "rejected", "declined", "crashed", "timed_out", "failed", "unavailable"]},
+        "replay_reason": {"$ref": "#/$defs/nullableText"},
+        "status": {"enum": ["available", "unavailable"]},
+        "checker": {"$ref": "#/$defs/nullableText"},
+        "checker_wall_time_ms": {"$ref": "#/$defs/nullableNat"},
+        "checker_retired_instructions": {"$ref": "#/$defs/nullableNat"},
+        "checker_retired_instructions_unavailable_reason": {"$ref": "#/$defs/nullableText"},
+        "build_wall_time_ms": {"$ref": "#/$defs/nullableNat"},
+        "build_retired_instructions": {"$ref": "#/$defs/nullableNat"},
+        "build_retired_instructions_unavailable_reason": {"$ref": "#/$defs/nullableText"},
+        "lines_of_code": {"$ref": "#/$defs/nullableNat"},
+        "file_count": {"$ref": "#/$defs/nullableNat"},
+        "unavailable_reason": {"$ref": "#/$defs/nullableText"},
+        "attempt": {"type": "integer", "minimum": 0},
+        "source_visibility": {"enum": ["public", "private"]},
+        "replay_task_id": {"type": "string", "pattern": "^rt1_[0-9a-f]{64}$"},
+        "measurement_config_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "execution_profile_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "updated_at": {"$ref": "#/$defs/timestamp"},
+        "transition_event_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}
+      },
+      "oneOf": [
+        {
+          "not": {
+            "anyOf": [
+              {"required": ["source_visibility"]},
+              {"required": ["replay_task_id"]},
+              {"required": ["measurement_config_digest"]},
+              {"required": ["execution_profile_digest"]},
+              {"required": ["updated_at"]},
+              {"required": ["transition_event_id"]}
+            ]
+          }
+        },
+        {
+          "required": [
+            "source_visibility", "replay_task_id", "measurement_config_digest",
+            "execution_profile_digest", "updated_at", "transition_event_id"
+          ]
+        }
+      ]
+    },
     "index": {
       "type": "object",
       "additionalProperties": false,
@@ -120,7 +180,7 @@
         "provenance": {"type": "object"},
         "public_solution": {"type": "object", "required": ["available", "url"]},
         "replay": {"type": "object", "required": ["status"]},
-        "measurements": {"type": "array", "items": {"type": "object", "required": ["kind", "status"]}},
+        "measurements": {"type": "array", "items": {"$ref": "#/$defs/measurement"}},
         "release": {"type": "object", "required": ["status"]}
       }
     },

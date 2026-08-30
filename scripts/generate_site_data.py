@@ -21,6 +21,7 @@ try:
     from scripts.lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
+        apply_state_projection_overlays,
         build_lifecycle_projection,
         build_model_identity_index,
         load_preview_fixture,
@@ -35,6 +36,7 @@ except ModuleNotFoundError:
     from lifecycle_site_data import (
         adapt_results_store,
         adapt_state_projection,
+        apply_state_projection_overlays,
         build_lifecycle_projection,
         build_model_identity_index,
         load_preview_fixture,
@@ -1416,9 +1418,11 @@ def main() -> int:
     state_solutions = adapt_state_projection(
         state_projection, aliases, model_identities
     )
+    solutions = merge_solutions(state_solutions, fallback_solutions)
+    apply_state_projection_overlays(solutions, state_projection)
     lifecycle_files = build_lifecycle_projection(
         problems=problems,
-        solutions=merge_solutions(state_solutions, fallback_solutions),
+        solutions=solutions,
         set_definitions=load_set_definitions(benchmark_repo / "manifests" / "sets"),
         tag_registry=load_tag_registry(benchmark_repo / "manifests" / "tags.toml"),
         fixture=fixture,

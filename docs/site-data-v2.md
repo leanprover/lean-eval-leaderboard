@@ -6,17 +6,25 @@ files remain available to the preserved `/legacy/` surface and downstream
 consumers.
 
 The production generator reads State's redacted
-`public-state-projection-v4` artifact, never the private append-only events or
+`public-state-projection-v6` artifact, never the private append-only events or
 internal `materialized/domain.json`. The public artifact contains recorded
-results, public lifecycle evidence, and public model-identity review history
-only; it excludes pending/rejected submissions, submission IDs, source and
-archive locators, and authentication nonces. Its source State commit, canonical
-event digest, and event count make the bytes reproducible by an authorized
-auditor. Presentation-only catalog fields come from the pinned benchmark
-checkout. If no State projection is provided, immutable base results are
-adapted instead. Every fallback appears in each payload's `data_limitations`;
-missing replay and release data is emitted as an explicit `unavailable` state
-rather than omitted or guessed.
+results, public lifecycle evidence, result amendments, model-identity review
+history, and locator-free historical replay series or reviewed-unavailable
+dispositions only. It excludes pending/rejected submissions, submission IDs,
+source and archive locators, profile locators, credentials, and authentication
+nonces. Its source State commit, canonical event digest, and event count make
+the bytes reproducible by an authorized auditor. Presentation-only catalog
+fields come from the pinned benchmark checkout. If no State projection is
+provided, immutable base results are adapted instead. Every fallback appears
+in each payload's `data_limitations`; missing replay and release data is emitted
+as an explicit `unavailable` state rather than omitted or guessed.
+
+Historical entries join to immutable base Results by `result_id`. The adapter
+rejects unknown Results, source-visibility mismatches, duplicate series,
+cross-lane series, and any replay/disposition overlap. It displays the newest
+series status and retains every versioned measurement series with its exact
+measurement-configuration and execution-profile digests. Reviewed
+unavailability supplies a public reason and no fabricated measurement.
 
 The split files are:
 

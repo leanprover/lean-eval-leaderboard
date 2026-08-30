@@ -59,8 +59,59 @@ LOGIN_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?")
 EVENT_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
+RESULT_ID_RE = re.compile(r"r2_[0-9a-f]{64}")
+REPLAY_TASK_ID_RE = re.compile(r"rt1_[0-9a-f]{64}")
+DIGEST_RE = re.compile(r"[0-9a-f]{64}")
+STATE_TIMESTAMP_RE = re.compile(
+    r"[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T"
+    r"(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\.[0-9]{3}Z"
+)
 MODEL_ID_DOMAIN = b"lean-eval-model-identity-v1\0"
 ALIAS_KEY_DOMAIN = b"lean-eval-model-alias-v1\0"
+REPLAY_PROJECTION_FIELDS = {
+    "status", "reason", "attempt", "checker", "checker_wall_time_ms",
+    "checker_retired_instructions",
+    "checker_retired_instructions_unavailable_reason", "build_wall_time_ms",
+    "build_retired_instructions",
+    "build_retired_instructions_unavailable_reason", "lines_of_code",
+    "file_count",
+}
+REPLAY_STATUSES = {
+    "queued", "running", "accepted", "rejected", "declined", "crashed",
+    "timed_out", "failed", "unavailable",
+}
+HISTORICAL_FAILURE_REASONS = {
+    "benchmark_fetch_failed", "runner_lost", "runner_start_failed",
+    "source_fetch_failed", "toolchain_setup_failed", "verdict_invalid",
+}
+HISTORICAL_UNAVAILABLE_REASONS = {
+    "source_ref_permanently_unavailable",
+    "benchmark_ref_permanently_unavailable",
+    "execution_profile_permanently_unavailable",
+}
+COUNTER_UNAVAILABLE_REASONS = {
+    "counter_not_supported", "counter_permission_denied",
+}
+HISTORICAL_REPLAY_SERIES_FIELDS = {
+    "result_id", "owner_login", "declared_model", "problem_id",
+    "statement_revision", "historical_accepted_at", "source_visibility",
+    "replay_task_id", "measurement_config_digest", "execution_profile_digest",
+    "updated_at", "transition_event_id", "replay",
+}
+HISTORICAL_REPLAY_UNAVAILABILITY_FIELDS = {
+    "result_id", "owner_login", "declared_model", "problem_id",
+    "statement_revision", "historical_accepted_at", "source_visibility",
+    "disposed_at", "disposition_event_id", "reason", "rationale",
+}
+STATE_OVERLAY_FIELDS = {
+    "result_id", "owner_login", "declared_model", "problem_id",
+    "statement_revision", "claim_event_id", "mutation_event_id", "claimed_at",
+    "metadata", "model_id", "resolved_model_id",
+}
+STATE_AMENDMENT_FIELDS = {
+    "effective_problem_id", "effective_statement_revision", "problem_repair",
+    "applied_problem_repair", "retraction", "leaderboard_eligible",
+}
 
 
 def _slug(value: str) -> str:
@@ -74,6 +125,18 @@ def _normalized_model(value: str) -> str:
 def _stable_legacy_id(parts: Iterable[object]) -> str:
     encoded = "\0".join(str(part) for part in parts).encode("utf-8")
     return "legacy_" + hashlib.sha256(encoded).hexdigest()
+
+
+def _expected_replay_task_id(
+    result_id_value: str, measurement_config_digest: str
+) -> str:
+    payload = (
+        "lean-eval-replay-task-v1\0"
+        + result_id_value
+        + "\0"
+        + measurement_config_digest
+    ).encode("utf-8")
+    return "rt1_" + hashlib.sha256(payload).hexdigest()
 
 
 def _acceptance_key(solution: Solution) -> tuple[str, str, str]:
@@ -214,11 +277,11 @@ def _model_label(value: Any, label: str) -> str:
 
 
 def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex:
-    """Validate and index the owner-scoped identity subset of projection v4."""
+    """Validate and index the owner-scoped identity subset of State projection."""
 
     if raw is None or raw.get("schema_version") == 1:
         return EMPTY_MODEL_IDENTITY_INDEX
-    if raw.get("schema_version") != 4:
+    if raw.get("schema_version") not in {4, 5, 6}:
         raise SystemExit("State domain: unsupported schema_version")
     identities: dict[str, dict[str, Any]] = {}
     identity_fields = {
@@ -453,17 +516,150 @@ def adapt_results_store(
     return out
 
 
+def _replay_projection_view(
+    replay: dict[str, Any],
+    *,
+    measurement_identity: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if not isinstance(replay, dict) or set(replay) != REPLAY_PROJECTION_FIELDS:
+        raise SystemExit("State projection: invalid replay fields")
+    if (
+        replay["status"] not in REPLAY_STATUSES
+        or type(replay["attempt"]) is not int
+        or replay["attempt"] < 0
+        or (
+            replay["checker"] is not None
+            and (not isinstance(replay["checker"], str) or not replay["checker"])
+        )
+        or (
+            replay["reason"] is not None
+            and (not isinstance(replay["reason"], str) or not replay["reason"])
+        )
+    ):
+        raise SystemExit("State projection: invalid replay values")
+    for field in (
+        "checker_wall_time_ms", "checker_retired_instructions",
+        "build_wall_time_ms", "build_retired_instructions", "lines_of_code",
+        "file_count",
+    ):
+        if replay[field] is not None and (
+            type(replay[field]) is not int or replay[field] < 0
+        ):
+            raise SystemExit("State projection: invalid replay measurements")
+    if measurement_identity is not None:
+        status = replay["status"]
+        reason = replay["reason"]
+        expected_reasons = (
+            HISTORICAL_FAILURE_REASONS
+            if status == "failed"
+            else HISTORICAL_UNAVAILABLE_REASONS
+            if status == "unavailable"
+            else None
+        )
+        if (
+            replay["checker"] != "nanoda"
+            or (expected_reasons is None and reason is not None)
+            or (expected_reasons is not None and reason not in expected_reasons)
+            or (
+                status
+                in {
+                    "running", "failed", "accepted", "rejected", "declined",
+                    "crashed", "timed_out",
+                }
+                and replay["attempt"] < 1
+            )
+        ):
+            raise SystemExit("State projection: invalid historical replay values")
+        terminal_verdict = status in {
+            "accepted", "rejected", "declined", "crashed", "timed_out",
+        }
+        for field in (
+            "checker_wall_time_ms", "build_wall_time_ms", "lines_of_code",
+            "file_count",
+        ):
+            if terminal_verdict != (replay[field] is not None):
+                raise SystemExit(
+                    "State projection: incoherent historical replay measurements"
+                )
+        for counter, unavailable_reason in (
+            (
+                "checker_retired_instructions",
+                "checker_retired_instructions_unavailable_reason",
+            ),
+            (
+                "build_retired_instructions",
+                "build_retired_instructions_unavailable_reason",
+            ),
+        ):
+            counter_reason = replay[unavailable_reason]
+            if (
+                counter_reason is not None
+                and counter_reason not in COUNTER_UNAVAILABLE_REASONS
+            ):
+                raise SystemExit(
+                    "State projection: invalid historical counter evidence"
+                )
+            if terminal_verdict:
+                if (replay[counter] is None) == (counter_reason is None):
+                    raise SystemExit(
+                        "State projection: incoherent historical counter evidence"
+                    )
+            elif replay[counter] is not None or counter_reason is not None:
+                raise SystemExit(
+                    "State projection: incoherent historical counter evidence"
+                )
+    view = {
+        "status": replay["status"],
+        "reason": replay["reason"],
+        "attempt": replay["attempt"],
+        "checker": replay["checker"],
+    }
+    measurement = {
+        "kind": "checker-replay",
+        "replay_status": replay["status"],
+        "replay_reason": replay["reason"],
+        "status": (
+            "unavailable"
+            if replay["checker_retired_instructions"] is None
+            else "available"
+        ),
+        "checker": replay["checker"],
+        "checker_wall_time_ms": replay["checker_wall_time_ms"],
+        "checker_retired_instructions": replay[
+            "checker_retired_instructions"
+        ],
+        "checker_retired_instructions_unavailable_reason": replay[
+            "checker_retired_instructions_unavailable_reason"
+        ],
+        "build_wall_time_ms": replay["build_wall_time_ms"],
+        "build_retired_instructions": replay["build_retired_instructions"],
+        "build_retired_instructions_unavailable_reason": replay[
+            "build_retired_instructions_unavailable_reason"
+        ],
+        "lines_of_code": replay["lines_of_code"],
+        "file_count": replay["file_count"],
+        "unavailable_reason": (
+            "performance-counter-unavailable"
+            if replay["checker_retired_instructions"] is None
+            else None
+        ),
+        "attempt": replay["attempt"],
+        **(measurement_identity or {}),
+    }
+    return view, measurement
+
+
 def adapt_state_projection(
     raw: dict[str, Any] | None,
     aliases: dict[str, dict[str, str]],
     model_identities: ModelIdentityIndex | None = None,
 ) -> list[Solution]:
-    """Normalize redacted State projection v1 or identity-aware v4."""
+    """Normalize a supported cumulative redacted State projection."""
 
     if raw is None:
         return []
     version = raw.get("schema_version")
-    if version not in {1, 4}:
+    if version not in {1, 4, 5, 6}:
         raise SystemExit("State domain: unsupported schema_version")
     if raw.get("environment") not in {"production", "staging"}:
         raise SystemExit("State domain: invalid environment")
@@ -477,15 +673,18 @@ def adapt_state_projection(
         "schema_version", "environment", "source_state_commit",
         "source_event_count", "source_digest", "results",
     }
-    expected_top_fields = (
-        common_fields
-        if version == 1
-        else common_fields
-        | {
+    expected_top_fields = common_fields
+    if version in {4, 5, 6}:
+        expected_top_fields |= {
             "result_overlays", "model_identities", "model_aliases",
             "model_identity_history",
         }
-    )
+    if version in {5, 6}:
+        expected_top_fields.add("result_amendment_history")
+    if version == 6:
+        expected_top_fields |= {
+            "historical_replay_series", "historical_replay_unavailability",
+        }
     if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
     identity_index = (
@@ -501,8 +700,14 @@ def adapt_state_projection(
             "record_event_id", "benchmark_commit", "production_metadata", "replay",
             "release", "public_solution",
         }
-        if version == 4:
+        if version in {4, 5, 6}:
             required |= {"model_id", "resolved_model_id"}
+        if version in {5, 6}:
+            required |= {
+                "effective_problem_id", "effective_statement_revision",
+                "problem_repair", "applied_problem_repair", "retraction",
+                "leaderboard_eligible",
+            }
         if not isinstance(result, dict) or set(result) != required:
             raise SystemExit("State projection: invalid result fields")
         raw_declared = str(result["declared_model"])
@@ -520,7 +725,7 @@ def adapt_state_projection(
         state_resolution = identity_index.aliases.get(
             (str(result["submitter"]).lower(), raw_declared)
         )
-        if version == 4:
+        if version in {4, 5, 6}:
             projected_resolution = (
                 result["model_id"], result["resolved_model_id"]
             )
@@ -538,45 +743,8 @@ def adapt_state_projection(
             replay_view = {"status": "unavailable", "reason": "not-enqueued"}
             measurements: list[dict[str, Any]] = []
         else:
-            replay_view = {
-                "status": replay["status"],
-                "reason": replay.get("reason_code"),
-                "attempt": replay.get("attempt", 0),
-                "checker": replay.get("checker"),
-            }
-            measurements = [
-                {
-                    "kind": "checker-replay",
-                    "status": (
-                        "unavailable"
-                        if replay.get("checker_retired_instructions") is None
-                        else "available"
-                    ),
-                    "checker": replay.get("checker"),
-                    "checker_wall_time_ms": replay.get("checker_wall_time_ms"),
-                    "checker_retired_instructions": replay.get(
-                        "checker_retired_instructions"
-                    ),
-                    "checker_retired_instructions_unavailable_reason": replay.get(
-                        "checker_retired_instructions_unavailable_reason"
-                    ),
-                    "build_wall_time_ms": replay.get("build_wall_time_ms"),
-                    "build_retired_instructions": replay.get(
-                        "build_retired_instructions"
-                    ),
-                    "build_retired_instructions_unavailable_reason": replay.get(
-                        "build_retired_instructions_unavailable_reason"
-                    ),
-                    "lines_of_code": replay.get("lines_of_code"),
-                    "file_count": replay.get("file_count"),
-                    "unavailable_reason": (
-                        "performance-counter-unavailable"
-                        if replay.get("checker_retired_instructions") is None
-                        else None
-                    ),
-                    "attempt": replay.get("attempt", 0),
-                }
-            ]
+            replay_view, measurement = _replay_projection_view(replay)
+            measurements = [measurement]
         release = result["release"]
         release_url = result["public_solution"]["url"]
         release_view = (
@@ -592,15 +760,27 @@ def adapt_state_projection(
         solutions.append(
             Solution(
                 result_id=result["result_id"],
-                problem_id=result["problem_id"],
-                statement_revision=result["statement_revision"],
+                problem_id=(
+                    result["effective_problem_id"]
+                    if version in {5, 6}
+                    else result["problem_id"]
+                ),
+                statement_revision=(
+                    result["effective_statement_revision"]
+                    if version in {5, 6}
+                    else result["statement_revision"]
+                ),
                 declared_model=declared,
                 canonical_model_id=canonical_id,
                 canonical_model_label=canonical_label,
                 submitter=result["submitter"],
                 accepted_at=result["accepted_at"],
                 acceptance_event_id=result["acceptance_event_id"],
-                retracted=bool(result.get("retracted", False)),
+                retracted=(
+                    not result["leaderboard_eligible"]
+                    if version in {5, 6}
+                    else False
+                ),
                 metadata=_metadata_fields(
                     result.get("production_metadata", {}),
                     "declared-at-submission",
@@ -649,6 +829,250 @@ def merge_solutions(primary: list[Solution], fallback: list[Solution]) -> list[S
     for solution in primary:
         merged[solution.result_id] = solution
     return sorted(merged.values(), key=_acceptance_key)
+
+
+def apply_state_projection_overlays(
+    solutions: list[Solution], raw: dict[str, Any] | None
+) -> list[Solution]:
+    """Apply redacted legacy overlays and historical replay series in place."""
+
+    if raw is None or raw.get("schema_version") == 1:
+        return solutions
+    version = raw.get("schema_version")
+    if version not in {4, 5, 6}:
+        raise SystemExit("State domain: unsupported schema_version")
+    by_result = {solution.result_id: solution for solution in solutions}
+    if len(by_result) != len(solutions):
+        raise SystemExit("State projection: duplicate materialized result_id")
+
+    seen_overlays: set[str] = set()
+    expected_overlay_fields = STATE_OVERLAY_FIELDS | (
+        STATE_AMENDMENT_FIELDS if version in {5, 6} else set()
+    )
+    for overlay in raw["result_overlays"]:
+        if not isinstance(overlay, dict) or set(overlay) != expected_overlay_fields:
+            raise SystemExit("State projection: invalid result overlay fields")
+        result_id_value = overlay["result_id"]
+        solution = by_result.get(result_id_value)
+        if solution is None or result_id_value in seen_overlays:
+            raise SystemExit("State projection: unknown or duplicate result overlay")
+        seen_overlays.add(result_id_value)
+        if (
+            overlay["owner_login"] != solution.submitter.lower()
+            or overlay["declared_model"] != solution.declared_model
+            or overlay["problem_id"] != solution.problem_id
+            or overlay["statement_revision"] != solution.statement_revision
+            or not isinstance(overlay["metadata"], dict)
+        ):
+            raise SystemExit("State projection: result overlay identity mismatch")
+        solution.metadata = dict(overlay["metadata"])
+        solution.provenance["state_claim_event_id"] = overlay["claim_event_id"]
+        solution.provenance["state_mutation_event_id"] = overlay[
+            "mutation_event_id"
+        ]
+        if version in {5, 6}:
+            if (
+                not isinstance(overlay["effective_problem_id"], str)
+                or type(overlay["effective_statement_revision"]) is not int
+                or overlay["effective_statement_revision"] < 1
+                or not isinstance(overlay["leaderboard_eligible"], bool)
+            ):
+                raise SystemExit("State projection: invalid overlay amendment")
+            solution.problem_id = overlay["effective_problem_id"]
+            solution.statement_revision = overlay[
+                "effective_statement_revision"
+            ]
+            solution.retracted = not overlay["leaderboard_eligible"]
+
+    if version != 6:
+        return solutions
+
+    def expected_historical_visibility(result_id_value: str) -> str:
+        solution = by_result[result_id_value]
+        submission = solution.provenance.get("submission")
+        if (
+            solution.provenance.get("source") != "base-results-store"
+            or not isinstance(submission, dict)
+            or not isinstance(submission.get("public"), bool)
+        ):
+            raise SystemExit(
+                "State projection: historical replay does not target a base result"
+            )
+        return "public" if submission["public"] else "private"
+
+    def validate_historical_identity(
+        item: dict[str, Any], result_id_value: str
+    ) -> None:
+        solution = by_result[result_id_value]
+        if (
+            not isinstance(item["owner_login"], str)
+            or not LOGIN_RE.fullmatch(item["owner_login"])
+            or not isinstance(item["declared_model"], str)
+            or not item["declared_model"]
+            or not isinstance(item["problem_id"], str)
+            or not item["problem_id"]
+            or type(item["statement_revision"]) is not int
+            or item["statement_revision"] < 1
+            or not isinstance(item["historical_accepted_at"], str)
+            or not re.fullmatch(
+                r"(?!0000-)[0-9]{4}-[0-9]{2}-[0-9]{2}T"
+                r"[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+                item["historical_accepted_at"],
+            )
+            or expected_result_id(
+                item["owner_login"],
+                item["declared_model"],
+                item["problem_id"],
+                item["statement_revision"],
+            )
+            != result_id_value
+            or item["owner_login"] != solution.submitter.lower()
+            or item["declared_model"] != solution.declared_model
+            or item["historical_accepted_at"] != solution.accepted_at
+        ):
+            raise SystemExit("State projection: historical result identity mismatch")
+
+    series_by_result: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    seen_series: set[tuple[str, str]] = set()
+    transition_event_ids: set[str] = set()
+    series_order: list[tuple[str, str, str, str]] = []
+    for series in raw["historical_replay_series"]:
+        if not isinstance(series, dict) or set(series) != HISTORICAL_REPLAY_SERIES_FIELDS:
+            raise SystemExit("State projection: invalid historical replay series fields")
+        result_id_value = series["result_id"]
+        replay_task_id = series["replay_task_id"]
+        identity = (result_id_value, replay_task_id)
+        if (
+            not isinstance(result_id_value, str)
+            or RESULT_ID_RE.fullmatch(result_id_value) is None
+            or result_id_value not in by_result
+            or not isinstance(replay_task_id, str)
+            or REPLAY_TASK_ID_RE.fullmatch(replay_task_id) is None
+            or identity in seen_series
+            or series["source_visibility"] not in {"public", "private"}
+            or series["source_visibility"]
+            != expected_historical_visibility(result_id_value)
+            or not isinstance(series["measurement_config_digest"], str)
+            or DIGEST_RE.fullmatch(series["measurement_config_digest"]) is None
+            or not isinstance(series["execution_profile_digest"], str)
+            or DIGEST_RE.fullmatch(series["execution_profile_digest"]) is None
+            or not isinstance(series["updated_at"], str)
+            or STATE_TIMESTAMP_RE.fullmatch(series["updated_at"]) is None
+            or not isinstance(series["transition_event_id"], str)
+            or EVENT_ID_RE.fullmatch(series["transition_event_id"]) is None
+            or series["transition_event_id"] in transition_event_ids
+            or replay_task_id
+            != _expected_replay_task_id(
+                result_id_value, series["measurement_config_digest"]
+            )
+        ):
+            raise SystemExit("State projection: invalid historical replay series")
+        validate_historical_identity(series, result_id_value)
+        seen_series.add(identity)
+        transition_event_ids.add(series["transition_event_id"])
+        series_order.append(
+            (
+                result_id_value,
+                replay_task_id,
+                series["measurement_config_digest"],
+                series["execution_profile_digest"],
+            )
+        )
+        series_by_result[result_id_value].append(series)
+    if series_order != sorted(series_order):
+        raise SystemExit("State projection: historical replay series are not sorted")
+
+    dispositions: dict[str, dict[str, Any]] = {}
+    disposition_order: list[str] = []
+    for disposition in raw["historical_replay_unavailability"]:
+        if (
+            not isinstance(disposition, dict)
+            or set(disposition) != HISTORICAL_REPLAY_UNAVAILABILITY_FIELDS
+        ):
+            raise SystemExit("State projection: invalid historical disposition fields")
+        result_id_value = disposition["result_id"]
+        if (
+            not isinstance(result_id_value, str)
+            or RESULT_ID_RE.fullmatch(result_id_value) is None
+            or result_id_value not in by_result
+            or result_id_value in dispositions
+            or result_id_value in series_by_result
+            or disposition["source_visibility"] not in {"public", "private"}
+            or disposition["source_visibility"]
+            != expected_historical_visibility(result_id_value)
+            or not isinstance(disposition["disposed_at"], str)
+            or STATE_TIMESTAMP_RE.fullmatch(disposition["disposed_at"]) is None
+            or not isinstance(disposition["disposition_event_id"], str)
+            or EVENT_ID_RE.fullmatch(disposition["disposition_event_id"]) is None
+            or disposition["disposition_event_id"] in transition_event_ids
+            or not isinstance(disposition["reason"], str)
+            or not disposition["reason"]
+            or (
+                disposition["rationale"] is not None
+                and (
+                    not isinstance(disposition["rationale"], str)
+                    or not disposition["rationale"]
+                )
+            )
+        ):
+            raise SystemExit("State projection: invalid historical disposition")
+        validate_historical_identity(disposition, result_id_value)
+        expected_disposition = (
+            (
+                "source_ref_permanently_unavailable",
+                "accepted_immutable_source_ref_unavailable_without_archive",
+            )
+            if disposition["source_visibility"] == "public"
+            else ("archive_not_found", None)
+        )
+        if (disposition["reason"], disposition["rationale"]) != expected_disposition:
+            raise SystemExit("State projection: invalid historical disposition")
+        disposition_order.append(result_id_value)
+        transition_event_ids.add(disposition["disposition_event_id"])
+        dispositions[result_id_value] = disposition
+    if disposition_order != sorted(disposition_order):
+        raise SystemExit("State projection: historical dispositions are not sorted")
+
+    for result_id_value, series_items in series_by_result.items():
+        lanes = {item["source_visibility"] for item in series_items}
+        if len(lanes) != 1:
+            raise SystemExit("State projection: historical replay lane changed")
+        solution = by_result[result_id_value]
+        measurements: list[dict[str, Any]] = []
+        summaries: list[tuple[tuple[str, str, str], dict[str, Any]]] = []
+        for series in series_items:
+            summary, measurement = _replay_projection_view(
+                series["replay"],
+                measurement_identity={
+                    key: series[key]
+                    for key in (
+                        "source_visibility", "replay_task_id",
+                        "measurement_config_digest", "execution_profile_digest",
+                        "updated_at", "transition_event_id",
+                    )
+                },
+            )
+            measurements.append(measurement)
+            summaries.append(
+                (
+                    (
+                        series["updated_at"], series["transition_event_id"],
+                        series["replay_task_id"],
+                    ),
+                    summary,
+                )
+            )
+        solution.measurements = measurements
+        solution.replay = max(summaries, key=lambda item: item[0])[1]
+
+    for result_id_value, disposition in dispositions.items():
+        solution = by_result[result_id_value]
+        solution.replay = {
+            "status": "unavailable",
+            "reason": disposition["reason"],
+        }
+        solution.measurements = []
+    return solutions
 
 
 def _scope_problem_ids(
@@ -912,7 +1336,7 @@ def build_lifecycle_projection(
         for solution in solutions
     ):
         limitations.append(
-            "Results not yet present in the public State projection were adapted from the immutable base-results store; their replay/release states are explicitly unavailable."
+            "Results absent from modern State result materialization were adapted from the immutable base-results store. Historical replay or disposition evidence is applied where State supplies it; otherwise replay is explicitly unavailable, and release remains unavailable."
         )
     if not any(
         lifecycle["status_history"] or lifecycle["statement_revisions"]
