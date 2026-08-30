@@ -12,6 +12,7 @@ class StateRefreshWorkflowTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 5", WORKFLOW)
         self.assertIn("cancel-in-progress: false", WORKFLOW)
         self.assertIn("PRODUCTION_STATE_READ_KEY", WORKFLOW)
+        self.assertIn("ref: main", WORKFLOW)
         self.assertIn("persist-credentials: false", WORKFLOW)
         self.assertIn("fetch-depth: 1", WORKFLOW)
 
@@ -26,7 +27,7 @@ class StateRefreshWorkflowTests(unittest.TestCase):
     def test_refresh_does_not_queue_behind_an_active_pages_build(self) -> None:
         self.assertIn("actions/workflows/deploy.yml/runs?per_page=100", WORKFLOW)
         self.assertIn('.head_branch == "main"', WORKFLOW)
-        self.assertIn('.status == "queued" or .status == "in_progress"', WORKFLOW)
+        self.assertIn('.status != "completed"', WORKFLOW)
         self.assertIn('if [ "$active" != 0 ]', WORKFLOW)
         self.assertIn('gh workflow run deploy.yml --repo "$REPOSITORY" --ref main', WORKFLOW)
 

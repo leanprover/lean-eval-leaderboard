@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: leanprover/lean-eval-state
+          ref: main
           path: lean-eval-state
           ssh-key: ${{ secrets.PRODUCTION_STATE_READ_KEY }}
           persist-credentials: false
@@ -61,14 +62,14 @@ jobs:
 
           active="$(
             gh api "repos/$REPOSITORY/actions/workflows/deploy.yml/runs?per_page=100" \
-              --jq '[.workflow_runs[] | select(.head_branch == "main") | select(.status == "queued" or .status == "in_progress")] | length'
+              --jq '[.workflow_runs[] | select(.head_branch == "main") | select(.status != "completed")] | length'
           )"
           if [[ ! "$active" =~ ^[0-9]+$ ]]; then
             echo "could not establish the active deployment count" >&2
             exit 1
           fi
           if [ "$active" != 0 ]; then
-            echo "A Pages deployment is already queued or running; it will be checked by the next bounded refresh."
+            echo "A Pages deployment is already active; it will be checked by the next bounded refresh."
             exit 0
           fi
 
