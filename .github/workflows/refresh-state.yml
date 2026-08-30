@@ -1,0 +1,77 @@
+name: Refresh leaderboard after State changes
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: leaderboard-state-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh-if-stale:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # The deploy key is read-only and scoped to private production State.
+      - name: Read current production State head
+        # actions/checkout pinned to 3d3c42e5 (= refs/tags/v7.0.1 as of 2026-07-30).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: leanprover/lean-eval-state
+          ref: main
+          path: lean-eval-state
+          ssh-key: ${{ secrets.PRODUCTION_STATE_READ_KEY }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Dispatch one refresh when the deployed projection is stale
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          current_state="$(git -C lean-eval-state rev-parse HEAD)"
+          if [[ ! "$current_state" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "current State head is not a full commit" >&2
+            exit 1
+          fi
+
+          deployed_state="$(
+            curl --fail --silent --show-error --location \
+              --proto '=https' --max-redirs 2 --max-time 30 \
+              --retry 3 --retry-all-errors --retry-max-time 90 \
+              https://lean-lang.org/eval/site-data/v2/index.json \
+              | jq --exit-status --raw-output '
+                  select(.schema_version == 2) |
+                  select(.state.repo == "leanprover/lean-eval-state") |
+                  select(.state.materialized == true) |
+                  .state.commit |
+                  select(type == "string" and test("^[0-9a-f]{40}$"))
+                '
+          )"
+          if [ "$deployed_state" = "$current_state" ]; then
+            echo "Leaderboard already materializes production State $current_state."
+            exit 0
+          fi
+
+          active="$(
+            gh api "repos/$REPOSITORY/actions/workflows/deploy.yml/runs?per_page=100" \
+              --jq '[.workflow_runs[] | select(.head_branch == "main") | select(.status != "completed")] | length'
+          )"
+          if [[ ! "$active" =~ ^[0-9]+$ ]]; then
+            echo "could not establish the active deployment count" >&2
+            exit 1
+          fi
+          if [ "$active" != 0 ]; then
+            echo "A Pages deployment is already active; it will be checked by the next bounded refresh."
+            exit 0
+          fi
+
+          gh workflow run deploy.yml --repo "$REPOSITORY" --ref main
+          echo "Dispatched a Pages refresh for production State $current_state."
