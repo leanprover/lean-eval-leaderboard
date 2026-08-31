@@ -99,7 +99,22 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("two UTC calendar months after acceptance", copy)
         self.assertIn("automatically publishes", copy)
         self.assertIn("Apache License 2.0", copy)
-        self.assertIn("opt out at any time before release", copy)
+        self.assertIn("At submission time, scheduled release is the default", copy)
+        self.assertIn("keep accepted source private", copy)
+        self.assertIn("If you initially choose private, you may later", copy)
+        self.assertIn("authorize scheduled release", copy)
+        self.assertIn(
+            "a scheduled choice cannot be changed back to private",
+            copy,
+        )
+        self.assertIn("that transition is irreversible", copy)
+        for revocation_offer in (
+            "opt out",
+            "withdraw authorization",
+            "revoke authorization",
+            "cancel scheduled release",
+        ):
+            self.assertNotIn(revocation_offer, copy.lower())
         self.assertIn("legacy GitHub issue form", copy)
         self.assertIn("return to the leaderboard", copy)
         self.assertIn(

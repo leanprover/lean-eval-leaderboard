@@ -338,11 +338,13 @@ def submitStep3Body : VersoDoc Page :=
   :::
   The submission action includes this acknowledgement:
 
-  > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation, publish evaluation metadata and results, and, two UTC calendar months after acceptance, publish the submitted source under the Apache License 2.0. I will not submit secrets or material I am not authorized to disclose.
+  > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation and publish evaluation metadata and results. I will not submit secrets or material I am not authorized to disclose. If I choose scheduled release, I also confirm that I have authority to license the accepted source under the Apache License 2.0 and authorize Lean Eval to publish it two UTC calendar months after acceptance.
 
-  Accepted source is scheduled for publication by default. You may opt out in
-  the submission application, or ask to opt out at any time before release.
-  The public result then remains visible with its solution marked as withheld.
+  At submission time, scheduled release is the default. You may instead choose
+  to keep accepted source private; the public result remains visible with its
+  solution marked as withheld. If you initially choose private, you may later
+  authorize scheduled release with the same license confirmation. That change
+  is irreversible: a scheduled choice cannot be changed back to private.
   :::
 
 def submitWhatPublicTitle  : String := "What becomes public, and when"
@@ -359,15 +361,17 @@ def submitWhatPublicBody : VersoDoc Page :=
   is recorded. Private source remains in the encrypted archive during the
   release delay.
 
-  Unless you opt out, LeanEval automatically publishes the exact accepted
-  `Submission.lean` and files under `Submission/` under the Apache License 2.0
-  two UTC calendar months after acceptance. Repository metadata, credentials,
-  challenge files, modified build files, and unrelated source files are not
-  included in that release.
+  If you choose scheduled release, LeanEval automatically publishes the exact
+  accepted `Submission.lean` and files under `Submission/` under the Apache
+  License 2.0 two UTC calendar months after acceptance. Repository metadata,
+  credentials, challenge files, modified build files, and unrelated source
+  files are not included in that release.
 
-  Only submit files that you have authority to provide and license. Do not
-  include secrets. If you opt out before release, the public leaderboard keeps
-  the evaluation result but shows that the solution is withheld.
+  Only schedule files that you have authority to provide and license. Do not
+  include secrets. If you choose to keep accepted source private, the public
+  leaderboard keeps the evaluation result but shows that the solution is
+  withheld. You may later schedule release; that transition is irreversible,
+  and scheduled release cannot later be changed to private.
   :::
 
 /-! ### Submit-page CTA + TL;DR widgets
