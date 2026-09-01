@@ -213,6 +213,12 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("--state-projection", workflow)
         self.assertIn("--schema-version 6", workflow)
         self.assertIn(".schema_version == 6", workflow)
+        self.assertIn("For authenticated submissions after launch", workflow)
+        self.assertIn("initial choice is private", workflow)
+        self.assertIn(
+            "The prelaunch submit page presents future release controls as current",
+            workflow,
+        )
         self.assertIn("Production server intake is not enabled yet", workflow)
         self.assertIn("Submit using the current GitHub issue form", workflow)
         self.assertIn(

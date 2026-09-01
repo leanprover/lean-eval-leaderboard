@@ -288,10 +288,17 @@ jobs:
           grep -F 'two UTC calendar months after acceptance' _site/submit/index.html
           grep -F 'automatically publishes' _site/submit/index.html
           grep -F 'Apache License 2.0' _site/submit/index.html
-          grep -F 'At submission time, scheduled release is the default' \
+          grep -F 'For authenticated submissions after launch' \
             _site/submit/index.html
-          grep -F 'If you initially choose private, you may later' \
+          grep -F 'initial choice is private' \
             _site/submit/index.html
+          if grep -F 'At submission time, scheduled release is the default' \
+              _site/submit/index.html || \
+             grep -F 'If you initially choose private, you may later' \
+              _site/submit/index.html; then
+            echo "::error::The prelaunch submit page presents future release controls as current."
+            exit 1
+          fi
           grep -F 'authorize scheduled release with the same license confirmation' \
             _site/submit/index.html
           grep -F 'a scheduled choice cannot be changed back to private' \
