@@ -288,13 +288,25 @@ jobs:
           grep -F 'two UTC calendar months after acceptance' _site/submit/index.html
           grep -F 'automatically publishes' _site/submit/index.html
           grep -F 'Apache License 2.0' _site/submit/index.html
-          grep -F 'At submission time, scheduled release is the default' \
+          grep -F 'For authenticated submissions after launch' \
             _site/submit/index.html
-          grep -F 'If you initially choose private, you may later' \
+          grep -F 'initial choice is private' \
             _site/submit/index.html
-          grep -F 'authorize scheduled release with the same license confirmation' \
+          if grep -F 'At submission time, scheduled release is the default' \
+              _site/submit/index.html || \
+             grep -F 'If you initially choose private, you may later' \
+              _site/submit/index.html; then
+            echo "::error::The prelaunch submit page presents future release controls as current."
+            exit 1
+          fi
+          # Verso preserves the source line break between these clauses.
+          grep -F 'authorize scheduled' \
             _site/submit/index.html
-          grep -F 'a scheduled choice cannot be changed back to private' \
+          grep -F 'release with the same license confirmation' \
+            _site/submit/index.html
+          grep -F 'That change is irreversible: a' \
+            _site/submit/index.html
+          grep -F 'scheduled choice cannot be changed back to private' \
             _site/submit/index.html
           grep -F 'that transition is irreversible' \
             _site/submit/index.html
@@ -302,23 +314,27 @@ jobs:
             echo "::error::The submit page still offers publication revocation."
             exit 1
           fi
-          grep -F 'legacy GitHub issue form' _site/submit/index.html
-          grep -F 'During the 28-day launch overlap' \
+          grep -F 'Production server intake is not enabled yet' \
             _site/submit/index.html
-          grep -F 'remains available as a fallback for existing users' \
+          grep -F 'current GitHub issue form' _site/submit/index.html
+          grep -F 'Until production server launch' _site/submit/index.html
+          grep -F 'At launch, the authenticated submission application will be hosted' \
             _site/submit/index.html
-          grep -F 'New submissions should' _site/submit/index.html
-          grep -F 'use the authenticated application above' \
+          grep -F 'The launch overlap will begin only after server intake launches' \
             _site/submit/index.html
-          grep -F 'Continue to secure submission service' \
+          grep -F 'at least four weeks' _site/submit/index.html
+          grep -F 'Submit using the current GitHub issue form' \
             _site/submit/index.html
-          if grep -Fi 'prelaunch' _site/submit/index.html; then
-            echo "::error::The launch submit page still describes server intake as prelaunch."
+          grep -F 'continue to the secure submission service' \
+            _site/submit/index.html
+          if grep -F 'During the 28-day launch overlap' \
+              _site/submit/index.html; then
+            echo "::error::The prelaunch submit page claims the overlap has already begun."
             exit 1
           fi
-          if grep -F 'Production server intake is not enabled' \
+          if grep -F 'New submissions should use the authenticated application' \
               _site/submit/index.html; then
-            echo "::error::The launch submit page still describes server intake as disabled."
+            echo "::error::The prelaunch submit page treats disabled server intake as primary."
             exit 1
           fi
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
