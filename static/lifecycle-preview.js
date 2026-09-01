@@ -294,6 +294,16 @@
     return list;
   }
 
+  function releaseFields(release) {
+    var fields = [["Release", release.status + (release.reason ? " · " + release.reason : "")]];
+    if (release.status === "scheduled") {
+      fields.push(["Automatic release", release.release_at
+        ? formattedDate(release.release_at) + " · " + release.release_at
+        : null]);
+    }
+    return fields;
+  }
+
   function renderProblem(content, status, problemId) {
     fetchJson("site-data/v2/problems/" + encodeURIComponent(problemId) + ".json").then(function (data) {
       status.hidden = true;
@@ -309,15 +319,15 @@
       }) : [node("li", { text: "No named set membership." })]);
       var solutions = node("div", { className: "lifecycle-solution-grid" });
       data.solutions.forEach(function (solution) {
+        var solutionFields = [
+          ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
+          ["Credit", solution.first_solve ? "First solve" : "Accepted solve"],
+          ["Declared label", solution.canonical_credit.declared_label],
+          ["Replay", solution.replay.status + (solution.replay.reason ? " · " + solution.replay.reason : "")]
+        ].concat(releaseFields(solution.release));
         var card = node("article", { className: "lifecycle-solution-card" }, [
           heading(4, solution.canonical_credit.label),
-          definitionList([
-            ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
-            ["Credit", solution.first_solve ? "First solve" : "Accepted solve"],
-            ["Declared label", solution.canonical_credit.declared_label],
-            ["Replay", solution.replay.status + (solution.replay.reason ? " · " + solution.replay.reason : "")],
-            ["Release", solution.release.status + (solution.release.reason ? " · " + solution.release.reason : "")]
-          ])
+          definitionList(solutionFields)
         ]);
         if (solution.public_solution.available && solution.public_solution.url) {
           card.appendChild(node("p", {}, [node("a", { href: solution.public_solution.url, rel: "noopener", text: "Released solution" })]));

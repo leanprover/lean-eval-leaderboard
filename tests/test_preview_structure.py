@@ -152,6 +152,16 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertNotIn("measurement.wall_time_ms", client)
         self.assertNotIn("measurement.retired_instructions", client)
 
+    def test_problem_page_shows_the_exact_scheduled_release_time(self) -> None:
+        client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
+
+        self.assertIn('release.status === "scheduled"', client)
+        self.assertIn('["Automatic release", release.release_at', client)
+        self.assertIn(
+            'formattedDate(release.release_at) + " · " + release.release_at',
+            client,
+        )
+
     def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
         sources = [
             REPO_ROOT / "LeaderboardSite/Pages/Preview.lean",
