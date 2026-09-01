@@ -276,6 +276,9 @@ def submitLeadBody : VersoDoc Page :=
   [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
   This separate origin is intentional: GitHub OAuth callbacks and the
   application session are scoped to the Worker that handles private intake.
+  The launch overlap will begin only after server intake launches, will last
+  at least four weeks, and will keep the current GitHub issue form available
+  as a fallback.
   After submitting, you can
   [return to the leaderboard](https://lean-lang.org/eval/).
   :::

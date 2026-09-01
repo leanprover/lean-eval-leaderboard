@@ -78,7 +78,12 @@ class PreviewStructureTests(unittest.TestCase):
         )
         self.assertIn(worker, copy)
         self.assertIn(issue_form, copy)
-        self.assertNotIn("launch overlap", copy.lower())
+        self.assertIn(
+            "The launch overlap will begin only after server intake launches",
+            copy,
+        )
+        self.assertIn("will last\n  at least four weeks", copy)
+        self.assertNotIn("During the 28-day launch overlap", copy)
         self.assertIn(
             "Production server intake is not enabled yet",
             copy,
