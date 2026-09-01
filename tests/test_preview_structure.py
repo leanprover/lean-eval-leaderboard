@@ -106,19 +106,30 @@ class PreviewStructureTests(unittest.TestCase):
             copy,
         )
         submit_copy = copy[copy.index("/-! ## Submit page") :]
+        normalized_copy = copy.replace("\n  ", " ")
         self.assertNotRegex(submit_copy, r"\b20\d{2}-\d{2}-\d{2}\b")
         self.assertIn("GitHub OAuth callbacks", copy)
         self.assertIn("private encrypted archive", copy)
         self.assertIn("two UTC calendar months after acceptance", copy)
         self.assertIn("automatically publishes", copy)
         self.assertIn("Apache License 2.0", copy)
-        self.assertIn("At submission time, scheduled release is the default", copy)
+        self.assertIn("3. Review authenticated-intake release terms", copy)
+        self.assertIn(
+            "After server launch, the authenticated submission action will include",
+            normalized_copy,
+        )
+        self.assertIn(
+            "For authenticated submissions after launch, scheduled release will be the",
+            normalized_copy,
+        )
+        self.assertNotIn("The submission action includes", submit_copy)
+        self.assertNotIn("At submission time", submit_copy)
         self.assertIn("keep accepted source private", copy)
-        self.assertIn("If you initially choose private, you may later", copy)
-        self.assertIn("authorize scheduled release", copy)
+        self.assertIn("If the\n  initial choice is private", copy)
+        self.assertIn("authorize scheduled release", normalized_copy)
         self.assertIn(
             "a scheduled choice cannot be changed back to private",
-            copy,
+            normalized_copy,
         )
         self.assertIn("that transition is irreversible", copy)
         for revocation_offer in (

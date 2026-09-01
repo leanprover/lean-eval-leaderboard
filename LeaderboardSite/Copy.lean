@@ -335,21 +335,23 @@ def submitStep2Body : VersoDoc Page :=
   logs.
   :::
 
-def submitStep3Title  : String := "3. Confirm the release terms"
+def submitStep3Title  : String := "3. Review authenticated-intake release terms"
 def submitStep3HtmlId : String := "step-3"
 
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  The submission action includes this acknowledgement:
+  After server launch, the authenticated submission action will include this
+  acknowledgement:
 
   > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation and publish evaluation metadata and results. I will not submit secrets or material I am not authorized to disclose. If I choose scheduled release, I also confirm that I have authority to license the accepted source under the Apache License 2.0 and authorize Lean Eval to publish it two UTC calendar months after acceptance.
 
-  At submission time, scheduled release is the default. You may instead choose
-  to keep accepted source private; the public result remains visible with its
-  solution marked as withheld. If you initially choose private, you may later
-  authorize scheduled release with the same license confirmation. That change
-  is irreversible: a scheduled choice cannot be changed back to private.
+  For authenticated submissions after launch, scheduled release will be the
+  default. A submitter may instead choose to keep accepted source private; the
+  public result remains visible with its solution marked as withheld. If the
+  initial choice is private, the submitter may later authorize scheduled
+  release with the same license confirmation. That change is irreversible: a
+  scheduled choice cannot be changed back to private.
   :::
 
 def submitWhatPublicTitle  : String := "What becomes public, and when"
