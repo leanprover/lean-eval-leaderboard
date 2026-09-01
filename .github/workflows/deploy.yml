@@ -304,6 +304,8 @@ jobs:
             _site/submit/index.html
           grep -F 'release with the same license confirmation' \
             _site/submit/index.html
+          grep -F 'That change is irreversible: a' \
+            _site/submit/index.html
           grep -F 'scheduled choice cannot be changed back to private' \
             _site/submit/index.html
           grep -F 'that transition is irreversible' \

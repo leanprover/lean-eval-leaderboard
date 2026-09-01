@@ -217,6 +217,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("initial choice is private", workflow)
         self.assertIn("grep -F 'authorize scheduled'", workflow)
         self.assertIn("grep -F 'release with the same license confirmation'", workflow)
+        self.assertIn("grep -F 'That change is irreversible: a'", workflow)
         self.assertIn(
             "grep -F 'scheduled choice cannot be changed back to private'",
             workflow,
