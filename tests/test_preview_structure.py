@@ -69,7 +69,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
 
-    def test_submit_page_makes_server_primary_during_issue_intake_overlap(self) -> None:
+    def test_submit_page_keeps_issue_intake_primary_before_server_launch(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
         worker = "https://lean-eval-submission-server.lean-eval.workers.dev/"
         issue_form = (
@@ -78,22 +78,30 @@ class PreviewStructureTests(unittest.TestCase):
         )
         self.assertIn(worker, copy)
         self.assertIn(issue_form, copy)
-        self.assertIn("28-day launch overlap", copy)
-        self.assertIn("remains available as a fallback", copy)
+        self.assertNotIn("launch overlap", copy.lower())
         self.assertIn(
-            "New submissions should\n  use the authenticated application",
+            "Production server intake is not enabled yet",
             copy,
         )
         self.assertIn(
-            "Continue to secure submission service",
+            "Until launch, submit through the",
+            copy,
+        )
+        self.assertIn(
+            "At launch, the authenticated submission application will be hosted",
+            copy,
+        )
+        self.assertIn("Submit using the current GitHub issue form", copy)
+        self.assertIn(
+            'def submitCtaUrl    : String :=\n  "' + issue_form + '"',
             copy,
         )
         self.assertNotIn(
-            "Production server intake is not enabled",
+            'def submitCtaUrl    : String :=\n  "' + worker + '"',
             copy,
         )
-        self.assertNotIn("it is not accepting submissions", copy)
-        self.assertNotIn("prelaunch", copy.lower())
+        submit_copy = copy[copy.index("/-! ## Submit page") :]
+        self.assertNotRegex(submit_copy, r"\b20\d{2}-\d{2}-\d{2}\b")
         self.assertIn("GitHub OAuth callbacks", copy)
         self.assertIn("private encrypted archive", copy)
         self.assertIn("two UTC calendar months after acceptance", copy)
@@ -115,7 +123,7 @@ class PreviewStructureTests(unittest.TestCase):
             "cancel scheduled release",
         ):
             self.assertNotIn(revocation_offer, copy.lower())
-        self.assertIn("legacy GitHub issue form", copy)
+        self.assertIn("current GitHub issue form", copy)
         self.assertIn("return to the leaderboard", copy)
         self.assertIn(
             "[return to the leaderboard](https://lean-lang.org/eval/)",
@@ -125,15 +133,11 @@ class PreviewStructureTests(unittest.TestCase):
             "https://github.com/apps/lean-eval-source-reader",
             copy,
         )
-        self.assertIn("exact 40-character source commit", copy)
+        self.assertIn("40-character source commit", copy)
         self.assertIn("require a private GitHub repository", copy)
         self.assertNotIn("Public repositories need no extra setup", copy)
         self.assertNotIn("https://github.com/apps/lean-eval-bot", copy)
         self.assertNotIn("Secret (unlisted) gists", copy)
-        self.assertNotIn(
-            'def submitCtaUrl    : String :=\n  "https://github.com/',
-            copy,
-        )
 
     def test_client_renders_current_replay_measurement_fields(self) -> None:
         client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()

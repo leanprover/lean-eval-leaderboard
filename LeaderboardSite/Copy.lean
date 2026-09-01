@@ -269,43 +269,45 @@ def submitTitle : String := "Submit"
 def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
-  The authenticated submission application is hosted at
+  Production server intake is not enabled yet. Until launch, submit through the
+  [current GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml).
+
+  At launch, the authenticated submission application will be hosted at
   [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
   This separate origin is intentional: GitHub OAuth callbacks and the
   application session are scoped to the Worker that handles private intake.
   After submitting, you can
   [return to the leaderboard](https://lean-lang.org/eval/).
-
-  During the 28-day launch overlap, the
-  [legacy GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  remains available as a fallback for existing users. New submissions should
-  use the authenticated application above.
   :::
 
 def submitStep1Title  : String :=
-  "1. Prepare a source LeanEval can fetch"
+  "1. Submit through the current issue-intake path"
 def submitStep1HtmlId : String := "step-1"
 
 def submitStep1Body : VersoDoc Page :=
   verso (Page) "submitStep1"
   :::
-  Submissions through this service require a private GitHub repository in
-  `owner/repository` form and the exact 40-character source commit to evaluate.
-  Before submitting,
-  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
-  on that repository so that LeanEval can clone it.
+  Until production server launch, use the
+  [current GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  and follow the instructions there. It is the working submission path while
+  server intake remains disabled.
   :::
 
-def submitStep2Title  : String := "2. Submit through the authenticated application"
+def submitStep2Title  : String := "2. Prepare for authenticated intake at launch"
 def submitStep2HtmlId : String := "step-2"
 
 def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
-  [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
-  and sign in with GitHub. Choose the source and identify the model or system
-  that produced the proof. The application walks the submitted source and
-  tries every directory containing a
+  At launch, submissions through the authenticated service will
+  require a private GitHub repository in `owner/repository` form and the exact
+  40-character source commit to evaluate. Before using it,
+  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
+  on that repository so that LeanEval can clone it. You will then
+  [continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/),
+  sign in with GitHub, choose the source, and identify the model or system that
+  produced the proof. The application will walk the submitted source and
+  try every directory containing a
   `lakefile.toml` whose `name` field matches a benchmark problem id, and
   which has a `Submission.lean` next to it. For example:
 
@@ -353,9 +355,9 @@ def submitWhatPublicHtmlId : String := "what-becomes-public"
 def submitWhatPublicBody : VersoDoc Page :=
   verso (Page) "submitWhatPublic"
   :::
-  The following release policy applies to submissions made through the
-  authenticated application. Submissions through the fallback issue intake
-  retain their existing policy during the 28-day launch overlap.
+  The following release policy will apply to submissions made through the
+  authenticated application after launch. Submissions through the current
+  issue-intake path retain their existing policy.
 
   Submission metadata and evaluation results may become public when the result
   is recorded. Private source remains in the encrypted archive during the
@@ -382,16 +384,16 @@ paragraph splices a `<code>` and an `<a>` mid-sentence, so its prose is
 broken into chunks rather than authored as a single string. -/
 
 def submitCtaUrl    : String :=
-  "https://lean-eval-submission-server.lean-eval.workers.dev/"
+  "https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml"
 def submitCtaLabel  : String :=
-  "Continue to secure submission service"
+  "Submit using the current GitHub issue form"
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Sign in with GitHub, choose the exact source snapshot, and confirm the "
+  "Until production server launch, use the GitHub issue form to submit each matching "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
-  " archive and release terms. LeanEval verifies each matching proof with "
+  ". LeanEval verifies each proof with "
 def submitTldrComparatorLabel : String := "comparator"
 def submitTldrComparatorUrl   : String :=
   "https://github.com/leanprover/comparator"
