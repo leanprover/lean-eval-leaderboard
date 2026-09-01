@@ -218,6 +218,10 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("grep -F 'authorize scheduled'", workflow)
         self.assertIn("grep -F 'release with the same license confirmation'", workflow)
         self.assertIn(
+            "grep -F 'scheduled choice cannot be changed back to private'",
+            workflow,
+        )
+        self.assertIn(
             "The prelaunch submit page presents future release controls as current",
             workflow,
         )
