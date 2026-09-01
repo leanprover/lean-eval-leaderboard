@@ -351,7 +351,15 @@ class LifecycleProjectionTests(unittest.TestCase):
             adapted[0].measurements[0],
             expected_measurement,
         )
-        self.assertEqual(adapted[0].release["status"], "scheduled")
+        self.assertEqual(
+            adapted[0].release,
+            {
+                "status": "scheduled",
+                "release_at": "2026-10-20T00:00:00Z",
+                "reason": None,
+                "url": None,
+            },
+        )
         nullable_checker = copy.deepcopy(raw)
         nullable_checker["results"][0]["replay"]["checker"] = None
         self.assertIsNone(
@@ -372,6 +380,7 @@ class LifecycleProjectionTests(unittest.TestCase):
         )
         published = files["v2/problems/alpha.json"]["solutions"][0]
         self.assertEqual(published["measurements"], [expected_measurement])
+        self.assertEqual(published["release"], adapted[0].release)
 
         raw["results"][0]["replay"]["checker_retired_instructions"] = 200
         raw["results"][0]["replay"][
