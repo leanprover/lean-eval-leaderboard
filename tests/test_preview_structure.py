@@ -213,6 +213,12 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("--state-projection", workflow)
         self.assertIn("--schema-version 6", workflow)
         self.assertIn(".schema_version == 6", workflow)
+        self.assertIn("Production server intake is not enabled yet", workflow)
+        self.assertIn("Submit using the current GitHub issue form", workflow)
+        self.assertIn(
+            "The launch overlap will begin only after server intake launches",
+            workflow,
+        )
         self.assertIn(".historical_replay_series | type == \"array\"", workflow)
         self.assertIn(".historical_replay_unavailability | type == \"array\"", workflow)
         self.assertIn("_site/site-data/public-state.json", workflow)

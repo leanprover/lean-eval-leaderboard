@@ -302,23 +302,27 @@ jobs:
             echo "::error::The submit page still offers publication revocation."
             exit 1
           fi
-          grep -F 'legacy GitHub issue form' _site/submit/index.html
-          grep -F 'During the 28-day launch overlap' \
+          grep -F 'Production server intake is not enabled yet' \
             _site/submit/index.html
-          grep -F 'remains available as a fallback for existing users' \
+          grep -F 'current GitHub issue form' _site/submit/index.html
+          grep -F 'Until production server launch' _site/submit/index.html
+          grep -F 'At launch, the authenticated submission application will be hosted' \
             _site/submit/index.html
-          grep -F 'New submissions should' _site/submit/index.html
-          grep -F 'use the authenticated application above' \
+          grep -F 'The launch overlap will begin only after server intake launches' \
             _site/submit/index.html
-          grep -F 'Continue to secure submission service' \
+          grep -F 'at least four weeks' _site/submit/index.html
+          grep -F 'Submit using the current GitHub issue form' \
             _site/submit/index.html
-          if grep -Fi 'prelaunch' _site/submit/index.html; then
-            echo "::error::The launch submit page still describes server intake as prelaunch."
+          grep -F 'continue to the secure submission service' \
+            _site/submit/index.html
+          if grep -F 'During the 28-day launch overlap' \
+              _site/submit/index.html; then
+            echo "::error::The prelaunch submit page claims the overlap has already begun."
             exit 1
           fi
-          if grep -F 'Production server intake is not enabled' \
+          if grep -F 'New submissions should use the authenticated application' \
               _site/submit/index.html; then
-            echo "::error::The launch submit page still describes server intake as disabled."
+            echo "::error::The prelaunch submit page treats disabled server intake as primary."
             exit 1
           fi
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
