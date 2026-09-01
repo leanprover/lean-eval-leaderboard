@@ -299,7 +299,10 @@ jobs:
             echo "::error::The prelaunch submit page presents future release controls as current."
             exit 1
           fi
-          grep -F 'authorize scheduled release with the same license confirmation' \
+          # Verso preserves the source line break between these clauses.
+          grep -F 'authorize scheduled' \
+            _site/submit/index.html
+          grep -F 'release with the same license confirmation' \
             _site/submit/index.html
           grep -F 'a scheduled choice cannot be changed back to private' \
             _site/submit/index.html

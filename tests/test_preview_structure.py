@@ -215,6 +215,8 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn(".schema_version == 6", workflow)
         self.assertIn("For authenticated submissions after launch", workflow)
         self.assertIn("initial choice is private", workflow)
+        self.assertIn("grep -F 'authorize scheduled'", workflow)
+        self.assertIn("grep -F 'release with the same license confirmation'", workflow)
         self.assertIn(
             "The prelaunch submit page presents future release controls as current",
             workflow,
