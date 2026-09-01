@@ -755,7 +755,10 @@ def adapt_state_projection(
                 "reason": release.get("reason_code"),
             }
             if release is not None
-            else {"status": "unavailable", "reason": "not-scheduled", "url": None}
+            # Modern State records a scheduled choice atomically with its
+            # release task. A recorded Result with no task is therefore the
+            # submitter's initial withheld choice, not missing release data.
+            else {"status": "withheld", "reason": None, "url": None}
         )
         solutions.append(
             Solution(

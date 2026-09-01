@@ -360,6 +360,12 @@ class LifecycleProjectionTests(unittest.TestCase):
                 "url": None,
             },
         )
+        withheld = copy.deepcopy(raw)
+        withheld["results"][0]["release"] = None
+        self.assertEqual(
+            adapt_state_projection(withheld, aliases)[0].release,
+            {"status": "withheld", "reason": None, "url": None},
+        )
         nullable_checker = copy.deepcopy(raw)
         nullable_checker["results"][0]["replay"]["checker"] = None
         self.assertIsNone(
