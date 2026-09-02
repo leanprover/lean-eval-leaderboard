@@ -269,48 +269,46 @@ def submitTitle : String := "Submit"
 def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
-  Production server intake is not enabled yet. Until launch, submit through the
-  [current GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml).
-
-  At launch, the authenticated submission application will be hosted at
+  Production server intake is open. Use this page to prepare your source, then
+  continue to the authenticated submission application at
   [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
   This separate origin is intentional: GitHub OAuth callbacks and the
   application session are scoped to the Worker that handles private intake.
-  The launch overlap will begin only after server intake launches, will last
-  at least four weeks, and will keep the current GitHub issue form available
-  as a fallback.
+
+  The launch overlap starts at `OVERLAP_START_UTC`. The
+  [GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  remains available as a fallback through at least
+  `EARLIEST_ISSUE_CLOSE_UTC`, no earlier than four weeks after the overlap
+  begins, and may stay open longer. Any closure will be announced at least two
+  weeks in advance.
   After submitting, you can
   [return to the leaderboard](https://lean-lang.org/eval/).
   :::
 
 def submitStep1Title  : String :=
-  "1. Submit through the current issue-intake path"
+  "1. Prepare a source LeanEval can fetch"
 def submitStep1HtmlId : String := "step-1"
 
 def submitStep1Body : VersoDoc Page :=
   verso (Page) "submitStep1"
   :::
-  Until production server launch, use the
-  [current GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  and follow the instructions there. It is the working submission path while
-  server intake remains disabled.
+  Authenticated submissions require a private GitHub repository in
+  `owner/repository` form and the exact 40-character source commit to evaluate.
+  Before submitting,
+  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
+  on that repository so LeanEval can clone it.
   :::
 
-def submitStep2Title  : String := "2. Prepare for authenticated intake at launch"
+def submitStep2Title  : String := "2. Submit through the authenticated application"
 def submitStep2HtmlId : String := "step-2"
 
 def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
-  At launch, submissions through the authenticated service will
-  require a private GitHub repository in `owner/repository` form and the exact
-  40-character source commit to evaluate. Before using it,
-  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
-  on that repository so that LeanEval can clone it. You will then
-  [continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/),
-  sign in with GitHub, choose the source, and identify the model or system that
-  produced the proof. The application will walk the submitted source and
-  try every directory containing a
+  [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
+  and sign in with GitHub. Choose the source and identify the model or system
+  that produced the proof. The application walks the submitted source and
+  tries every directory containing a
   `lakefile.toml` whose `name` field matches a benchmark problem id, and
   which has a `Submission.lean` next to it. For example:
 
@@ -335,23 +333,22 @@ def submitStep2Body : VersoDoc Page :=
   logs.
   :::
 
-def submitStep3Title  : String := "3. Review authenticated-intake release terms"
+def submitStep3Title  : String := "3. Confirm the release terms"
 def submitStep3HtmlId : String := "step-3"
 
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  After server launch, the authenticated submission action will include this
-  acknowledgement:
+  The authenticated submission action includes this acknowledgement:
 
   > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation and publish evaluation metadata and results. I will not submit secrets or material I am not authorized to disclose. If I choose scheduled release, I also confirm that I have authority to license the accepted source under the Apache License 2.0 and authorize Lean Eval to publish it two UTC calendar months after acceptance.
 
-  For authenticated submissions after launch, scheduled release will be the
-  default. A submitter may instead choose to keep accepted source private; the
-  public result remains visible with its solution marked as withheld. If the
-  initial choice is private, the submitter may later authorize scheduled
-  release with the same license confirmation. That change is irreversible: a
-  scheduled choice cannot be changed back to private.
+  Scheduled release is recommended and selected by default. You may instead
+  choose to keep accepted source private; the public result remains visible
+  with its solution marked as withheld. If the initial choice is private, you
+  may later authorize scheduled release with the same license confirmation.
+  That change is irreversible: a scheduled choice cannot be changed back to
+  private.
   :::
 
 def submitWhatPublicTitle  : String := "What becomes public, and when"
@@ -360,9 +357,9 @@ def submitWhatPublicHtmlId : String := "what-becomes-public"
 def submitWhatPublicBody : VersoDoc Page :=
   verso (Page) "submitWhatPublic"
   :::
-  The following release policy will apply to submissions made through the
-  authenticated application after launch. Submissions through the current
-  issue-intake path retain their existing policy.
+  The following release policy applies to submissions made through the
+  authenticated application. Submissions through the fallback issue-intake
+  path retain their existing policy.
 
   Submission metadata and evaluation results may become public when the result
   is recorded. Private source remains in the encrypted archive during the
@@ -389,16 +386,16 @@ paragraph splices a `<code>` and an `<a>` mid-sentence, so its prose is
 broken into chunks rather than authored as a single string. -/
 
 def submitCtaUrl    : String :=
-  "https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml"
+  "https://lean-eval-submission-server.lean-eval.workers.dev/"
 def submitCtaLabel  : String :=
-  "Submit using the current GitHub issue form"
+  "Continue to secure submission service"
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Until production server launch, use the GitHub issue form to submit each matching "
+  "Sign in with GitHub and choose the exact source snapshot containing each matching "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
-  ". LeanEval verifies each proof with "
+  ". Confirm the archive and release terms. LeanEval verifies each proof with "
 def submitTldrComparatorLabel : String := "comparator"
 def submitTldrComparatorUrl   : String :=
   "https://github.com/leanprover/comparator"
