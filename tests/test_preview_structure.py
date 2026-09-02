@@ -69,63 +69,50 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
 
-    def test_submit_page_keeps_issue_intake_primary_before_server_launch(self) -> None:
+    def test_submit_page_makes_server_primary_and_keeps_issue_fallback(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
         worker = "https://lean-eval-submission-server.lean-eval.workers.dev/"
         issue_form = (
             "https://github.com/leanprover/lean-eval-submissions/"
             "issues/new?template=submit.yml"
         )
+        submit_copy = copy[copy.index("/-! ## Submit page") :]
+        normalized_copy = copy.replace("\n  ", " ")
         self.assertIn(worker, copy)
         self.assertIn(issue_form, copy)
+        self.assertIn("Production server intake is open", copy)
+        self.assertIn("2026-09-02T06:57:10Z", copy)
+        self.assertIn("2026-09-30T06:57:10Z", copy)
+        self.assertIn("remains available as a fallback", copy)
+        self.assertIn("no earlier than four weeks", copy)
+        self.assertIn("Any closure will be announced at least two", copy)
+        self.assertIn("weeks in advance.", copy)
+        self.assertIn("Continue to secure submission service", copy)
         self.assertIn(
-            "The launch overlap will begin only after server intake launches",
-            copy,
-        )
-        self.assertIn("will last\n  at least four weeks", copy)
-        self.assertNotIn("During the 28-day launch overlap", copy)
-        self.assertIn(
-            "Production server intake is not enabled yet",
-            copy,
-        )
-        self.assertIn(
-            "Until launch, submit through the",
-            copy,
-        )
-        self.assertIn(
-            "At launch, the authenticated submission application will be hosted",
-            copy,
-        )
-        self.assertIn("Submit using the current GitHub issue form", copy)
-        self.assertIn(
-            'def submitCtaUrl    : String :=\n  "' + issue_form + '"',
-            copy,
-        )
-        self.assertNotIn(
             'def submitCtaUrl    : String :=\n  "' + worker + '"',
             copy,
         )
-        submit_copy = copy[copy.index("/-! ## Submit page") :]
-        normalized_copy = copy.replace("\n  ", " ")
+        self.assertNotIn(
+            'def submitCtaUrl    : String :=\n  "' + issue_form + '"',
+            copy,
+        )
         self.assertNotRegex(submit_copy, r"\b20\d{2}-\d{2}-\d{2}\b")
         self.assertIn("GitHub OAuth callbacks", copy)
         self.assertIn("private encrypted archive", copy)
         self.assertIn("two UTC calendar months after acceptance", copy)
         self.assertIn("automatically publishes", copy)
         self.assertIn("Apache License 2.0", copy)
-        self.assertIn("3. Review authenticated-intake release terms", copy)
+        self.assertIn("3. Confirm the release terms", copy)
         self.assertIn(
-            "After server launch, the authenticated submission action will include",
+            "The authenticated submission action includes",
             normalized_copy,
         )
         self.assertIn(
-            "For authenticated submissions after launch, scheduled release will be the",
+            "Scheduled release is recommended and selected by default",
             normalized_copy,
         )
-        self.assertNotIn("The submission action includes", submit_copy)
-        self.assertNotIn("At submission time", submit_copy)
         self.assertIn("keep accepted source private", copy)
-        self.assertIn("If the\n  initial choice is private", copy)
+        self.assertIn("If the initial choice is private", normalized_copy)
         self.assertIn("authorize scheduled release", normalized_copy)
         self.assertIn(
             "a scheduled choice cannot be changed back to private",
@@ -139,7 +126,6 @@ class PreviewStructureTests(unittest.TestCase):
             "cancel scheduled release",
         ):
             self.assertNotIn(revocation_offer, copy.lower())
-        self.assertIn("current GitHub issue form", copy)
         self.assertIn("return to the leaderboard", copy)
         self.assertIn(
             "[return to the leaderboard](https://lean-lang.org/eval/)",
@@ -213,25 +199,27 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("--state-projection", workflow)
         self.assertIn("--schema-version 6", workflow)
         self.assertIn(".schema_version == 6", workflow)
-        self.assertIn("For authenticated submissions after launch", workflow)
+        self.assertIn(
+            "Scheduled release is recommended and selected by default",
+            workflow,
+        )
         self.assertIn("initial choice is private", workflow)
         self.assertIn("grep -F 'authorize scheduled'", workflow)
         self.assertIn("grep -F 'release with the same license confirmation'", workflow)
         self.assertIn("grep -F 'That change is irreversible: a'", workflow)
         self.assertIn(
-            "grep -F 'scheduled choice cannot be changed back to private'",
+            "grep -F 'scheduled choice cannot be changed back to'",
             workflow,
         )
-        self.assertIn(
-            "The prelaunch submit page presents future release controls as current",
-            workflow,
-        )
-        self.assertIn("Production server intake is not enabled yet", workflow)
-        self.assertIn("Submit using the current GitHub issue form", workflow)
-        self.assertIn(
-            "The launch overlap will begin only after server intake launches",
-            workflow,
-        )
+        self.assertIn("grep -F 'private.'", workflow)
+        self.assertIn("Production server intake is open", workflow)
+        self.assertIn("2026-09-02T06:57:10Z", workflow)
+        self.assertIn("2026-09-30T06:57:10Z", workflow)
+        self.assertIn("no earlier than four weeks", workflow)
+        self.assertIn("Any closure will be announced at least two", workflow)
+        self.assertIn("weeks in advance.", workflow)
+        self.assertIn("launch submit page still says server intake is disabled", workflow)
+        self.assertIn("launch submit page still makes issue intake primary", workflow)
         self.assertIn(".historical_replay_series | type == \"array\"", workflow)
         self.assertIn(".historical_replay_unavailability | type == \"array\"", workflow)
         self.assertIn("_site/site-data/public-state.json", workflow)
