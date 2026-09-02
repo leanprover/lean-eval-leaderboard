@@ -275,10 +275,10 @@ def submitLeadBody : VersoDoc Page :=
   This separate origin is intentional: GitHub OAuth callbacks and the
   application session are scoped to the Worker that handles private intake.
 
-  The launch overlap starts at `OVERLAP_START_UTC`. The
+  The launch overlap starts at `2026-09-02T06:57:10Z`. The
   [GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
   remains available as a fallback through at least
-  `EARLIEST_ISSUE_CLOSE_UTC`, no earlier than four weeks after the overlap
+  `2026-09-30T06:57:10Z`, no earlier than four weeks after the overlap
   begins, and may stay open longer. Any closure will be announced at least two
   weeks in advance.
   After submitting, you can

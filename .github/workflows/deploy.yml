@@ -311,8 +311,8 @@ jobs:
           fi
           grep -F 'Production server intake is open' \
             _site/submit/index.html
-          grep -F 'OVERLAP_START_UTC' _site/submit/index.html
-          grep -F 'EARLIEST_ISSUE_CLOSE_UTC' _site/submit/index.html
+          grep -F '2026-09-02T06:57:10Z' _site/submit/index.html
+          grep -F '2026-09-30T06:57:10Z' _site/submit/index.html
           grep -F 'remains available as a fallback' \
             _site/submit/index.html
           grep -F 'no earlier than four weeks' _site/submit/index.html
