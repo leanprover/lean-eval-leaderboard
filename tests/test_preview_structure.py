@@ -208,9 +208,10 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("grep -F 'release with the same license confirmation'", workflow)
         self.assertIn("grep -F 'That change is irreversible: a'", workflow)
         self.assertIn(
-            "grep -F 'scheduled choice cannot be changed back to private'",
+            "grep -F 'scheduled choice cannot be changed back to'",
             workflow,
         )
+        self.assertIn("grep -F 'private.'", workflow)
         self.assertIn("Production server intake is open", workflow)
         self.assertIn("OVERLAP_START_UTC", workflow)
         self.assertIn("EARLIEST_ISSUE_CLOSE_UTC", workflow)

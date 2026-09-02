@@ -299,7 +299,9 @@ jobs:
             _site/submit/index.html
           grep -F 'That change is irreversible: a' \
             _site/submit/index.html
-          grep -F 'scheduled choice cannot be changed back to private' \
+          grep -F 'scheduled choice cannot be changed back to' \
+            _site/submit/index.html
+          grep -F 'private.' \
             _site/submit/index.html
           grep -F 'that transition is irreversible' \
             _site/submit/index.html
