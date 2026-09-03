@@ -275,15 +275,13 @@ jobs:
             echo "::error::The compatibility route leaked into canonical group navigation."
             exit 1
           fi
-          grep -F 'https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml' \
+          grep -F 'https://lean-eval-submission-server.lean-eval.workers.dev/' \
+            _site/submit/index.html
+          grep -F 'https://github.com/apps/lean-eval-source-reader' \
             _site/submit/index.html
           grep -F 'https://github.com/apps/lean-eval-bot' \
             _site/submit/index.html
-          if grep -F 'https://github.com/apps/lean-eval-source-reader' \
-              _site/submit/index.html; then
-            echo "::error::The paused page still asks for the inactive server App."
-            exit 1
-          fi
+          grep -F 'GitHub OAuth callbacks' _site/submit/index.html
           grep -F 'two UTC calendar months after acceptance' _site/submit/index.html
           grep -F 'automatically publishes' _site/submit/index.html
           grep -F 'Apache License 2.0' _site/submit/index.html
@@ -308,27 +306,27 @@ jobs:
             echo "::error::The submit page still offers publication revocation."
             exit 1
           fi
-          grep -F 'Production server intake is temporarily paused' \
+          grep -F 'Production server intake is open' \
             _site/submit/index.html
           grep -F '2026-09-02T06:57:10Z' _site/submit/index.html
           grep -F '2026-09-30T06:57:10Z' _site/submit/index.html
-          grep -F 'remains available for submissions' \
+          grep -F 'remains available as a fallback' \
             _site/submit/index.html
           grep -F 'no earlier than four weeks' _site/submit/index.html
           grep -F 'Any closure will be announced at least two' \
             _site/submit/index.html
           grep -F 'weeks in advance.' \
             _site/submit/index.html
-          grep -F 'Submit through the GitHub issue form' \
+          grep -F 'Continue to secure submission service' \
             _site/submit/index.html
-          if grep -F 'Production server intake is open' \
+          if grep -F 'Production server intake is temporarily paused' \
               _site/submit/index.html; then
-            echo "::error::The submit page incorrectly says paused server intake is open."
+            echo "::error::The launch submit page still says server intake is paused."
             exit 1
           fi
-          if grep -F 'Continue to secure submission service' \
+          if grep -F 'Submit through the GitHub issue form' \
               _site/submit/index.html; then
-            echo "::error::The paused submit page still makes server intake primary."
+            echo "::error::The launch submit page still makes issue intake primary."
             exit 1
           fi
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
