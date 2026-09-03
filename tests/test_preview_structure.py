@@ -69,7 +69,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
 
-    def test_submit_page_makes_server_primary_and_keeps_issue_fallback(self) -> None:
+    def test_submit_page_reports_pause_and_makes_issue_intake_primary(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
         worker = "https://lean-eval-submission-server.lean-eval.workers.dev/"
         issue_form = (
@@ -78,26 +78,24 @@ class PreviewStructureTests(unittest.TestCase):
         )
         submit_copy = copy[copy.index("/-! ## Submit page") :]
         normalized_copy = copy.replace("\n  ", " ")
-        self.assertIn(worker, copy)
         self.assertIn(issue_form, copy)
-        self.assertIn("Production server intake is open", copy)
+        self.assertIn("Production server intake is temporarily paused", copy)
         self.assertIn("2026-09-02T06:57:10Z", copy)
         self.assertIn("2026-09-30T06:57:10Z", copy)
-        self.assertIn("remains available as a fallback", copy)
+        self.assertIn("remains available for submissions", copy)
         self.assertIn("no earlier than four weeks", copy)
         self.assertIn("Any closure will be announced at least two", copy)
         self.assertIn("weeks in advance.", copy)
-        self.assertIn("Continue to secure submission service", copy)
+        self.assertIn("Submit through the GitHub issue form", copy)
         self.assertIn(
-            'def submitCtaUrl    : String :=\n  "' + worker + '"',
-            copy,
-        )
-        self.assertNotIn(
             'def submitCtaUrl    : String :=\n  "' + issue_form + '"',
             copy,
         )
+        self.assertNotIn(
+            'def submitCtaUrl    : String :=\n  "' + worker + '"',
+            copy,
+        )
         self.assertNotRegex(submit_copy, r"\b20\d{2}-\d{2}-\d{2}\b")
-        self.assertIn("GitHub OAuth callbacks", copy)
         self.assertIn("private encrypted archive", copy)
         self.assertIn("two UTC calendar months after acceptance", copy)
         self.assertIn("automatically publishes", copy)
@@ -132,13 +130,13 @@ class PreviewStructureTests(unittest.TestCase):
             copy,
         )
         self.assertIn(
-            "https://github.com/apps/lean-eval-source-reader",
+            "https://github.com/apps/lean-eval-bot",
             copy,
         )
         self.assertIn("40-character source commit", copy)
         self.assertIn("require a private GitHub repository", copy)
         self.assertNotIn("Public repositories need no extra setup", copy)
-        self.assertNotIn("https://github.com/apps/lean-eval-bot", copy)
+        self.assertNotIn("https://github.com/apps/lean-eval-source-reader", copy)
         self.assertNotIn("Secret (unlisted) gists", copy)
 
     def test_client_renders_current_replay_measurement_fields(self) -> None:
@@ -212,14 +210,14 @@ class PreviewStructureTests(unittest.TestCase):
             workflow,
         )
         self.assertIn("grep -F 'private.'", workflow)
-        self.assertIn("Production server intake is open", workflow)
+        self.assertIn("Production server intake is temporarily paused", workflow)
         self.assertIn("2026-09-02T06:57:10Z", workflow)
         self.assertIn("2026-09-30T06:57:10Z", workflow)
         self.assertIn("no earlier than four weeks", workflow)
         self.assertIn("Any closure will be announced at least two", workflow)
         self.assertIn("weeks in advance.", workflow)
-        self.assertIn("launch submit page still says server intake is disabled", workflow)
-        self.assertIn("launch submit page still makes issue intake primary", workflow)
+        self.assertIn("submit page incorrectly says paused server intake is open", workflow)
+        self.assertIn("paused submit page still makes server intake primary", workflow)
         self.assertIn(".historical_replay_series | type == \"array\"", workflow)
         self.assertIn(".historical_replay_unavailability | type == \"array\"", workflow)
         self.assertIn("_site/site-data/public-state.json", workflow)

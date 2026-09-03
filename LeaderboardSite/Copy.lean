@@ -269,15 +269,13 @@ def submitTitle : String := "Submit"
 def submitLeadBody : VersoDoc Page :=
   verso (Page) "submitLead"
   :::
-  Production server intake is open. Use this page to prepare your source, then
-  continue to the authenticated submission application at
-  [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
-  This separate origin is intentional: GitHub OAuth callbacks and the
-  application session are scoped to the Worker that handles private intake.
+  Production server intake is temporarily paused while its source-access
+  admission check is repaired. Do not use the authenticated submission
+  application until this notice is removed.
 
   The launch overlap starts at `2026-09-02T06:57:10Z`. The
   [GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  remains available as a fallback through at least
+  remains available for submissions through at least
   `2026-09-30T06:57:10Z`, no earlier than four weeks after the overlap
   begins, and may stay open longer. Any closure will be announced at least two
   weeks in advance.
@@ -294,21 +292,20 @@ def submitStep1Body : VersoDoc Page :=
   :::
   Authenticated submissions require a private GitHub repository in
   `owner/repository` form and the exact 40-character source commit to evaluate.
-  Before submitting,
-  [install the Lean Eval Source Reader GitHub App](https://github.com/apps/lean-eval-source-reader)
-  on that repository so LeanEval can clone it.
+  During the server pause, private issue-form submissions instead require the
+  [lean-eval-bot GitHub App](https://github.com/apps/lean-eval-bot)
+  on that repository so the existing issue workflow can clone it.
   :::
 
-def submitStep2Title  : String := "2. Submit through the authenticated application"
+def submitStep2Title  : String := "2. Submit through the issue form during the pause"
 def submitStep2HtmlId : String := "step-2"
 
 def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
-  [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
-  and sign in with GitHub. Choose the source and identify the model or system
-  that produced the proof. The application walks the submitted source and
-  tries every directory containing a
+  [Continue to the GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
+  and identify the model or system that produced the proof. LeanEval walks the
+  submitted source and tries every directory containing a
   `lakefile.toml` whose `name` field matches a benchmark problem id, and
   which has a `Submission.lean` next to it. For example:
 
@@ -386,16 +383,16 @@ paragraph splices a `<code>` and an `<a>` mid-sentence, so its prose is
 broken into chunks rather than authored as a single string. -/
 
 def submitCtaUrl    : String :=
-  "https://lean-eval-submission-server.lean-eval.workers.dev/"
+  "https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml"
 def submitCtaLabel  : String :=
-  "Continue to secure submission service"
+  "Submit through the GitHub issue form"
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Sign in with GitHub and choose the exact source snapshot containing each matching "
+  "Provide a source URL containing each matching "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
-  ". Confirm the archive and release terms. LeanEval verifies each proof with "
+  ". Complete the issue form's archive and publication choices. LeanEval verifies each proof with "
 def submitTldrComparatorLabel : String := "comparator"
 def submitTldrComparatorUrl   : String :=
   "https://github.com/leanprover/comparator"
