@@ -308,15 +308,6 @@ jobs:
           fi
           grep -F 'Production server intake is open' \
             _site/submit/index.html
-          grep -F '2026-09-02T06:57:10Z' _site/submit/index.html
-          grep -F '2026-09-30T06:57:10Z' _site/submit/index.html
-          grep -F 'remains available as a fallback' \
-            _site/submit/index.html
-          grep -F 'no earlier than four weeks' _site/submit/index.html
-          grep -F 'Any closure will be announced at least two' \
-            _site/submit/index.html
-          grep -F 'weeks in advance.' \
-            _site/submit/index.html
           grep -F 'Continue to secure submission service' \
             _site/submit/index.html
           if grep -F 'Production server intake is temporarily paused' \
@@ -324,11 +315,17 @@ jobs:
             echo "::error::The launch submit page still says server intake is paused."
             exit 1
           fi
-          if grep -F 'Submit through the GitHub issue form' \
-              _site/submit/index.html; then
-            echo "::error::The launch submit page still makes issue intake primary."
-            exit 1
-          fi
+          for retired_copy in \
+              'issues/new?template=submit.yml' \
+              'remains available as a fallback' \
+              'fallback issue-intake' \
+              '2026-09-02T06:57:10Z' \
+              '2026-09-30T06:57:10Z'; do
+            if grep -F "$retired_copy" _site/submit/index.html; then
+              echo "::error::The submit page still contains retired issue-intake copy: $retired_copy"
+              exit 1
+            fi
+          done
           grep -F '<a href="https://lean-lang.org/eval/">return to the leaderboard</a>' \
             _site/submit/index.html
           jq --exit-status '.preview.kind == "results-v2-compatibility"' \
