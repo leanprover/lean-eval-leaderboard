@@ -274,13 +274,6 @@ def submitLeadBody : VersoDoc Page :=
   [lean-eval-submission-server.lean-eval.workers.dev](https://lean-eval-submission-server.lean-eval.workers.dev/).
   This separate origin is intentional: GitHub OAuth callbacks and the
   application session are scoped to the Worker that handles private intake.
-
-  The launch overlap starts at `2026-09-02T06:57:10Z`. The
-  [GitHub issue form](https://github.com/leanprover/lean-eval-submissions/issues/new?template=submit.yml)
-  remains available as a fallback through at least
-  `2026-09-30T06:57:10Z`, no earlier than four weeks after the overlap
-  begins, and may stay open longer. Any closure will be announced at least two
-  weeks in advance.
   After submitting, you can
   [return to the leaderboard](https://lean-lang.org/eval/).
   :::
@@ -360,10 +353,6 @@ def submitWhatPublicHtmlId : String := "what-becomes-public"
 def submitWhatPublicBody : VersoDoc Page :=
   verso (Page) "submitWhatPublic"
   :::
-  The following release policy applies to submissions made through the
-  authenticated application. Submissions through the fallback issue-intake
-  path retain their existing policy.
-
   Submission metadata and evaluation results may become public when the result
   is recorded. Private source remains in the encrypted archive during the
   release delay.

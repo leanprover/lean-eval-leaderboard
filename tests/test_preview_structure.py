@@ -69,7 +69,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
 
-    def test_submit_page_makes_server_primary_and_requires_both_apps(self) -> None:
+    def test_submit_page_uses_only_server_intake_and_requires_both_apps(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
         worker = "https://lean-eval-submission-server.lean-eval.workers.dev/"
         issue_form = (
@@ -79,14 +79,14 @@ class PreviewStructureTests(unittest.TestCase):
         submit_copy = copy[copy.index("/-! ## Submit page") :]
         normalized_copy = copy.replace("\n  ", " ")
         self.assertIn(worker, copy)
-        self.assertIn(issue_form, copy)
+        self.assertNotIn(issue_form, copy)
         self.assertIn("Production server intake is open", copy)
-        self.assertIn("2026-09-02T06:57:10Z", copy)
-        self.assertIn("2026-09-30T06:57:10Z", copy)
-        self.assertIn("remains available as a fallback", copy)
-        self.assertIn("no earlier than four weeks", copy)
-        self.assertIn("Any closure will be announced at least two", copy)
-        self.assertIn("weeks in advance.", copy)
+        self.assertNotIn("2026-09-02T06:57:10Z", copy)
+        self.assertNotIn("2026-09-30T06:57:10Z", copy)
+        self.assertNotIn("remains available as a fallback", copy)
+        self.assertNotIn("no earlier than four weeks", copy)
+        self.assertNotIn("Any closure will be announced", copy)
+        self.assertNotIn("fallback issue-intake", copy)
         self.assertIn("Continue to secure submission service", copy)
         self.assertIn(
             'def submitCtaUrl    : String :=\n  "' + worker + '"',
@@ -212,13 +212,13 @@ class PreviewStructureTests(unittest.TestCase):
         )
         self.assertIn("grep -F 'private.'", workflow)
         self.assertIn("Production server intake is temporarily paused", workflow)
+        self.assertIn("issues/new?template=submit.yml", workflow)
+        self.assertIn("remains available as a fallback", workflow)
+        self.assertIn("fallback issue-intake", workflow)
         self.assertIn("2026-09-02T06:57:10Z", workflow)
         self.assertIn("2026-09-30T06:57:10Z", workflow)
-        self.assertIn("no earlier than four weeks", workflow)
-        self.assertIn("Any closure will be announced at least two", workflow)
-        self.assertIn("weeks in advance.", workflow)
         self.assertIn("launch submit page still says server intake is paused", workflow)
-        self.assertIn("launch submit page still makes issue intake primary", workflow)
+        self.assertIn("retired issue-intake copy", workflow)
         self.assertIn(".historical_replay_series | type == \"array\"", workflow)
         self.assertIn(".historical_replay_unavailability | type == \"array\"", workflow)
         self.assertIn("_site/site-data/public-state.json", workflow)
