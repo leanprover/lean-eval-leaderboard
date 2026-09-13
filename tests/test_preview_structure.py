@@ -102,10 +102,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("automatically publishes", copy)
         self.assertIn("Apache License 2.0", copy)
         self.assertIn("3. Confirm the release terms", copy)
-        self.assertIn(
-            "The authenticated submission action includes",
-            normalized_copy,
-        )
+        self.assertIn("requires you to confirm", normalized_copy)
         self.assertIn(
             "Scheduled release is recommended and selected by default",
             normalized_copy,
@@ -136,7 +133,10 @@ class PreviewStructureTests(unittest.TestCase):
         )
         self.assertIn("https://github.com/apps/lean-eval-bot", copy)
         self.assertIn("40-character source commit", copy)
-        self.assertIn("require a private GitHub repository", copy)
+        self.assertIn("public or private GitHub repository", copy)
+        self.assertIn("evaluates only the selected problem", copy)
+        self.assertIn("resolves the problem group", normalized_copy)
+        self.assertIn("at most four active submissions", normalized_copy)
         self.assertNotIn("Public repositories need no extra setup", copy)
         self.assertNotIn("Secret (unlisted) gists", copy)
 
