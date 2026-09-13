@@ -292,7 +292,7 @@ def submitStep1HtmlId : String := "step-1"
 def submitStep1Body : VersoDoc Page :=
   verso (Page) "submitStep1"
   :::
-  Authenticated submissions require a private GitHub repository in
+  Authenticated submissions accept a public or private GitHub repository in
   `owner/repository` form and the exact 40-character source commit to evaluate.
   Before submitting, install both read-only GitHub Apps on that one repository:
 
@@ -309,20 +309,22 @@ def submitStep2Body : VersoDoc Page :=
   verso (Page) "submitStep2"
   :::
   [Continue to the secure submission service](https://lean-eval-submission-server.lean-eval.workers.dev/)
-  and sign in with GitHub. Choose the source and identify the model or system
-  that produced the proof. The application walks the submitted source and
-  tries every directory containing a
-  `lakefile.toml` whose `name` field matches a benchmark problem id, and
-  which has a `Submission.lean` next to it. For example:
+  and sign in with GitHub. Enter one problem id, choose the exact source, and
+  identify the model or system that produced the proof. LeanEval resolves the
+  problem group and current statement revision from the protected catalog.
+  Formalization problems must be visible and active; software-verification
+  problems may be visible and draft or active.
+
+  The source may be:
 
   - a clone of a single generated workspace from
     [leanprover/lean-eval/generated/](https://github.com/leanprover/lean-eval/tree/main/generated)
   - a fork of leanprover/lean-eval itself with your proofs under the
     relevant `generated/<problem_id>/` directories
-  - a custom repository containing several benchmark workspaces side by
-    side
+  - a custom repository containing several benchmark workspaces side by side
 
-  For each matched directory LeanEval overlays only your `Submission.lean`
+  LeanEval evaluates only the selected problem. For its matching directory,
+  LeanEval overlays only your `Submission.lean`
   and any files under `Submission/**/*.lean` onto a pristine copy of the
   benchmark's workspace for that problem. Every other file in your
   submission is ignored, including `Solution.lean`, `Challenge.lean`, or
@@ -333,7 +335,9 @@ def submitStep2Body : VersoDoc Page :=
   Before evaluation, LeanEval records the exact source revision and digest
   and stores a private encrypted archive bound to that submission. Submission
   source and credentials are not exposed through public workflow artifacts or
-  logs.
+  logs. An exact resubmission by the same owner returns the original receipt
+  instead of starting duplicate work. Each owner may have at most four active
+  submissions.
   :::
 
 def submitStep3Title  : String := "3. Confirm the release terms"
@@ -342,16 +346,25 @@ def submitStep3HtmlId : String := "step-3"
 def submitStep3Body : VersoDoc Page :=
   verso (Page) "submitStep3"
   :::
-  The authenticated submission action includes this acknowledgement:
+  The authenticated submission action requires you to confirm all of the
+  following:
 
-  > By submitting, I confirm that I have authority to provide this source. I authorize Lean Eval to store and run it privately for evaluation and publish evaluation metadata and results. I will not submit secrets or material I am not authorized to disclose. If I choose scheduled release, I also confirm that I have authority to license the accepted source under the Apache License 2.0 and authorize Lean Eval to publish it two UTC calendar months after acceptance.
+  - you are authorized to submit the exact source and metadata
+  - LeanEval may privately fetch, archive, build, and execute the exact commit
+  - the encrypted archive may be retained indefinitely, including when
+    evaluation rejects or fails
+  - the result and submitted metadata may be displayed publicly, and the
+    submission contains no secrets
+  - if scheduled, accepted source will be published under Apache License 2.0
+    exactly two UTC calendar months after acceptance
+  - if initially withheld, later scheduling is irreversible
 
   Scheduled release is recommended and selected by default. You may instead
-  choose to keep accepted source private; the public result remains visible
+  choose to keep accepted source from a private repository private; the public result remains visible
   with its solution marked as withheld. If the initial choice is private, you
   may later authorize scheduled release with the same license confirmation.
   That change is irreversible: a scheduled choice cannot be changed back to
-  private.
+  private. A public repository must use scheduled release.
   :::
 
 def submitWhatPublicTitle  : String := "What becomes public, and when"
@@ -395,7 +408,7 @@ def submitCtaLabel  : String :=
 def submitCtaArrow  : String := " →"
 
 def submitTldrPart1 : String :=
-  "Sign in with GitHub and choose the exact source snapshot containing each matching "
+  "Sign in with GitHub and choose one problem and the exact source snapshot containing its "
 def submitTldrCode1 : String := "Submission.lean"
 def submitTldrPart2 : String :=
   ". Confirm the archive and release terms. LeanEval verifies each proof with "
