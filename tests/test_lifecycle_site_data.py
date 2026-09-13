@@ -360,6 +360,7 @@ class LifecycleProjectionTests(unittest.TestCase):
                 "url": None,
             },
         )
+
         withheld = copy.deepcopy(raw)
         withheld["results"][0]["release"] = None
         self.assertEqual(
@@ -413,6 +414,55 @@ class LifecycleProjectionTests(unittest.TestCase):
         )
         self.assertEqual(released.release["status"], "released")
         self.assertEqual(released.release["url"], release_url)
+
+    def test_public_state_projection_accepts_counter_not_reported(self) -> None:
+        raw = {
+            "schema_version": 1,
+            "environment": "production",
+            "source_state_commit": "e" * 40,
+            "source_event_count": 8,
+            "source_digest": "f" * 64,
+            "results": [{
+                "result_id": result_id("alice", "Example Model Revision A", "alpha", 1),
+                "problem_id": "alpha",
+                "statement_revision": 1,
+                "declared_model": "Example Model Revision A",
+                "submitter": "alice",
+                "accepted_at": "2026-08-20T00:00:00Z",
+                "acceptance_event_id": "0198abcd-0000-7000-8000-000000000001",
+                "recorded_at": "2026-08-20T00:00:01Z",
+                "record_event_id": "0198abcd-0000-7000-8000-000000000002",
+                "benchmark_commit": "a" * 40,
+                "production_metadata": {},
+                "replay": {
+                    "status": "accepted",
+                    "reason": None,
+                    "attempt": 1,
+                    "checker": "lean4lean",
+                    "checker_wall_time_ms": 20,
+                    "checker_retired_instructions": None,
+                    "checker_retired_instructions_unavailable_reason": "counter_not_reported",
+                    "build_wall_time_ms": 40,
+                    "build_retired_instructions": None,
+                    "build_retired_instructions_unavailable_reason": "counter_not_reported",
+                    "lines_of_code": 12,
+                    "file_count": 1,
+                },
+                "release": {
+                    "status": "scheduled",
+                    "release_at": "2026-10-20T00:00:00Z",
+                    "reason": None,
+                },
+                "public_solution": {"available": False, "url": None},
+            }],
+        }
+
+        adapted = adapt_state_projection(raw, {})
+
+        self.assertEqual(
+            adapted[0].measurements[0]["checker_retired_instructions_unavailable_reason"],
+            "counter_not_reported",
+        )
 
     def test_public_state_projection_rejects_private_internal_fields(self) -> None:
         raw = {
