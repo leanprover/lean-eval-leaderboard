@@ -90,6 +90,7 @@ HISTORICAL_UNAVAILABLE_REASONS = {
     "execution_profile_permanently_unavailable",
 }
 COUNTER_UNAVAILABLE_REASONS = {
+    "counter_not_reported",
     "counter_not_supported", "counter_permission_denied",
 }
 HISTORICAL_REPLAY_SERIES_FIELDS = {
