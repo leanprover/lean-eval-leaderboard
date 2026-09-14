@@ -1333,28 +1333,21 @@ def build_lifecycle_projection(
     limitations: list[str] = []
     if not state_commit:
         limitations.append(
-            "The redacted production State projection was unavailable; base results were adapted and replay/release states are explicitly unavailable."
+            "Some result details are temporarily unavailable."
         )
     elif any(
         solution.provenance.get("source") == "base-results-store"
         for solution in solutions
     ):
         limitations.append(
-            "Results absent from modern State result materialization were adapted from the immutable base-results store. Historical replay or disposition evidence is applied where State supplies it; otherwise replay is explicitly unavailable, and release remains unavailable."
-        )
-    if not any(
-        lifecycle["status_history"] or lifecycle["statement_revisions"]
-        for lifecycle in problem_lifecycles.values()
-    ):
-        limitations.append(
-            "The pinned catalog records no lifecycle history for any visible problem; current fields are reported separately and no history entry is fabricated."
+            "Some older results do not include replay or source-release information."
         )
     published_model_aliases = list(model_aliases) or fixture.get(
         "model_aliases", []
     )
     if any(not solution.model_identity_reviewed for solution in solutions):
         limitations.append(
-            "Some results have no reviewed State model alias; their normalized declared model labels are used as fallback credit identities."
+            "The same model may appear under more than one name while model names are being consolidated."
         )
 
     files: dict[str, Any] = {}
@@ -1456,14 +1449,6 @@ def build_lifecycle_projection(
         problem_solutions = [item for item in solutions if item.problem_id == problem.id]
         lifecycle = problem_lifecycles[problem.id]
         problem_limitations = list(limitations)
-        if not lifecycle["status_history"]:
-            problem_limitations.append(
-                "No status transition history is recorded for this problem; current_status is reported separately and no history entry is fabricated."
-            )
-        if not lifecycle["statement_revisions"]:
-            problem_limitations.append(
-                "No statement revision history is recorded for this problem; statement_revision is reported separately and no history entry is fabricated."
-            )
         files[f"v2/problems/{problem.id}.json"] = {
             "schema_version": 2,
             "generated_at": generated_at,

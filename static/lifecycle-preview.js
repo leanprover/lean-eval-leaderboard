@@ -49,8 +49,8 @@
 
   function limitations(items) {
     if (!items || !items.length) return null;
-    return node("aside", { className: "lifecycle-limitations", "aria-label": "Preview data limitations" }, [
-      heading(2, "Data limitations"),
+    return node("aside", { className: "lifecycle-limitations", "aria-label": "About these results" }, [
+      heading(2, "About these results"),
       node("ul", {}, items.map(function (item) { return node("li", { text: item }); }))
     ]);
   }
@@ -143,30 +143,35 @@
     return node("span", { className: "lifecycle-tag", text: tag });
   }
 
-  function problemsTable(problems) {
+  function problemsTable(problems, showLifecycleColumns) {
     var body = node("tbody");
     problems.forEach(function (problem) {
       var tags = node("div", { className: "lifecycle-tag-list" }, problem.tags.map(tagChip));
-      body.appendChild(node("tr", {}, [
+      var cells = [
         node("th", { scope: "row" }, [node("a", { href: problem.url, text: problem.title })]),
-        node("td", { text: problem.status }),
-        node("td", {}, [tags]),
-        node("td", { text: "r" + problem.statement_revision })
-      ]));
+        node("td", {}, [tags])
+      ];
+      if (showLifecycleColumns) {
+        cells.splice(1, 0, node("td", { text: problem.status }));
+        cells.push(node("td", { text: "r" + problem.statement_revision }));
+      }
+      body.appendChild(node("tr", {}, cells));
     });
     if (!problems.length) {
-      body.appendChild(node("tr", {}, [node("td", { colspan: "4", text: "No problems match these filters." })]));
+      body.appendChild(node("tr", {}, [node("td", { colspan: showLifecycleColumns ? "4" : "2", text: "No problems match these filters." })]));
+    }
+    var headers = [node("th", { scope: "col", text: "Problem" }), node("th", { scope: "col", text: "Tags" })];
+    if (showLifecycleColumns) {
+      headers.splice(1, 0, node("th", { scope: "col", text: "Status" }));
+      headers.push(node("th", { scope: "col", text: "Statement" }));
     }
     return node("div", { className: "lifecycle-table-scroll" }, [node("table", { className: "lifecycle-table" }, [
-      node("caption", { text: "Problems in the selected scope" }),
-      node("thead", {}, [node("tr", {}, [
-        node("th", { scope: "col", text: "Problem" }), node("th", { scope: "col", text: "Status" }),
-        node("th", { scope: "col", text: "Tags" }), node("th", { scope: "col", text: "Statement" })
-      ])]), body
+      node("caption", { text: "Problems in the selected scope, alphabetically by title" }),
+      node("thead", {}, [node("tr", {}, headers)]), body
     ])]);
   }
 
-  function renderGroup(app, content, status, groupId) {
+  function renderGroup(app, content, status, groupId, view) {
     markGroupTab(groupId);
     fetchJson("site-data/v2/groups/" + encodeURIComponent(groupId) + ".json").then(function (data) {
       status.hidden = true;
@@ -175,6 +180,9 @@
       var scope = data.scopes.find(function (item) { return item.id === scopeId; }) || data.scopes[0];
       var sortKey = ["unique", "first", "total"].indexOf(params.get("sort")) >= 0 ? params.get("sort") : "unique";
       var selectedTags = new Set((params.get("tags") || "").split(",").filter(Boolean));
+      var showStandings = view !== "problems";
+      var showProblems = view !== "front";
+      var showPolicy = view !== "front" && view !== "problems";
 
       var title = heading(2, data.group.label);
       var policy = node("p", { className: "lifecycle-policy", text: data.group.policy });
@@ -198,12 +206,15 @@
         }));
         controls.appendChild(node("label", { text: "Scope " }, [scopeSelect]));
       }
-      var sortSelect = node("select", { id: "lifecycle-sort" }, ["unique", "first", "total"].map(function (key) {
-        var option = node("option", { value: key, text: key[0].toUpperCase() + key.slice(1) + " solves" });
-        option.selected = key === sortKey;
-        return option;
-      }));
-      controls.appendChild(node("label", { text: "Order " }, [sortSelect]));
+      var sortSelect = null;
+      if (showStandings) {
+        sortSelect = node("select", { id: "lifecycle-sort" }, ["unique", "first", "total"].map(function (key) {
+          var option = node("option", { value: key, text: key[0].toUpperCase() + key.slice(1) + " solves" });
+          option.selected = key === sortKey;
+          return option;
+        }));
+        controls.appendChild(node("label", { text: "Order " }, [sortSelect]));
+      }
       var tagFieldset = node("fieldset", { className: "lifecycle-tag-filter" }, [node("legend", { text: "Filter by tag" })]);
       data.tags.forEach(function (tag) {
         var checkbox = node("input", { type: "checkbox", value: tag.id, id: "tag-" + tag.id });
@@ -217,26 +228,38 @@
       function update() {
         scopeId = scopeSelect ? scopeSelect.value : scope.id;
         scope = data.scopes.find(function (item) { return item.id === scopeId; }) || scope;
-        sortKey = sortSelect.value;
+        sortKey = sortSelect ? sortSelect.value : "unique";
         selectedTags = new Set(Array.from(tagFieldset.querySelectorAll("input:checked")).map(function (input) { return input.value; }));
         var scoped = scopeProblemIds(scope, data.problems);
         var filtered = data.problems.filter(function (problem) {
           return scoped.has(problem.id + "@" + problem.statement_revision) && Array.from(selectedTags).every(function (tag) { return problem.tags.indexOf(tag) >= 0; });
+        }).sort(function (a, b) {
+          return a.title.localeCompare(b.title) || a.id.localeCompare(b.id);
         });
         var ids = new Set(filtered.map(function (problem) {
           return problem.id + "@" + problem.statement_revision;
         }));
-        standingsRoot.replaceChildren(
-          heading(3, "Model standings"),
-          standingsTable(computeStandings(data.credits, ids, sortKey), data.group.label, scope.label, sortKey)
-        );
-        problemsRoot.replaceChildren(heading(3, "Problems"), problemsTable(filtered));
+        if (showStandings) {
+          standingsRoot.replaceChildren(
+            heading(3, "Model standings"),
+            standingsTable(computeStandings(data.credits, ids, sortKey), data.group.label, scope.label, sortKey)
+          );
+        }
+        if (showProblems) {
+          problemsRoot.replaceChildren(
+            heading(3, "Problems"), problemsTable(filtered, view !== "problems")
+          );
+        }
         updateQuery({ scope: scope.id === data.default_scope ? "" : scope.id,
-          sort: sortKey === "unique" ? "" : sortKey,
+          sort: !showStandings || sortKey === "unique" ? "" : sortKey,
           tags: Array.from(selectedTags).sort().join(",") });
       }
       controls.addEventListener("change", update);
-      var children = [title, policy, controls, standingsRoot, problemsRoot];
+      var children = [title];
+      if (showPolicy) children.push(policy);
+      children.push(controls);
+      if (showStandings) children.push(standingsRoot);
+      if (showProblems) children.push(problemsRoot);
       var note = limitations(data.data_limitations);
       if (note) children.push(note);
       content.replaceChildren.apply(content, children);
@@ -294,37 +317,72 @@
     return list;
   }
 
-  function releaseFields(release) {
-    var fields = [["Release", release.status + (release.reason ? " · " + release.reason : "")]];
+  function releaseFields(release, metadata) {
+    var fields = [];
     if (release.status === "scheduled") {
-      fields.push(["Automatic release", release.release_at
-        ? formattedDate(release.release_at) + " · " + release.release_at
-        : null]);
+      fields.push(["Source", release.release_at
+        ? "Scheduled for " + formattedDate(release.release_at) + " (" + release.release_at + ")"
+        : "Scheduled for automatic publication"]);
+    } else if (release.status === "published") {
+      fields.push(["Source", "Published"]);
+    } else if (release.status === "withheld") {
+      fields.push(["Source", "Kept private"]);
+    } else if (metadata.solution_publication_status) {
+      var reported = metadata.solution_publication_status.value;
+      if (reported === "private") fields.push(["Source", "Kept private"]);
+      else if (reported === "published") fields.push(["Source", "Published by the submitter"]);
+      else if (reported === "planned") fields.push(["Source", "Publication planned by the submitter"]);
     }
     return fields;
+  }
+
+  function readableMetadataLabel(key) {
+    var labels = {
+      human_involvement: "Human involvement",
+      production_description: "How it was produced",
+      solution_publication_date: "Planned publication date"
+    };
+    return labels[key] || key.replace(/_/g, " ").replace(/^./, function (letter) {
+      return letter.toUpperCase();
+    });
+  }
+
+  function measurementDetails(measurement) {
+    var fields = [];
+    if (measurement.checker) fields.push(["Independent checker", measurement.checker]);
+    if (measurement.replay_status && measurement.replay_status !== "unavailable") {
+      fields.push(["Replay result", measurement.replay_status === "accepted" ? "Passed" : "Did not pass"]);
+    }
+    if (measurement.build_wall_time_ms !== null) {
+      fields.push(["Build time", (measurement.build_wall_time_ms / 1000).toLocaleString() + " seconds"]);
+    }
+    if (measurement.checker_wall_time_ms !== null) {
+      fields.push(["Checker time", (measurement.checker_wall_time_ms / 1000).toLocaleString() + " seconds"]);
+    }
+    if (measurement.build_retired_instructions !== null) {
+      fields.push(["CPU instructions used while building", measurement.build_retired_instructions.toLocaleString()]);
+    }
+    if (measurement.checker_retired_instructions !== null) {
+      fields.push(["CPU instructions used while checking", measurement.checker_retired_instructions.toLocaleString()]);
+    }
+    if (measurement.lines_of_code !== null) fields.push(["Lines of code", measurement.lines_of_code.toLocaleString()]);
+    if (measurement.file_count !== null) fields.push(["Files", measurement.file_count.toLocaleString()]);
+    return node("details", { className: "lifecycle-replay-details" }, [
+      node("summary", { text: "Independent replay details" }),
+      definitionList(fields)
+    ]);
   }
 
   function renderProblem(content, status, problemId) {
     fetchJson("site-data/v2/problems/" + encodeURIComponent(problemId) + ".json").then(function (data) {
       status.hidden = true;
-      var problem = data.problem;
-      markGroupTab(problem.group);
-      var historyEntries = data.lifecycle.status_history.map(function (entry) {
-        return node("li", { text: entry.status + (entry.effective_at ? " · " + formattedDate(entry.effective_at) : " · date unavailable") + (entry.reason ? " · " + entry.reason : "") });
-      });
-      if (!historyEntries.length) historyEntries.push(node("li", { text: "No recorded status transitions." }));
-      var history = node("ol", { className: "lifecycle-history" }, historyEntries);
-      var sets = node("ul", {}, data.sets.length ? data.sets.map(function (set) {
-        return node("li", { text: set.title + " · statement r" + set.statement_revision + (set.frozen ? " · frozen" : " · draft") });
-      }) : [node("li", { text: "No named set membership." })]);
       var solutions = node("div", { className: "lifecycle-solution-grid" });
       data.solutions.forEach(function (solution) {
+        var metadata = solution.metadata || {};
         var solutionFields = [
           ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
-          ["Credit", solution.first_solve ? "First solve" : "Accepted solve"],
-          ["Declared label", solution.canonical_credit.declared_label],
-          ["Replay", solution.replay.status + (solution.replay.reason ? " · " + solution.replay.reason : "")]
-        ].concat(releaseFields(solution.release));
+          ["Result", solution.first_solve ? "First accepted solution" : "Accepted solution"]
+        ].concat(releaseFields(solution.release, metadata));
         var card = node("article", { className: "lifecycle-solution-card" }, [
           heading(4, solution.canonical_credit.label),
           definitionList(solutionFields)
@@ -332,56 +390,27 @@
         if (solution.public_solution.available && solution.public_solution.url) {
           card.appendChild(node("p", {}, [node("a", { href: solution.public_solution.url, rel: "noopener", text: "Released solution" })]));
         }
-        var metadataKeys = Object.keys(solution.metadata || {});
+        var metadataKeys = Object.keys(metadata).filter(function (key) {
+          return key !== "solution_publication_status";
+        });
         if (metadataKeys.length) {
-          card.appendChild(heading(5, "Self-reported metadata"));
+          card.appendChild(heading(5, "Details supplied by the submitter"));
           metadataKeys.sort().forEach(function (key) {
-            var field = solution.metadata[key];
-            card.appendChild(definitionList([
-              [key.replace(/_/g, " "), field.value],
-              ["Provenance", field.provenance + (field.recorded_at ? " · " + formattedDate(field.recorded_at) : "")]
-            ]));
+            var field = metadata[key];
+            card.appendChild(definitionList([[readableMetadataLabel(key), field.value]]));
           });
         }
         if (solution.measurements.length) {
-          card.appendChild(heading(5, "Measurements"));
           solution.measurements.forEach(function (measurement) {
-            var measurementFields = [
-              ["Checker", measurement.checker],
-              ["Replay outcome", measurement.replay_status],
-              ["Performance counters", measurement.status]
-            ];
-            if (measurement.replay_reason) measurementFields.push(["Replay reason", measurement.replay_reason]);
-            if (measurement.measurement_config_digest) measurementFields.push(["Measurement series", measurement.measurement_config_digest]);
-            if (measurement.execution_profile_digest) measurementFields.push(["Execution profile", measurement.execution_profile_digest]);
-            if (measurement.updated_at) measurementFields.push(["Replay updated", formattedDate(measurement.updated_at)]);
-            measurementFields.push(
-              ["Checker wall time (ms)", measurement.checker_wall_time_ms],
-              ["Checker retired instructions", measurement.checker_retired_instructions],
-              ["Checker counter unavailable reason", measurement.checker_retired_instructions_unavailable_reason],
-              ["Build wall time (ms)", measurement.build_wall_time_ms],
-              ["Build retired instructions", measurement.build_retired_instructions],
-              ["Build counter unavailable reason", measurement.build_retired_instructions_unavailable_reason],
-              ["Lines of code", measurement.lines_of_code], ["File count", measurement.file_count]
-            );
-            card.appendChild(definitionList(measurementFields));
+            card.appendChild(measurementDetails(measurement));
           });
-        } else {
-          card.appendChild(node("p", { className: "lifecycle-unavailable", text: "Replay measurements unavailable." }));
         }
         solutions.appendChild(card);
       });
       if (!data.solutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
       var children = [
-        node("p", {}, [node("a", { href: problem.group + "/", text: "Back to " + problem.group })]),
-        heading(2, problem.title),
-        definitionList([["Problem id", problem.id], ["Group", problem.group], ["Status", problem.current_status],
-          ["Statement revision", problem.statement_revision], ["Author", problem.submitter], ["Module", problem.module]]),
-        heading(3, "Lifecycle"), history, heading(3, "Frozen sets"), sets,
-        heading(3, "Solutions and replay comparison"), solutions
+        heading(2, "Accepted solutions"), solutions
       ];
-      var note = limitations(data.data_limitations);
-      if (note) children.push(note);
       content.replaceChildren.apply(content, children);
     }).catch(function (error) { status.textContent = "Could not load this problem: " + error.message; });
   }
@@ -395,7 +424,7 @@
     var status = app.querySelector(".lifecycle-app-status");
     if (view === "recent") renderRecent(content, status);
     else if (view === "problem") renderProblem(content, status, identity);
-    else renderGroup(app, content, status, identity || "formalization-evaluation");
+    else renderGroup(app, content, status, identity || "formalization-evaluation", view);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);

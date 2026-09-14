@@ -1,5 +1,6 @@
 import Lean
 import VersoBlog
+import LeaderboardSite.Copy
 import LeaderboardSite.Data
 import LeaderboardSite.Pages.ProblemDetail
 
@@ -13,6 +14,7 @@ open Verso.Output Html
 namespace LeaderboardSite.Pages.Preview
 
 open LeaderboardSite.Data
+open LeaderboardSite.Copy
 
 private def textInline (text : String) : Inline Page := .text text
 private def textHtml (text : String) : Html := Html.text true text
@@ -39,39 +41,40 @@ private def groupTabs : Html := {{
 }}
 
 private def appShell (preview : Bool) (view : String) (identity : String := "") : Block Page :=
-  let heading := if preview then "LeanEval lifecycle-aware leaderboard preview" else "LeanEval leaderboard"
-  let description :=
+  let heading :=
+    if preview then "LeanEval lifecycle-aware leaderboard preview"
+    else if view == "problem" then "Accepted solutions"
+    else "LeanEval leaderboard"
+  let banner :=
     if preview then
-      "Preview of the lifecycle-aware leaderboard now available at the stable site routes."
-    else
-      "Lifecycle-aware standings, problem histories, recent solutions, and replay status."
-  let bannerLink :=
-    if preview then
-      {{<a href=".">{{textHtml "Current leaderboard"}}</a>}}
-    else
-      {{<a href="legacy/">{{textHtml "Legacy leaderboard"}}</a>}}
-  let badge :=
-    if preview then
-      {{<span class="lifecycle-preview-badge">{{textHtml "Preview"}}</span>}}
+      {{
+        <aside class="lifecycle-preview-banner">
+          <span class="lifecycle-preview-badge">{{textHtml "Preview"}}</span>
+          <div>
+            <p>{{textHtml "Preview of the current leaderboard pages."}}</p>
+          </div>
+          <a href=".">{{textHtml "Current leaderboard"}}</a>
+        </aside>
+      }}
     else
       .seq #[]
+  let noscriptText :=
+    if preview then
+      "This preview uses client-side tables. Enable JavaScript to inspect it."
+    else
+      "This page uses client-side tables. Enable JavaScript to view them."
+  let tabs := if view == "problem" then .seq #[] else groupTabs
   htmlBlob {{
     <section class="lifecycle-app wrap" data-lifecycle-app="true" data-lifecycle-view={{view}}
              data-lifecycle-identity={{identity}} aria-label={{heading}}>
-      <aside class="lifecycle-preview-banner">
-        {{badge}}
-        <div>
-          <p>{{textHtml description}}</p>
-        </div>
-        {{bannerLink}}
-      </aside>
-      {{groupTabs}}
+      {{banner}}
+      {{tabs}}
       <div class="lifecycle-app-status" role="status" aria-live="polite">
         {{textHtml "Loading leaderboard data…"}}
       </div>
       <div class="lifecycle-app-content"></div>
       <noscript>
-        <p>{{textHtml "This leaderboard uses client-side tables. Enable JavaScript to inspect it; the legacy leaderboard remains available from the link above."}}</p>
+        <p>{{textHtml noscriptText}}</p>
       </noscript>
     </section>
   }}
@@ -80,7 +83,8 @@ private def pagePart (preview : Bool) (title view : String) (identity : String :
   .mk #[textInline title] title none #[appShell preview view identity] #[]
 
 def _root_.LeaderboardSite.Pages.LifecycleFront : VersoDoc Page :=
-  .mk (fun _ => pagePart false "LeanEval leaderboard" "group" "formalization-evaluation") "{}"
+  .mk (fun _ => .mk #[textInline siteTitle] siteTitle none
+    (frontIntro.toPart.content ++ #[appShell false "front" "formalization-evaluation"]) #[]) "{}"
 
 def _root_.LeaderboardSite.Pages.LifecycleFormalization : VersoDoc Page :=
   .mk (fun _ => pagePart false "Formalization evaluation" "group" "formalization-evaluation") "{}"
@@ -101,7 +105,11 @@ def _root_.LeaderboardSite.Pages.LifecycleRecent : VersoDoc Page :=
   .mk (fun _ => pagePart false "Recent solutions" "recent") "{}"
 
 def _root_.LeaderboardSite.Pages.LifecycleProblems : VersoDoc Page :=
-  .mk (fun _ => pagePart false "Problems" "group" "formalization-evaluation") "{}"
+  .mk (fun _ => .mk #[textInline problemsTitle] problemsTitle none
+    #[
+      divBlock "wrap prose page-copy" problemsIntro.toPart.content,
+      appShell false "problems" "formalization-evaluation"
+    ] #[]) "{}"
 
 def _root_.LeaderboardSite.Pages.Preview : VersoDoc Page :=
   .mk (fun _ => pagePart true "Lifecycle-aware leaderboard preview" "group" "formalization-evaluation") "{}"
@@ -126,11 +134,16 @@ private def problemPart
     (title problemId : String)
     (notesText sourceText informalSolution : Option String)
     (anchors : Array (Block Page)) : Part Page :=
+  let backLink := htmlBlob {{
+    <p class="lifecycle-problem-back">
+      <a href="problems/">{{textHtml backToProblems}}</a>
+    </p>
+  }}
   let statement := divBlock "wrap prose lifecycle-problem-statement" <|
     #[headingBlock "Problem statement"] ++
       LeaderboardSite.Pages.ProblemDetail.problemStatementBlocks
         notesText sourceText informalSolution anchors
-  .mk #[textInline title] title none #[appShell preview "problem" problemId, statement] #[]
+  .mk #[textInline title] title none #[backLink, statement, appShell preview "problem" problemId] #[]
 
 private def previewPageName (namePrefix problemId : String) : Lean.Name :=
   ((`LeaderboardSite.Pages.Preview).str namePrefix).str problemId

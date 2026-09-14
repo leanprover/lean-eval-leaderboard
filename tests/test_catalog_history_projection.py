@@ -33,12 +33,12 @@ def project(problem):
 
 
 class CatalogHistoryProjectionTests(unittest.TestCase):
-    def test_client_handles_empty_history_and_calendar_dates(self) -> None:
+    def test_client_formats_calendar_dates_without_exposing_empty_history(self) -> None:
         client = (ROOT / "static" / "lifecycle-preview.js").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn("No recorded status transitions.", client)
+        self.assertNotIn("No recorded status transitions.", client)
         self.assertIn("Number(calendar[2]) - 1", client)
 
     def test_current_canonical_status_fixture_projects_real_history(self) -> None:
@@ -179,24 +179,13 @@ class CatalogHistoryProjectionTests(unittest.TestCase):
         self.assertEqual(payload["lifecycle"]["statement_revisions"], [])
         self.assertEqual(payload["problem"]["current_status"], "draft")
         self.assertEqual(payload["problem"]["statement_revision"], 1)
-        self.assertTrue(
-            any(
-                "no lifecycle history for any visible problem" in limitation
-                for limitation in files["v2/index.json"]["data_limitations"]
+        for limitations in (
+            files["v2/index.json"]["data_limitations"],
+            payload["data_limitations"],
+        ):
+            self.assertFalse(
+                any("history" in limitation for limitation in limitations)
             )
-        )
-        history_limitations = [
-            limitation
-            for limitation in payload["data_limitations"]
-            if "history is recorded" in limitation
-        ]
-        self.assertEqual(len(history_limitations), 2)
-        self.assertTrue(
-            all(
-                "no history entry is fabricated" in limitation
-                for limitation in history_limitations
-            )
-        )
 
 
 if __name__ == "__main__":

@@ -542,7 +542,7 @@ class LifecycleProjectionTests(unittest.TestCase):
         self.assertEqual(published_alias["model_id"], raw["model_identities"][0]["model_id"])
         self.assertFalse(
             any(
-                "no reviewed State model alias" in limitation
+                "same model may appear under more than one name" in limitation
                 for limitation in files["v2/index.json"]["data_limitations"]
             )
         )
@@ -570,7 +570,7 @@ class LifecycleProjectionTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                "no reviewed State model alias" in limitation
+                "same model may appear under more than one name" in limitation
                 for limitation in mixed_files["v2/index.json"]["data_limitations"]
             )
         )

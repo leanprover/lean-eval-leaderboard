@@ -25,13 +25,25 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("lifecycle_problem_pages%", site)
         self.assertIn("preview_problem_pages%", site)
         theme = (REPO_ROOT / "SiteTheme.lean").read_text()
+        style = (REPO_ROOT / "static/style.css").read_text()
         self.assertIn("isLegacyFront", theme)
         self.assertIn('"home-page legacy-page"', theme)
-        self.assertIn("LeanEval lifecycle-aware leaderboard", page)
+        self.assertIn(".legacy-page article > h1 { display: none; }", style)
+        self.assertNotIn(".home-page article > h1 { display: none; }", style)
+        self.assertIn("LeanEval lifecycle-aware leaderboard preview", page)
         self.assertIn('aria-live="polite"', page)
         self.assertIn("aria-label={{heading}}", page)
         self.assertNotIn('<h1 id="lifecycle-title">', page)
-        self.assertIn('href="legacy/"', page)
+        self.assertNotIn('href="legacy/"', page)
+        self.assertNotIn(
+            "Lifecycle-aware standings, problem histories, recent solutions, and replay status.",
+            page,
+        )
+        self.assertIn('appShell false "front"', page)
+        self.assertIn("frontIntro.toPart.content", page)
+        self.assertIn('appShell false "problems"', page)
+        self.assertIn("problemsIntro.toPart.content", page)
+        self.assertIn('divBlock "wrap prose page-copy" problemsIntro.toPart.content', page)
         self.assertIn('data-lifecycle-group-tab="open-problems"', page)
         self.assertNotIn('data-lifecycle-group-tab="open-conjectures"', page)
         self.assertNotIn("Open conjectures", page)
@@ -46,6 +58,8 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('headingBlock "Problem statement"', page)
         self.assertIn('"wrap prose lifecycle-problem-statement"', page)
         self.assertIn("problemStatementBlocks", page)
+        self.assertIn("#[backLink, statement, appShell", page)
+        self.assertIn('if view == "problem" then .seq #[] else groupTabs', page)
         self.assertIn("def problemStatementBlocks", detail)
         self.assertIn("optionalParagraph problemsNotesLabel notesText", detail)
         self.assertIn("sourceParagraph sourceText", detail)
@@ -68,6 +82,16 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('["unique", "first", "total"]', client)
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
+        self.assertIn('heading(2, "About these results")', client)
+        self.assertNotIn('heading(2, "Data limitations")', client)
+        self.assertIn('var showStandings = view !== "problems";', client)
+        self.assertIn('var showProblems = view !== "front";', client)
+        self.assertIn('var showPolicy = view !== "front" && view !== "problems";', client)
+        self.assertIn('problemsTable(filtered, view !== "problems")', client)
+        self.assertIn("a.title.localeCompare(b.title)", client)
+        self.assertIn(
+            "Problems in the selected scope, alphabetically by title", client
+        )
 
     def test_submit_page_makes_server_primary_and_requires_both_apps(self) -> None:
         copy = (REPO_ROOT / "LeaderboardSite/Copy.lean").read_text()
@@ -145,10 +169,8 @@ class PreviewStructureTests(unittest.TestCase):
         for field in (
             "checker_wall_time_ms",
             "checker_retired_instructions",
-            "checker_retired_instructions_unavailable_reason",
             "build_wall_time_ms",
             "build_retired_instructions",
-            "build_retired_instructions_unavailable_reason",
             "lines_of_code",
             "file_count",
         ):
@@ -161,11 +183,25 @@ class PreviewStructureTests(unittest.TestCase):
         client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
 
         self.assertIn('release.status === "scheduled"', client)
-        self.assertIn('["Automatic release", release.release_at', client)
+        self.assertIn('["Source", release.release_at', client)
         self.assertIn(
-            'formattedDate(release.release_at) + " · " + release.release_at',
+            'formattedDate(release.release_at) + " (" + release.release_at + ")"',
             client,
         )
+
+    def test_problem_page_leads_with_statement_and_hides_internal_catalog_state(self) -> None:
+        page = (REPO_ROOT / "LeaderboardSite/Pages/Preview.lean").read_text()
+        client = (REPO_ROOT / "static/lifecycle-preview.js").read_text()
+        style = (REPO_ROOT / "static/style.css").read_text()
+
+        self.assertIn("#[backLink, statement, appShell", page)
+        self.assertNotIn('heading(3, "Lifecycle")', client)
+        self.assertNotIn('heading(3, "Frozen sets")', client)
+        self.assertIn('heading(2, "Accepted solutions")', client)
+        self.assertNotIn("limitations(data.data_limitations)", client[client.index("function renderProblem") : client.index("function run")])
+        self.assertIn(".lifecycle-problem-statement .hl.lean.block", style)
+        self.assertIn("display: block;", style)
+        self.assertIn("white-space: pre;", style)
 
     def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
         sources = [
