@@ -106,7 +106,10 @@ def _root_.LeaderboardSite.Pages.LifecycleRecent : VersoDoc Page :=
 
 def _root_.LeaderboardSite.Pages.LifecycleProblems : VersoDoc Page :=
   .mk (fun _ => .mk #[textInline problemsTitle] problemsTitle none
-    (problemsIntro.toPart.content ++ #[appShell false "problems" "formalization-evaluation"]) #[]) "{}"
+    #[
+      divBlock "wrap prose page-copy" problemsIntro.toPart.content,
+      appShell false "problems" "formalization-evaluation"
+    ] #[]) "{}"
 
 def _root_.LeaderboardSite.Pages.Preview : VersoDoc Page :=
   .mk (fun _ => pagePart true "Lifecycle-aware leaderboard preview" "group" "formalization-evaluation") "{}"

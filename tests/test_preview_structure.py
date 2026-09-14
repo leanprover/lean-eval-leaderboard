@@ -43,6 +43,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("frontIntro.toPart.content", page)
         self.assertIn('appShell false "problems"', page)
         self.assertIn("problemsIntro.toPart.content", page)
+        self.assertIn('divBlock "wrap prose page-copy" problemsIntro.toPart.content', page)
         self.assertIn('data-lifecycle-group-tab="open-problems"', page)
         self.assertNotIn('data-lifecycle-group-tab="open-conjectures"', page)
         self.assertNotIn("Open conjectures", page)
