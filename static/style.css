@@ -1279,6 +1279,7 @@ nav.top .home { display: none; }
 .lifecycle-problem-statement .hl.lean.block,
 .theorem-card .hl.lean.block,
 .theorem-card-rendered .hl.lean.block {
+  display: block;
   margin: var(--space-4) 0 var(--space-6);
   padding: var(--space-5);
   background: var(--color-surface-soft);

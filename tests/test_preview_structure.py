@@ -199,6 +199,7 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('heading(2, "Accepted solutions")', client)
         self.assertNotIn("limitations(data.data_limitations)", client[client.index("function renderProblem") : client.index("function run")])
         self.assertIn(".lifecycle-problem-statement .hl.lean.block", style)
+        self.assertIn("display: block;", style)
         self.assertIn("white-space: pre;", style)
 
     def test_product_ui_uses_lifecycle_not_schema_terminology(self) -> None:
