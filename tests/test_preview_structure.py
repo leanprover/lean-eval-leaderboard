@@ -81,6 +81,8 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn('["unique", "first", "total"]', client)
         self.assertIn("recent-solutions.xml", client)
         self.assertIn("No open problems are published in this group yet.", client)
+        self.assertIn('heading(2, "About these results")', client)
+        self.assertNotIn('heading(2, "Data limitations")', client)
         self.assertIn('var showStandings = view !== "problems";', client)
         self.assertIn('var showProblems = view !== "front";', client)
         self.assertIn('var showPolicy = view !== "front" && view !== "problems";', client)

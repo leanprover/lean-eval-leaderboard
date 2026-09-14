@@ -49,8 +49,8 @@
 
   function limitations(items) {
     if (!items || !items.length) return null;
-    return node("aside", { className: "lifecycle-limitations", "aria-label": "Preview data limitations" }, [
-      heading(2, "Data limitations"),
+    return node("aside", { className: "lifecycle-limitations", "aria-label": "About these results" }, [
+      heading(2, "About these results"),
       node("ul", {}, items.map(function (item) { return node("li", { text: item }); }))
     ]);
   }
