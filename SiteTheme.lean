@@ -52,10 +52,8 @@ def theme (_name : String) (siteName : String) : Theme := {
     -- Verso emits a `<base href>` tag pointing at the site root, so all
     -- relative URLs in the page resolve against that base. Asset and nav
     -- hrefs below use plain relative paths (no leading `/` or `../`).
-    -- The home page emits its own wrappers (a full-width
-    -- `.leaderboard-root` for the hero/leaderboard plus a
-    -- `.wrap.prose.page-copy` for the intro prose), so the theme just
-    -- renders the content directly. Inner pages get the standard prose
+    -- Wide pages emit their own wrappers, so the theme renders their content
+    -- directly. Inner pages get the standard prose
     -- container from the theme.
     let pageCopy ←
       if isWide then

@@ -235,6 +235,16 @@ body::before {
   gap: var(--space-6);
 }
 
+.lifecycle-page article > h1,
+.preview-page article > h1 {
+  width: min(1120px, calc(100vw - 48px));
+  margin: 0 auto var(--space-6);
+  font-family: var(--font-secondary);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
 .lifecycle-app .lifecycle-preview-banner {
   width: 100%;
   margin-bottom: 0;
@@ -271,11 +281,17 @@ body::before {
 .lifecycle-app-content h3 { font-size: var(--fs-lg); }
 
 .lifecycle-problem-statement {
-  margin-top: var(--space-8);
+  margin-top: 0;
+  min-width: 0;
 }
 
 .lifecycle-problem-statement > h2 {
   font-size: var(--fs-xl);
+}
+
+.lifecycle-problem-back {
+  width: min(1120px, calc(100vw - 48px));
+  margin: 0 auto var(--space-4);
 }
 
 .lifecycle-policy,
@@ -430,7 +446,7 @@ body::before {
 
 .lifecycle-solution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
 }
 
@@ -438,6 +454,16 @@ body::before {
   display: grid;
   align-content: start;
   gap: var(--space-3);
+}
+
+.lifecycle-replay-details summary {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.lifecycle-replay-details .lifecycle-definition-list {
+  margin-top: var(--space-3);
 }
 
 .lifecycle-unavailable { color: var(--color-text-light); font-style: italic; }
@@ -1250,6 +1276,7 @@ nav.top .home { display: none; }
    ───────────────────────────────────────────────────────────────────────── */
 
 .page-copy .hl.lean.block,
+.lifecycle-problem-statement .hl.lean.block,
 .theorem-card .hl.lean.block,
 .theorem-card-rendered .hl.lean.block {
   margin: var(--space-4) 0 var(--space-6);
@@ -1263,6 +1290,13 @@ nav.top .home { display: none; }
   font-size: 0.92rem;
   color: var(--color-text);
   line-height: 1.55;
+  max-width: 100%;
+  white-space: pre;
+}
+
+.lifecycle-problem-statement .hole {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hl.lean.block code { color: inherit; }
@@ -1488,9 +1522,9 @@ main section.group-empty > h2::after {
   .page-copy { padding: var(--space-5) var(--space-5); }
 }
 
-/* Home page: hide the auto-generated <article><h1> title — the hero
-   panel renders its own styled <h1> in the right place. */
-.home-page article > h1 { display: none; }
+/* The retained legacy front page renders its own hero heading. Lifecycle
+   pages use their ordinary page title and must keep it visible. */
+.legacy-page article > h1 { display: none; }
 
 /* ─────────────────────────────────────────────────────────────────────────
    Components introduced after the initial reskin (coverage matrix, score
