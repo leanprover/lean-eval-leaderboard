@@ -184,8 +184,8 @@ key of the surrounding bucket.
 When the lean-eval CI records a successful submission:
 
 1. It reads `results/<login>.json`, or starts from an empty `solved` map.
-2. The submission carries one model name (the value of the issue form's
-   `Model` field). The CI uses that as the bucket key.
+2. The submission carries one declared model name. The CI uses that as the
+   bucket key.
 3. For each problem that passed in the submission:
    - If `solved[<model>][<problem_id>]` already exists, **do nothing** (sticky no-op).
    - Otherwise, create the model bucket if needed, and add a new record with
