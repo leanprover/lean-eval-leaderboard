@@ -381,6 +381,42 @@ body::before {
   vertical-align: top;
 }
 
+.lifecycle-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.lifecycle-sort-button:hover,
+.lifecycle-sort-button:focus-visible {
+  color: var(--color-primary);
+}
+
+.lifecycle-sort-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.lifecycle-sort-arrow {
+  min-width: 1em;
+  color: var(--color-text-light);
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.lifecycle-sort-button.is-active .lifecycle-sort-arrow {
+  color: currentColor;
+}
+
 .lifecycle-table thead th {
   color: var(--color-text-light);
   font-size: var(--fs-sm);

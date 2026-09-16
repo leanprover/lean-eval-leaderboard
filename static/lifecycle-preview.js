@@ -77,7 +77,7 @@
     }).map(function (problem) { return problem.id + "@" + problem.statement_revision; }));
   }
 
-  function computeStandings(credits, problemIds, sortKey) {
+  function computeStandings(credits, problemIds, sortKey, sortDirection) {
     var selected = credits.filter(function (credit) {
       return problemIds.has(credit.problem_id + "@" + credit.statement_revision);
     });
@@ -102,16 +102,38 @@
     var order = [sortKey].concat(["unique", "first", "total"].filter(function (key) {
       return key !== sortKey;
     }));
+    var direction = sortDirection === "asc" ? 1 : -1;
     return Array.from(rows.values()).sort(function (a, b) {
       for (var i = 0; i < order.length; i += 1) {
-        var difference = b.counts[order[i]] - a.counts[order[i]];
+        var difference = direction * (a.counts[order[i]] - b.counts[order[i]]);
         if (difference) return difference;
       }
       return a.label.localeCompare(b.label) || a.id.localeCompare(b.id);
     });
   }
 
-  function standingsTable(rows, groupLabel, scopeLabel, sortKey) {
+  function standingsSortHeader(label, key, sortKey, sortDirection, onSort) {
+    var active = key === sortKey;
+    var arrow = active ? (sortDirection === "asc" ? "↑" : "↓") : "↕";
+    var directionLabel = active ? sortDirection + "ending" : "descending";
+    var button = node("button", {
+      type: "button",
+      className: "lifecycle-sort-button" + (active ? " is-active" : ""),
+      "aria-label": "Sort by " + label.toLowerCase() + " solves, " + directionLabel,
+      title: "Sort by " + label.toLowerCase() + " solves"
+    }, [
+      document.createTextNode(label + " "),
+      node("span", { className: "lifecycle-sort-arrow", "aria-hidden": "true", text: arrow })
+    ]);
+    button.addEventListener("click", function () {
+      onSort(key, active && sortDirection === "desc" ? "asc" : "desc");
+    });
+    var attributes = { scope: "col" };
+    if (active) attributes["aria-sort"] = sortDirection === "asc" ? "ascending" : "descending";
+    return node("th", attributes, [button]);
+  }
+
+  function standingsTable(rows, groupLabel, scopeLabel, sortKey, sortDirection, onSort) {
     var body = node("tbody");
     rows.forEach(function (row, index) {
       body.appendChild(node("tr", {}, [
@@ -127,13 +149,13 @@
       body.appendChild(node("tr", {}, [node("td", { colspan: "6", text: "No accepted solves in this scope." })]));
     }
     return node("div", { className: "lifecycle-table-scroll" }, [node("table", { className: "lifecycle-table" }, [
-      node("caption", { text: groupLabel + " — " + scopeLabel + " standings; ordered by " + sortKey + " solves" }),
+      node("caption", { text: groupLabel + " — " + scopeLabel + " standings; ordered by " + sortKey + " solves, " + sortDirection + "ending" }),
       node("thead", {}, [node("tr", {}, [
         node("th", { scope: "col", text: "Rank" }),
         node("th", { scope: "col", text: "Credit identity" }),
-        node("th", { scope: "col", text: "Unique" }),
-        node("th", { scope: "col", text: "First" }),
-        node("th", { scope: "col", text: "Total" }),
+        standingsSortHeader("Unique", "unique", sortKey, sortDirection, onSort),
+        standingsSortHeader("First", "first", sortKey, sortDirection, onSort),
+        standingsSortHeader("Total", "total", sortKey, sortDirection, onSort),
         node("th", { scope: "col", text: "Submitters" })
       ])]), body
     ])]);
@@ -179,6 +201,7 @@
       var scopeId = params.get("scope") || data.default_scope;
       var scope = data.scopes.find(function (item) { return item.id === scopeId; }) || data.scopes[0];
       var sortKey = ["unique", "first", "total"].indexOf(params.get("sort")) >= 0 ? params.get("sort") : "unique";
+      var sortDirection = params.get("direction") === "asc" ? "asc" : "desc";
       var selectedTags = new Set((params.get("tags") || "").split(",").filter(Boolean));
       var showStandings = view !== "problems";
       var showProblems = view !== "front";
@@ -206,15 +229,6 @@
         }));
         controls.appendChild(node("label", { text: "Scope " }, [scopeSelect]));
       }
-      var sortSelect = null;
-      if (showStandings) {
-        sortSelect = node("select", { id: "lifecycle-sort" }, ["unique", "first", "total"].map(function (key) {
-          var option = node("option", { value: key, text: key[0].toUpperCase() + key.slice(1) + " solves" });
-          option.selected = key === sortKey;
-          return option;
-        }));
-        controls.appendChild(node("label", { text: "Order " }, [sortSelect]));
-      }
       var tagFieldset = node("fieldset", { className: "lifecycle-tag-filter" }, [node("legend", { text: "Filter by tag" })]);
       data.tags.forEach(function (tag) {
         var checkbox = node("input", { type: "checkbox", value: tag.id, id: "tag-" + tag.id });
@@ -228,7 +242,6 @@
       function update() {
         scopeId = scopeSelect ? scopeSelect.value : scope.id;
         scope = data.scopes.find(function (item) { return item.id === scopeId; }) || scope;
-        sortKey = sortSelect ? sortSelect.value : "unique";
         selectedTags = new Set(Array.from(tagFieldset.querySelectorAll("input:checked")).map(function (input) { return input.value; }));
         var scoped = scopeProblemIds(scope, data.problems);
         var filtered = data.problems.filter(function (problem) {
@@ -242,7 +255,18 @@
         if (showStandings) {
           standingsRoot.replaceChildren(
             heading(3, "Model standings"),
-            standingsTable(computeStandings(data.credits, ids, sortKey), data.group.label, scope.label, sortKey)
+            standingsTable(
+              computeStandings(data.credits, ids, sortKey, sortDirection),
+              data.group.label,
+              scope.label,
+              sortKey,
+              sortDirection,
+              function (key, direction) {
+                sortKey = key;
+                sortDirection = direction;
+                update();
+              }
+            )
           );
         }
         if (showProblems) {
@@ -252,12 +276,13 @@
         }
         updateQuery({ scope: scope.id === data.default_scope ? "" : scope.id,
           sort: !showStandings || sortKey === "unique" ? "" : sortKey,
+          direction: !showStandings || sortDirection === "desc" ? "" : sortDirection,
           tags: Array.from(selectedTags).sort().join(",") });
       }
       controls.addEventListener("change", update);
       var children = [title];
       if (showPolicy) children.push(policy);
-      children.push(controls);
+      if (controls.hasChildNodes()) children.push(controls);
       if (showStandings) children.push(standingsRoot);
       if (showProblems) children.push(problemsRoot);
       var note = limitations(data.data_limitations);
