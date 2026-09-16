@@ -1,4 +1,4 @@
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 import Mathlib.GroupTheory.Sylow
 import Mathlib.RepresentationTheory.Character
 

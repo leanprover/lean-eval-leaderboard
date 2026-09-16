@@ -1,6 +1,6 @@
 import Mathlib.Algebra.Group.Pointwise.Set.Basic
 import Mathlib.Algebra.MonoidAlgebra.MapDomain
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.GroupTheory.FreeGroup.Basic
 import Mathlib.SetTheory.Cardinal.Finite
 
