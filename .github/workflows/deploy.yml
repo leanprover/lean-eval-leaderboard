@@ -156,6 +156,13 @@ jobs:
               | sed 's|^BenchmarkProblems/||;s|\.lean$||' \
               | awk '{printf "+BenchmarkProblems.%s:highlighted\n", $1}'
           )
+          # Download TauCeti's build outputs instead of compiling it, for
+          # benchmark commits that ship the script (see lean-eval's
+          # scripts/fetch_dependency_caches.sh). GITHUB_ENV is cleared so the
+          # script prints the settings for this step rather than later ones.
+          if [ -f ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh ]; then
+            eval "$(GITHUB_ENV= bash ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh .)"
+          fi
           lake build BenchmarkProblems subverso-extract-mod "${highlighted_targets[@]}"
 
       - name: Produce and validate the redacted public State projection

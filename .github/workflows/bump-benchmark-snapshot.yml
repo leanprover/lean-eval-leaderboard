@@ -104,6 +104,13 @@ jobs:
           set -euo pipefail
           cd benchmark-snapshot
           lake update
+          # Download TauCeti's build outputs instead of compiling it, for
+          # benchmark commits that ship the script (see lean-eval's
+          # scripts/fetch_dependency_caches.sh). GITHUB_ENV is cleared so the
+          # script prints the settings for this step rather than later ones.
+          if [ -f ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh ]; then
+            eval "$(GITHUB_ENV= bash ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh .)"
+          fi
           lake build BenchmarkProblems
 
       - name: Commit and push if snapshot changed
