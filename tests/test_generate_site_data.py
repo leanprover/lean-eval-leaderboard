@@ -5,6 +5,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from scripts.generate_site_data import (
+    benchmark_snapshot_lakefile,
+    import_root,
     dedupe_universe_declarations,
     fetch_json_url,
     load_manifest,
@@ -92,6 +94,60 @@ class ResultOwnerBindingTests(unittest.TestCase):
             )
 
             self.assertEqual(load_results(root), [document])
+
+
+class SnapshotLakefileTests(unittest.TestCase):
+    LAKEFILE = """
+[[require]]
+name = "TauCeti"
+git = "https://github.com/TauCetiProject/TauCeti"
+rev = "9965de63baed364af97a4148480b71072a4d21e3"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "d13f23b723b8a846827a245b89c10fc7d3f11612"
+
+[[require]]
+name = "Cli"
+git = "https://github.com/leanprover/lean4-cli"
+"""
+
+    def render(self, import_roots: set[str]) -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "lakefile.toml").write_text(self.LAKEFILE, encoding="utf-8")
+            with patch(
+                "scripts.generate_site_data.consumer_subverso_rev", return_value="abc123"
+            ):
+                return benchmark_snapshot_lakefile(root, import_roots)
+
+    def test_imported_require_precedes_mathlib(self) -> None:
+        text = self.render({"Mathlib", "TauCeti"})
+        self.assertIn(
+            '[[require]]\nname = "TauCeti"\n'
+            'git = "https://github.com/TauCetiProject/TauCeti"\n'
+            'rev = "9965de63baed364af97a4148480b71072a4d21e3"\n\n'
+            '[[require]]\nname = "mathlib"\n',
+            text,
+        )
+        self.assertNotIn("Cli", text)
+
+    def test_import_root_ignores_comments_and_modifiers(self) -> None:
+        self.assertEqual(import_root("import TauCeti.Foo -- why"), "TauCeti")
+        self.assertEqual(import_root("public import TauCeti.Foo.Bar"), "TauCeti")
+        self.assertEqual(import_root("import Mathlib"), "Mathlib")
+        self.assertEqual(import_root("import all TauCeti.Foo--x"), "TauCeti")
+
+    def test_mathlib_only_snapshot_is_unchanged(self) -> None:
+        text = self.render({"Mathlib"})
+        self.assertNotIn("TauCeti", text)
+        self.assertTrue(
+            text.startswith(
+                'name = "benchmark-snapshot"\ndefaultTargets = ["BenchmarkProblems"]\n\n'
+                '[[require]]\nname = "mathlib"\n'
+            )
+        )
 
 
 class SnapshotTransformationTests(unittest.TestCase):

@@ -432,14 +432,74 @@ def consumer_subverso_rev() -> str:
     raise SystemExit(f"No subverso package in Verso's lake-manifest at {url}")
 
 
-def benchmark_snapshot_lakefile(benchmark_repo: pathlib.Path) -> str:
+IMPORT_LINE_RE = re.compile(r"^\s*(?:public\s+)?(?:meta\s+)?import\s+(?:all\s+)?(?P<module>[^\s-]+)")
+
+
+def import_root(line: str) -> str:
+    """The first component of the module named by an `import` line, ignoring a
+    trailing comment and any `public`/`meta`/`all` modifiers."""
+    match = IMPORT_LINE_RE.match(line)
+    if match is None:
+        raise SystemExit(f"Could not parse import line: {line!r}")
+    return match.group("module").split(".", 1)[0]
+
+
+def benchmark_extra_requires(
+    benchmark_repo: pathlib.Path, import_roots: set[str]
+) -> list[tuple[str, str, str]]:
+    """The benchmark's non-Mathlib git requires that some problem imports.
+
+    Mirrors lean-eval-generator's rule for generated workspaces: a require is
+    needed iff its name is the first component of an imported module (for
+    example `import TauCeti.Foo` needs the `TauCeti` require). Tooling requires
+    such as `Cli` are never imported by a problem, so they are left out.
+    Returned in the benchmark lakefile's order as `(name, git, rev)`."""
+    lakefile = benchmark_repo / "lakefile.toml"
+    data = tomllib.loads(lakefile.read_text(encoding="utf-8"))
+    extras: list[tuple[str, str, str]] = []
+    for req in data.get("require", []):
+        name = str(req.get("name", ""))
+        if name == "mathlib" or name not in import_roots:
+            continue
+        git, rev = req.get("git"), req.get("rev")
+        unsupported = sorted(set(req) - {"name", "git", "rev"})
+        if not (isinstance(git, str) and git.strip() and isinstance(rev, str) and rev.strip()):
+            raise SystemExit(f"{lakefile}: imported require {name!r} needs a git url and rev")
+        if unsupported:
+            raise SystemExit(
+                f"{lakefile}: imported require {name!r} uses unsupported fields {unsupported}"
+            )
+        extras.append((name, git.strip(), rev.strip()))
+    return extras
+
+
+def toml_string(value: str) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def benchmark_snapshot_lakefile(
+    benchmark_repo: pathlib.Path, import_roots: set[str] = frozenset()
+) -> str:
     mathlib_git, mathlib_rev = benchmark_mathlib_require(benchmark_repo)
     subverso_rev = consumer_subverso_rev()
+    # Extra requires come before Mathlib: Lake takes shared transitive
+    # dependencies (batteries, aesop, ...) from the later require, and those
+    # must be Mathlib's, as in the benchmark's own lakefile.
+    extra_lines: list[str] = []
+    for name, git, rev in benchmark_extra_requires(benchmark_repo, set(import_roots)):
+        extra_lines += [
+            "[[require]]",
+            f"name = {toml_string(name)}",
+            f"git = {toml_string(git)}",
+            f"rev = {toml_string(rev)}",
+            "",
+        ]
     return "\n".join(
         [
             'name = "benchmark-snapshot"',
             'defaultTargets = ["BenchmarkProblems"]',
             "",
+            *extra_lines,
             "[[require]]",
             'name = "mathlib"',
             f'git = "{mathlib_git}"',
@@ -885,9 +945,15 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
         shutil.rmtree(BENCHMARK_SNAPSHOT_ROOT)
     BENCHMARK_SNAPSHOT_ROOT.mkdir(parents=True, exist_ok=True)
 
+    import_roots = {
+        import_root(line)
+        for problem in problems
+        if problem.visible
+        for line in source_file_imports(benchmark_repo, problem.module)
+    }
     write_text(
         BENCHMARK_SNAPSHOT_ROOT / "lakefile.toml",
-        benchmark_snapshot_lakefile(benchmark_repo),
+        benchmark_snapshot_lakefile(benchmark_repo, import_roots),
     )
     shutil.copy2(benchmark_repo / "lean-toolchain", BENCHMARK_SNAPSHOT_ROOT / "lean-toolchain")
 

@@ -156,6 +156,19 @@ jobs:
               | sed 's|^BenchmarkProblems/||;s|\.lean$||' \
               | awk '{printf "+BenchmarkProblems.%s:highlighted\n", $1}'
           )
+          # Download TauCeti's build outputs instead of compiling it, for
+          # benchmark commits that ship the script (see lean-eval's
+          # scripts/fetch_dependency_caches.sh); `--restore` fails if any
+          # TauCeti module would have to be compiled. GITHUB_ENV is cleared so
+          # the script prints the settings for this step rather than later
+          # ones, and the output is captured first so a failure stops the step.
+          if [ -f ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh ]; then
+            cache_env="$(env -u GITHUB_ENV bash ../lean-eval-benchmark/scripts/fetch_dependency_caches.sh --restore .)"
+            eval "$cache_env"
+          elif jq -e '.packages[] | select(.name == "TauCeti")' lake-manifest.json > /dev/null; then
+            echo "::error::The snapshot requires TauCeti but the benchmark has no scripts/fetch_dependency_caches.sh to download its build outputs."
+            exit 1
+          fi
           lake build BenchmarkProblems subverso-extract-mod "${highlighted_targets[@]}"
 
       - name: Produce and validate the redacted public State projection
