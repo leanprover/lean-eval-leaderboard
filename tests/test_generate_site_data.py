@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from scripts.generate_site_data import (
     benchmark_snapshot_lakefile,
+    import_root,
     dedupe_universe_declarations,
     fetch_json_url,
     load_manifest,
@@ -131,6 +132,12 @@ git = "https://github.com/leanprover/lean4-cli"
             text,
         )
         self.assertNotIn("Cli", text)
+
+    def test_import_root_ignores_comments_and_modifiers(self) -> None:
+        self.assertEqual(import_root("import TauCeti.Foo -- why"), "TauCeti")
+        self.assertEqual(import_root("public import TauCeti.Foo.Bar"), "TauCeti")
+        self.assertEqual(import_root("import Mathlib"), "Mathlib")
+        self.assertEqual(import_root("import all TauCeti.Foo--x"), "TauCeti")
 
     def test_mathlib_only_snapshot_is_unchanged(self) -> None:
         text = self.render({"Mathlib"})

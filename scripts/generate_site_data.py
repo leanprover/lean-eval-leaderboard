@@ -432,6 +432,18 @@ def consumer_subverso_rev() -> str:
     raise SystemExit(f"No subverso package in Verso's lake-manifest at {url}")
 
 
+IMPORT_LINE_RE = re.compile(r"^\s*(?:public\s+)?(?:meta\s+)?import\s+(?:all\s+)?(?P<module>[^\s-]+)")
+
+
+def import_root(line: str) -> str:
+    """The first component of the module named by an `import` line, ignoring a
+    trailing comment and any `public`/`meta`/`all` modifiers."""
+    match = IMPORT_LINE_RE.match(line)
+    if match is None:
+        raise SystemExit(f"Could not parse import line: {line!r}")
+    return match.group("module").split(".", 1)[0]
+
+
 def benchmark_extra_requires(
     benchmark_repo: pathlib.Path, import_roots: set[str]
 ) -> list[tuple[str, str, str]]:
@@ -934,7 +946,7 @@ def write_benchmark_snapshot(benchmark_repo: pathlib.Path, problems: list[Proble
     BENCHMARK_SNAPSHOT_ROOT.mkdir(parents=True, exist_ok=True)
 
     import_roots = {
-        line.split()[-1].split(".", 1)[0]
+        import_root(line)
         for problem in problems
         if problem.visible
         for line in source_file_imports(benchmark_repo, problem.module)
