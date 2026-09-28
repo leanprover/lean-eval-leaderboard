@@ -835,6 +835,54 @@ def merge_solutions(primary: list[Solution], fallback: list[Solution]) -> list[S
     return sorted(merged.values(), key=_acceptance_key)
 
 
+def attach_original_verification(
+    solutions: list[Solution],
+    base_solutions: list[Solution],
+    results_repo: pathlib.Path,
+    results_commit: str,
+) -> None:
+    """Attach public intake and trusted original-run evidence without changing credit."""
+
+    base_by_id = {solution.result_id: solution for solution in base_solutions}
+    for solution in solutions:
+        base = base_by_id.get(solution.result_id)
+        if base is None:
+            continue
+        provenance = solution.provenance
+        provenance["intake"] = dict(base.provenance["intake"])
+        provenance["results_url"] = (
+            f"https://github.com/leanprover/lean-eval-submissions/blob/{results_commit}"
+            f"/results/{quote(base.submitter.lower(), safe='')}.json"
+        )
+        submission = base.provenance["submission"]
+        if submission.get("public") is True:
+            if submission["kind"] == "github_repo":
+                provenance["submitted_source_url"] = (
+                    f"https://github.com/{submission['repo']}/tree/{submission['ref']}"
+                )
+            elif submission["kind"] == "gist":
+                provenance["submitted_source_url"] = (
+                    f"https://gist.github.com/{submission['repo']}/{submission['ref']}"
+                )
+        path = results_repo / "verification" / f"{solution.result_id}.json"
+        if not path.exists():
+            continue
+        evidence = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            set(evidence) != {"schema_version", "result_id", "benchmark_commit", "run_id", "run_attempt"}
+            or type(evidence["schema_version"]) is not int
+            or evidence["schema_version"] != 1
+            or evidence["result_id"] != solution.result_id
+            or evidence["benchmark_commit"] != base.provenance["benchmark_commit"]
+            or any(type(evidence[key]) is not int or evidence[key] <= 0 for key in ("run_id", "run_attempt"))
+        ):
+            raise SystemExit(f"{path}: invalid original verification evidence")
+        provenance["verification_url"] = (
+            "https://github.com/leanprover/lean-eval-submissions/actions/runs/"
+            f"{evidence['run_id']}/attempts/{evidence['run_attempt']}"
+        )
+
+
 def apply_state_projection_overlays(
     solutions: list[Solution], raw: dict[str, Any] | None
 ) -> list[Solution]:
