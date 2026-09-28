@@ -402,7 +402,10 @@
     fetchJson("site-data/v2/problems/" + encodeURIComponent(problemId) + ".json").then(function (data) {
       status.hidden = true;
       var solutions = node("div", { className: "lifecycle-solution-grid" });
-      data.solutions.forEach(function (solution) {
+      var acceptedSolutions = data.solutions.filter(function (solution) {
+        return !solution.retracted;
+      });
+      acceptedSolutions.forEach(function (solution) {
         var metadata = solution.metadata || {};
         var solutionFields = [
           ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
@@ -432,7 +435,7 @@
         }
         solutions.appendChild(card);
       });
-      if (!data.solutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
+      if (!acceptedSolutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
       var children = [
         heading(2, "Accepted solutions"), solutions
       ];
