@@ -337,27 +337,33 @@
     var list = node("dl", { className: "lifecycle-definition-list" });
     values.forEach(function (pair) {
       list.appendChild(node("dt", { text: pair[0] }));
-      list.appendChild(node("dd", { text: pair[1] === null || pair[1] === undefined || pair[1] === "" ? "Unavailable" : String(pair[1]) }));
+      var value = pair[1];
+      list.appendChild(value && typeof value.nodeType === "number"
+        ? node("dd", {}, [value])
+        : node("dd", { text: value === null || value === undefined || value === "" ? "Unavailable" : String(value) }));
     });
     return list;
   }
 
-  function releaseFields(release, metadata) {
+  function releaseFields(release, metadata, provenance) {
     var fields = [];
     if (release.status === "scheduled") {
       fields.push(["Source", release.release_at
-        ? "Scheduled for " + formattedDate(release.release_at) + " (" + release.release_at + ")"
-        : "Scheduled for automatic publication"]);
+        ? "Private; release scheduled for " + formattedDate(release.release_at) + " (" + release.release_at + ")"
+        : "Private; release scheduled"]);
     } else if (release.status === "published") {
       fields.push(["Source", "Published"]);
     } else if (release.status === "withheld") {
       fields.push(["Source", "Kept private"]);
+    } else if (provenance.submitted_source_url) {
+      fields.push(["Source", node("a", { href: provenance.submitted_source_url, rel: "noopener", text: "Public when submitted" })]);
     } else if (metadata.solution_publication_status) {
       var reported = metadata.solution_publication_status.value;
       if (reported === "private") fields.push(["Source", "Kept private"]);
       else if (reported === "published") fields.push(["Source", "Published by the submitter"]);
-      else if (reported === "planned") fields.push(["Source", "Publication planned by the submitter"]);
+      else if (reported === "planned") fields.push(["Source", "Private; publication planned by the submitter"]);
     }
+    if (!fields.length) fields.push(["Source", "Not recorded"]);
     return fields;
   }
 
@@ -402,16 +408,33 @@
     fetchJson("site-data/v2/problems/" + encodeURIComponent(problemId) + ".json").then(function (data) {
       status.hidden = true;
       var solutions = node("div", { className: "lifecycle-solution-grid" });
-      data.solutions.forEach(function (solution) {
+      var acceptedSolutions = data.solutions.filter(function (solution) {
+        return !solution.retracted;
+      });
+      acceptedSolutions.forEach(function (solution) {
         var metadata = solution.metadata || {};
+        var provenance = solution.provenance || {};
+        var intake = provenance.intake || {};
+        var submittedVia = intake.kind === "server" ? "Website (no GitHub issue)"
+          : intake.kind === "issue" ? node("a", {
+            href: "https://github.com/leanprover/lean-eval-submissions/issues/" + intake.issue_number,
+            rel: "noopener", text: "GitHub issue #" + intake.issue_number
+          }) : "Not recorded";
         var solutionFields = [
           ["Submitter", "@" + solution.submitter], ["Accepted", formattedDate(solution.accepted_at)],
+          ["Verification", provenance.verification_url ? node("a", {
+            href: provenance.verification_url, rel: "noopener", text: "Passed — original CI run"
+          }) : "Passed; original CI run not recorded"],
+          ["Submitted via", submittedVia],
           ["Result", solution.first_solve ? "First accepted solution" : "Accepted solution"]
-        ].concat(releaseFields(solution.release, metadata));
+        ].concat(releaseFields(solution.release, metadata, provenance));
         var card = node("article", { className: "lifecycle-solution-card" }, [
           heading(4, solution.canonical_credit.label),
           definitionList(solutionFields)
         ]);
+        if (provenance.results_url) {
+          card.appendChild(node("p", {}, [node("a", { href: provenance.results_url, rel: "noopener", text: "Result record" })]));
+        }
         if (solution.public_solution.available && solution.public_solution.url) {
           card.appendChild(node("p", {}, [node("a", { href: solution.public_solution.url, rel: "noopener", text: "Released solution" })]));
         }
@@ -432,7 +455,7 @@
         }
         solutions.appendChild(card);
       });
-      if (!data.solutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
+      if (!acceptedSolutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
       var children = [
         heading(2, "Accepted solutions"), solutions
       ];

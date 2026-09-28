@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import pathlib
+import tempfile
 import unittest
 from types import SimpleNamespace
 
@@ -12,6 +13,7 @@ from scripts.lifecycle_site_data import (
     Solution,
     _expected_replay_task_id,
     adapt_results_store,
+    attach_original_verification,
     adapt_state_projection,
     apply_state_projection_overlays,
     build_lifecycle_projection,
@@ -169,6 +171,47 @@ def solution(
 
 
 class LifecycleProjectionTests(unittest.TestCase):
+    def test_original_verification_survives_state_merge_without_private_source_link(self) -> None:
+        raw = identity_projection_v4()
+        state_solution = adapt_state_projection(raw, {})[0]
+        base = copy.deepcopy(state_solution)
+        base.provenance = {
+            "benchmark_commit": "a" * 40,
+            "intake": {"kind": "server", "submission_id": "server-id"},
+            "submission": {"kind": "github_repo", "public": False, "repo": "alice/private", "ref": "b" * 40},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / "verification").mkdir()
+            evidence = {"schema_version": 1, "result_id": base.result_id, "benchmark_commit": "a" * 40, "run_id": 123, "run_attempt": 2}
+            path = root / "verification" / f"{base.result_id}.json"
+            path.write_text(json.dumps(evidence))
+            attach_original_verification([state_solution], [base], root, "c" * 40)
+            self.assertEqual(state_solution.provenance["intake"]["kind"], "server")
+            self.assertEqual(state_solution.provenance["verification_url"], "https://github.com/leanprover/lean-eval-submissions/actions/runs/123/attempts/2")
+            self.assertNotIn("submitted_source_url", state_solution.provenance)
+            self.assertNotIn("alice/private", json.dumps(state_solution.provenance))
+            self.assertEqual(state_solution.canonical_model_id, base.canonical_model_id)
+            for field, invalid in [("benchmark_commit", "d" * 40), ("result_id", "r2_" + "e" * 64), ("run_id", True), ("run_attempt", 0)]:
+                with self.subTest(field=field):
+                    bad = {**evidence, field: invalid}
+                    path.write_text(json.dumps(bad))
+                    with self.assertRaises(SystemExit):
+                        attach_original_verification([state_solution], [base], root, "c" * 40)
+
+    def test_public_source_and_missing_historical_run(self) -> None:
+        base = adapt_state_projection(identity_projection_v4(), {})[0]
+        base.provenance = {
+            "benchmark_commit": "a" * 40,
+            "intake": {"kind": "issue", "issue_number": 42},
+            "submission": {"kind": "github_repo", "public": True, "repo": "alice/proofs", "ref": "b" * 40},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            attach_original_verification([base], [base], pathlib.Path(directory), "c" * 40)
+        self.assertEqual(base.provenance["submitted_source_url"], "https://github.com/alice/proofs/tree/" + "b" * 40)
+        self.assertNotIn("verification_url", base.provenance)
+        self.assertTrue(base.provenance["results_url"].endswith("/results/alice.json"))
+
     def build(self):
         problems = [
             problem("alpha", tags=("annals",)),

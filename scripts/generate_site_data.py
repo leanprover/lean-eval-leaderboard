@@ -20,6 +20,7 @@ import tomllib
 try:
     from scripts.lifecycle_site_data import (
         adapt_results_store,
+        attach_original_verification,
         adapt_state_projection,
         apply_state_projection_overlays,
         build_lifecycle_projection,
@@ -35,6 +36,7 @@ try:
 except ModuleNotFoundError:
     from lifecycle_site_data import (
         adapt_results_store,
+        attach_original_verification,
         adapt_state_projection,
         apply_state_projection_overlays,
         build_lifecycle_projection,
@@ -1486,6 +1488,7 @@ def main() -> int:
     )
     solutions = merge_solutions(state_solutions, fallback_solutions)
     apply_state_projection_overlays(solutions, state_projection)
+    attach_original_verification(solutions, fallback_solutions, results_repo, git_head(results_repo))
     lifecycle_files = build_lifecycle_projection(
         problems=problems,
         solutions=solutions,
