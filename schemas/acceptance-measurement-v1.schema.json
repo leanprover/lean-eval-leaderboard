@@ -116,27 +116,17 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "comparator",
-        "lean4export",
-        "nanoda",
-        "landrun"
+        "toolchain",
+        "bubblewrap_sha256"
       ],
       "properties": {
-        "comparator": {
+        "toolchain": {
           "type": "string",
           "pattern": "^[0-9a-f]{40}$"
         },
-        "lean4export": {
+        "bubblewrap_sha256": {
           "type": "string",
-          "pattern": "^[0-9a-f]{40}$"
-        },
-        "nanoda": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{40}$"
-        },
-        "landrun": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{40}$"
+          "pattern": "^[0-9a-f]{64}$"
         }
       }
     },
