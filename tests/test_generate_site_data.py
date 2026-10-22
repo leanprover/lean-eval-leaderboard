@@ -3,6 +3,7 @@ import pathlib
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
 
 from scripts.generate_site_data import (
     benchmark_snapshot_lakefile,
@@ -10,6 +11,7 @@ from scripts.generate_site_data import (
     dedupe_universe_declarations,
     fetch_json_url,
     load_manifest,
+    validate_generated_revisions,
     load_results,
     preserve_root_declarations,
     qualify_probability_root_opens,
@@ -32,6 +34,32 @@ class SnapshotContextTests(unittest.TestCase):
         )
         self.assertEqual(urlopen.call_count, 2)
         sleep.assert_called_once_with(2)
+
+
+class GeneratedRevisionTests(unittest.TestCase):
+    def validate(self, rows, revision=2):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / "generated").mkdir()
+            (root / "generated/index.json").write_text(json.dumps(rows))
+            validate_generated_revisions(root, [SimpleNamespace(id="alpha", statement_revision=revision)])
+
+    def test_matching_generated_revision_is_publishable(self):
+        self.validate([{"id": "alpha", "statement_revision": 2}])
+
+    def test_new_manifest_with_old_generated_statement_cannot_publish(self):
+        with self.assertRaisesRegex(SystemExit, "alpha .*manifest 2, generated 1"):
+            self.validate([{"id": "alpha", "statement_revision": 1}])
+
+    def test_missing_generated_problem_cannot_publish(self):
+        with self.assertRaisesRegex(SystemExit, "generated missing"):
+            self.validate([])
+
+    def test_malformed_or_duplicate_generated_revisions_cannot_publish(self):
+        for rows in [None, [{"id": "alpha", "statement_revision": True}],
+                     [{"id": "alpha", "statement_revision": 2}] * 2]:
+            with self.subTest(rows=rows), self.assertRaises(SystemExit):
+                self.validate(rows)
 
 
 class CatalogMetadataTests(unittest.TestCase):

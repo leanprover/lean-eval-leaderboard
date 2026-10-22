@@ -93,6 +93,11 @@ timestamps and benchmark pins. An active production Pages run suppresses duplica
 dispatches. A stale publication following a failed deployment dispatches a recovery
 and fails the monitor so that the outage is visible in Actions.
 
+Before generating any public data, the generator requires the statement revisions
+in `generated/index.json` to match the authored manifests. Source changes can notify
+the snapshot workflow before regeneration finishes; this guard prevents publishing
+an old generated statement under a new revision number.
+
 The deploy job enables Git's `fetch.prune` before either Lake dependency update.
 This removes deleted remote branches from cached dependency checkouts before they
 can conflict with new branch names.
