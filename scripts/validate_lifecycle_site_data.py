@@ -94,6 +94,15 @@ def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
     for index, measurement in enumerate(measurements):
         label = f"{path}: measurement {index}"
         require(isinstance(measurement, dict), f"{label} must be an object")
+        if measurement.get("kind") == "acceptance-build":
+            try:
+                from scripts.acceptance_measurement import validate_measurement
+            except ModuleNotFoundError:
+                from acceptance_measurement import validate_measurement
+            try: validate_measurement(measurement)
+            except ValueError as error: raise SystemExit(f"{label}: {error}") from error
+            require(measurement["result_id"] == solution["result_id"], f"{label}: result identity disagrees")
+            continue
         fields = set(measurement)
         require(
             fields == MEASUREMENT_CORE_FIELDS

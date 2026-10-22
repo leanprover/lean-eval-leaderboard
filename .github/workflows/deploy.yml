@@ -41,6 +41,9 @@ jobs:
       - name: Test snapshot generator
         run: python3 -m unittest discover -s tests
 
+      - name: Test compute comparison behavior
+        run: node --test tests/compute-stats.test.cjs
+
       - name: Checkout benchmark repo at the snapshot's pinned commit
         # site-data/leaderboard.json is regenerated each deploy from the
         # results store. The generator needs the benchmark repo for problem
@@ -186,7 +189,7 @@ jobs:
           python3 lean-eval-state/scripts/public_projection.py \
             --root lean-eval-state \
             --state-commit "$state_commit" \
-            --schema-version 6 \
+            --schema-version 7 \
             --output "$RUNNER_TEMP/public-state.json"
           python3 lean-eval-state/scripts/public_projection.py \
             --validate "$RUNNER_TEMP/public-state.json"
@@ -252,7 +255,7 @@ jobs:
           if [ "${{ github.ref }}" = 'refs/heads/main' ]; then
             test -f _site/site-data/public-state.json
             jq --exit-status \
-              '.schema_version == 6 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array")' \
+              '.schema_version == 7 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array") and (.acceptance_measurements | type == "array") and (.metadata_updates | type == "array")' \
               _site/site-data/public-state.json
             if rg -n '"(source_repository|source_commit|source_ref|archive_[^"]*|submission_id|nonce_digest|[^"]*crosswalk[^"]*|plan_sha256|authority_[^"]*|evidence_[^"]*)"[[:space:]]*:' \
                 _site/site-data/public-state.json; then

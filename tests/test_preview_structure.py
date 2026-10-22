@@ -237,8 +237,8 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("Checkout private production State for its redacted projection", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("--state-projection", workflow)
-        self.assertIn("--schema-version 6", workflow)
-        self.assertIn(".schema_version == 6", workflow)
+        self.assertIn("--schema-version 7", workflow)
+        self.assertIn(".schema_version == 7", workflow)
         self.assertIn(
             "Scheduled release is recommended and selected by default",
             workflow,
