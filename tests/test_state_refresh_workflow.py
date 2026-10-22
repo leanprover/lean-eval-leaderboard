@@ -16,20 +16,15 @@ class StateRefreshWorkflowTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", WORKFLOW)
         self.assertIn("fetch-depth: 1", WORKFLOW)
 
-    def test_refresh_binds_live_and_private_state_before_dispatch(self) -> None:
-        self.assertIn("https://lean-lang.org/eval/site-data/v2/index.json", WORKFLOW)
-        self.assertIn('select(.schema_version == 2)', WORKFLOW)
-        self.assertIn('select(.state.repo == "leanprover/lean-eval-state")', WORKFLOW)
-        self.assertIn('select(.state.materialized == true)', WORKFLOW)
-        self.assertIn('git -C lean-eval-state rev-parse HEAD', WORKFLOW)
-        self.assertIn('if [ "$deployed_state" = "$current_state" ]', WORKFLOW)
+    def test_refresh_checks_out_and_runs_the_publication_monitor(self) -> None:
+        self.assertIn("Checkout publication monitor", WORKFLOW)
+        self.assertIn("run: bash scripts/refresh_leaderboard.sh", WORKFLOW)
+        self.assertIn("GH_TOKEN: ${{ github.token }}", WORKFLOW)
 
-    def test_refresh_does_not_queue_behind_an_active_pages_build(self) -> None:
-        self.assertIn("actions/workflows/deploy.yml/runs?per_page=100", WORKFLOW)
-        self.assertIn('.head_branch == "main"', WORKFLOW)
-        self.assertIn('.status != "completed"', WORKFLOW)
-        self.assertIn('if [ "$active" != 0 ]', WORKFLOW)
-        self.assertIn('gh workflow run deploy.yml --repo "$REPOSITORY" --ref main', WORKFLOW)
+    def test_dependency_fetches_prune_stale_cached_refs(self) -> None:
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
+        self.assertLess(workflow.index("git config --global fetch.prune true"),
+                        workflow.index("run: lake update"))
 
     def test_refresh_permissions_are_minimal_for_same_repo_dispatch(self) -> None:
         self.assertIn("permissions:\n  actions: write\n  contents: read", WORKFLOW)

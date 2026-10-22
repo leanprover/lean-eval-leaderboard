@@ -114,6 +114,12 @@ jobs:
             benchmark-snapshot/.lake/build
           key: ${{ runner.os }}-snapshot-lake-${{ hashFiles('benchmark-snapshot/lean-toolchain', 'benchmark-snapshot/lakefile.toml', 'benchmark-snapshot/BenchmarkProblems.lean', 'benchmark-snapshot/BenchmarkProblems/**/*.lean') }}
 
+      # Cached dependency checkouts can retain deleted branch names that
+      # conflict with new upstream refs. Lake invokes git fetch; enable pruning
+      # for both the site and snapshot dependency updates on this runner.
+      - name: Prune stale dependency refs during fetch
+        run: git config --global fetch.prune true
+
       - name: Fetch Lake dependencies
         run: lake update
 

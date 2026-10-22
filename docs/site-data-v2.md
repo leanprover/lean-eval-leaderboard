@@ -84,6 +84,19 @@ The previous server-rendered leaderboard remains available under `/legacy/`
 for comparison and rollback diagnosis. The lifecycle-aware client constructs
 untrusted content with `textContent`, and RSS text is XML-escaped.
 
+## Publication monitoring
+
+The scheduled refresh compares the live State revision in `v2/index.json`, the
+Results revision in `leaderboard.json`, and the repository's pinned benchmark
+revision. It also requires both public snapshots to have matching generation
+timestamps and benchmark pins. An active production Pages run suppresses duplicate
+dispatches. A stale publication following a failed deployment dispatches a recovery
+and fails the monitor so that the outage is visible in Actions.
+
+The deploy job enables Git's `fetch.prune` before either Lake dependency update.
+This removes deleted remote branches from cached dependency checkouts before they
+can conflict with new branch names.
+
 ## Local fixture boundary
 
 State owns model-identity review and alias policy; it does not own catalog
