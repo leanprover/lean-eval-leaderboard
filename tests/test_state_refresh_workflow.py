@@ -18,6 +18,8 @@ class StateRefreshWorkflowTests(unittest.TestCase):
 
     def test_refresh_checks_out_and_runs_the_publication_monitor(self) -> None:
         self.assertIn("Checkout publication monitor", WORKFLOW)
+        monitor = WORKFLOW.split("Checkout publication monitor", 1)[1].split("# The deploy key", 1)[0]
+        self.assertIn("ref: main", monitor)
         self.assertIn("run: bash scripts/refresh_leaderboard.sh", WORKFLOW)
         self.assertIn("GH_TOKEN: ${{ github.token }}", WORKFLOW)
 

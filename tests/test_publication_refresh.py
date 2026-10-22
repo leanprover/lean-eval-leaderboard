@@ -130,6 +130,22 @@ else:
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.root / "dispatch").exists())
 
+    def test_disagreeing_benchmark_snapshots_trigger_refresh(self):
+        self.results["benchmark"]["commit"] = "d" * 40
+        self.assert_dispatched(self.run_monitor())
+
+    def test_unmaterialized_state_reports_invalid_public_provenance(self):
+        self.index["state"]["materialized"] = False
+        result = self.run_monitor()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("::error::Published site-data lacks valid provenance", result.stderr)
+        self.assertFalse((self.root / "dispatch").exists())
+
+    def test_old_failure_after_newer_success_does_not_report_failure(self):
+        self.results["results_repo"]["commit"] = "d" * 40
+        self.runs.append({**self.runs[0], "conclusion": "failure"})
+        self.assert_dispatched(self.run_monitor())
+
     def test_missing_results_provenance_fails_without_dispatch(self):
         del self.results["results_repo"]
         result = self.run_monitor()
@@ -161,12 +177,16 @@ class DependencyRefPruningTests(unittest.TestCase):
             git("clone", "remote.git", "cached")
             git("-C", "writer", "push", "origin", ":refs/heads/bump/v4.37.0/old")
             git("-C", "writer", "push", "origin", "HEAD:refs/heads/bump/v4.37.0")
-            failed = git("-C", "cached", "fetch", "origin", check=False)
-            self.assertNotEqual(failed.returncode, 0)
-            self.assertRegex(failed.stderr, "cannot lock ref|unable to update local ref")
+            git("-C", "cached", "show-ref", "--verify", "refs/remotes/origin/bump/v4.37.0/old")
+            # Some Git versions may resolve this automatically; do not bind
+            # production publication to a particular error message or version.
+            git("-C", "cached", "fetch", "origin", check=False)
             git("config", "--global", "fetch.prune", "true")
             git("-C", "cached", "fetch", "origin")
             git("-C", "cached", "show-ref", "--verify", "refs/remotes/origin/bump/v4.37.0")
+            old = git("-C", "cached", "show-ref", "--verify",
+                      "refs/remotes/origin/bump/v4.37.0/old", check=False)
+            self.assertNotEqual(old.returncode, 0)
 
 
 if __name__ == "__main__":

@@ -43,7 +43,10 @@ published="$(jq --exit-status --null-input \
   {state: $index.state.commit, results: $results.results_repo.commit,
    benchmark: $index.benchmark.commit,
    coherent: ($index.generated_at == $results.generated_at and $index.benchmark == $results.benchmark)}
-')"
+')" || {
+  echo "::error::Published site-data lacks valid provenance in index.json or leaderboard.json." >&2
+  exit 1
+}
 if jq --exit-status --arg state "$current_state" --arg results "$current_results" \
     --arg benchmark "$current_benchmark" \
     '.coherent and .state == $state and .results == $results and .benchmark == $benchmark' \

@@ -21,6 +21,7 @@ jobs:
       - name: Checkout publication monitor
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          ref: main
           persist-credentials: false
 
       # The deploy key is read-only and scoped to private production State.
