@@ -333,6 +333,34 @@ def load_manifest(manifest_dir: pathlib.Path, benchmark_repo: pathlib.Path) -> l
     return problems
 
 
+def validate_generated_revisions(benchmark_repo: pathlib.Path, problems: list[Problem]) -> None:
+    """Never label an old generated statement with a newer manifest revision."""
+    path = benchmark_repo / "generated" / "index.json"
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Cannot validate generated statement revisions in {path}: {error}") from error
+    if not isinstance(rows, list) or any(
+        not isinstance(row, dict) or not isinstance(row.get("id"), str)
+        or type(row.get("statement_revision")) is not int
+        for row in rows
+    ):
+        raise SystemExit(f"Invalid generated statement revisions in {path}")
+    revisions = {row["id"]: row["statement_revision"] for row in rows}
+    if len(revisions) != len(rows):
+        raise SystemExit(f"Duplicate problem ids in {path}")
+    stale = [
+        f"{problem.id} (manifest {problem.statement_revision}, generated {revisions.get(problem.id, 'missing')})"
+        for problem in problems
+        if revisions.get(problem.id) != problem.statement_revision
+    ]
+    if stale:
+        raise SystemExit(
+            "Generated statement revisions are stale: " + "; ".join(stale)
+            + ". Wait for 'Regenerate generated/ on main' to finish before advancing or publishing the snapshot."
+        )
+
+
 def write_json(path: pathlib.Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -1433,6 +1461,7 @@ def main() -> int:
         raise SystemExit(f"Benchmark manifest directory not found: {manifest_dir}")
 
     problems = load_manifest(manifest_dir, benchmark_repo)
+    validate_generated_revisions(benchmark_repo, problems)
     raw_results = load_results(results_root)
 
     normalized_files = [
