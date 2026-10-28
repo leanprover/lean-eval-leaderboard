@@ -1,0 +1,452 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lean-lang.org/schemas/lean-eval/public-state-projection-v7.schema.json",
+  "title": "lean-eval public State projection schema version 7",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "environment",
+    "source_state_commit",
+    "source_event_count",
+    "source_digest",
+    "results",
+    "result_overlays",
+    "model_identities",
+    "model_aliases",
+    "model_identity_history",
+    "result_amendment_history",
+    "historical_replay_series",
+    "historical_replay_unavailability",
+    "acceptance_measurements",
+    "metadata_provenance"
+  ],
+  "properties": {
+    "environment": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/environment"
+    },
+    "source_state_commit": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/source_state_commit"
+    },
+    "source_event_count": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/source_event_count"
+    },
+    "source_digest": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/source_digest"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/result"
+      }
+    },
+    "result_overlays": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/overlay"
+      }
+    },
+    "model_identities": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/model_identities"
+    },
+    "model_aliases": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/model_aliases"
+    },
+    "model_identity_history": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/model_identity_history"
+    },
+    "result_amendment_history": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/result_amendment_history"
+    },
+    "historical_replay_series": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/historical_replay_series"
+    },
+    "historical_replay_unavailability": {
+      "$ref": "public-state-projection-v6.schema.json#/properties/historical_replay_unavailability"
+    },
+    "schema_version": {
+      "const": 7
+    },
+    "acceptance_measurements": {
+      "type": "array",
+      "items": {
+        "$ref": "acceptance-measurement-v1.schema.json"
+      }
+    },
+    "metadata_provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "result_id",
+          "fields"
+        ],
+        "properties": {
+          "result_id": {
+            "type": "string",
+            "pattern": "^r2_[0-9a-f]{64}$"
+          },
+          "fields": {
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "credit_identity",
+                "component_models",
+                "harness",
+                "human_involvement",
+                "web_access",
+                "wall_time_seconds",
+                "input_tokens",
+                "output_tokens",
+                "cost_usd",
+                "billing_mode",
+                "prompt",
+                "notes",
+                "cached_input_tokens"
+              ]
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "event_id",
+                "recorded_at",
+                "initial"
+              ],
+              "properties": {
+                "event_id": {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/eventId"
+                },
+                "recorded_at": {
+                  "$ref": "public-state-projection-v4.schema.json#/$defs/timestamp"
+                },
+                "initial": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id",
+        "problem_id",
+        "statement_revision",
+        "declared_model",
+        "submitter",
+        "accepted_at",
+        "acceptance_event_id",
+        "recorded_at",
+        "record_event_id",
+        "benchmark_commit",
+        "production_metadata",
+        "replay",
+        "release",
+        "public_solution",
+        "model_id",
+        "resolved_model_id",
+        "effective_problem_id",
+        "effective_statement_revision",
+        "problem_repair",
+        "applied_problem_repair",
+        "retraction",
+        "leaderboard_eligible"
+      ],
+      "properties": {
+        "result_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/result_id"
+        },
+        "problem_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/problem_id"
+        },
+        "statement_revision": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/statement_revision"
+        },
+        "declared_model": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/declared_model"
+        },
+        "submitter": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/submitter"
+        },
+        "accepted_at": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/accepted_at"
+        },
+        "acceptance_event_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/acceptance_event_id"
+        },
+        "recorded_at": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/recorded_at"
+        },
+        "record_event_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/record_event_id"
+        },
+        "benchmark_commit": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/benchmark_commit"
+        },
+        "production_metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "credit_identity": {
+              "allOf": [
+                {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                },
+                {
+                  "maxLength": 256
+                }
+              ]
+            },
+            "component_models": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                  },
+                  {
+                    "maxLength": 256
+                  }
+                ]
+              }
+            },
+            "harness": {
+              "allOf": [
+                {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                },
+                {
+                  "maxLength": 1024
+                }
+              ]
+            },
+            "human_involvement": {
+              "allOf": [
+                {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                },
+                {
+                  "maxLength": 1024
+                }
+              ]
+            },
+            "web_access": {
+              "type": "boolean"
+            },
+            "wall_time_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 31536000
+            },
+            "input_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "output_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "cost_usd": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "billing_mode": {
+              "enum": [
+                "api",
+                "subscription",
+                "unknown"
+              ]
+            },
+            "prompt": {
+              "allOf": [
+                {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                },
+                {
+                  "maxLength": 8192
+                }
+              ]
+            },
+            "notes": {
+              "allOf": [
+                {
+                  "$ref": "public-state-projection-v1.schema.json#/$defs/metadataText"
+                },
+                {
+                  "maxLength": 4096
+                }
+              ]
+            },
+            "cached_input_tokens": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "replay": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/replay"
+        },
+        "release": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/release"
+        },
+        "public_solution": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/public_solution"
+        },
+        "model_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/model_id"
+        },
+        "resolved_model_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/resolved_model_id"
+        },
+        "effective_problem_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/effective_problem_id"
+        },
+        "effective_statement_revision": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/effective_statement_revision"
+        },
+        "problem_repair": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/problem_repair"
+        },
+        "applied_problem_repair": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/applied_problem_repair"
+        },
+        "retraction": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/retraction"
+        },
+        "leaderboard_eligible": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/result/properties/leaderboard_eligible"
+        }
+      }
+    },
+    "overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id",
+        "owner_login",
+        "declared_model",
+        "problem_id",
+        "statement_revision",
+        "claim_event_id",
+        "mutation_event_id",
+        "claimed_at",
+        "metadata",
+        "model_id",
+        "resolved_model_id",
+        "effective_problem_id",
+        "effective_statement_revision",
+        "problem_repair",
+        "applied_problem_repair",
+        "retraction",
+        "leaderboard_eligible"
+      ],
+      "properties": {
+        "result_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/result_id"
+        },
+        "owner_login": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/owner_login"
+        },
+        "declared_model": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/declared_model"
+        },
+        "problem_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/problem_id"
+        },
+        "statement_revision": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/statement_revision"
+        },
+        "claim_event_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/claim_event_id"
+        },
+        "mutation_event_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/mutation_event_id"
+        },
+        "claimed_at": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/claimed_at"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "credit_identity": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/text256Provenance"
+            },
+            "component_models": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/componentModelsProvenance"
+            },
+            "harness": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/text1024Provenance"
+            },
+            "human_involvement": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/text1024Provenance"
+            },
+            "web_access": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/booleanProvenance"
+            },
+            "wall_time_seconds": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/wallTimeProvenance"
+            },
+            "input_tokens": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/tokenProvenance"
+            },
+            "output_tokens": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/tokenProvenance"
+            },
+            "cost_usd": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/costProvenance"
+            },
+            "billing_mode": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/billingProvenance"
+            },
+            "prompt": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/text8192Provenance"
+            },
+            "notes": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/text4096Provenance"
+            },
+            "cached_input_tokens": {
+              "$ref": "result-overlays-v1.schema.json#/$defs/tokenProvenance"
+            }
+          }
+        },
+        "model_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/model_id"
+        },
+        "resolved_model_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/resolved_model_id"
+        },
+        "effective_problem_id": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/effective_problem_id"
+        },
+        "effective_statement_revision": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/effective_statement_revision"
+        },
+        "problem_repair": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/problem_repair"
+        },
+        "applied_problem_repair": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/applied_problem_repair"
+        },
+        "retraction": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/retraction"
+        },
+        "leaderboard_eligible": {
+          "$ref": "public-state-projection-v5.schema.json#/$defs/overlay/properties/leaderboard_eligible"
+        }
+      }
+    }
+  }
+}

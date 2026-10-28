@@ -13,6 +13,7 @@ import hashlib
 import json
 import pathlib
 import re
+import sys
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -282,7 +283,7 @@ def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex
 
     if raw is None or raw.get("schema_version") == 1:
         return EMPTY_MODEL_IDENTITY_INDEX
-    if raw.get("schema_version") not in {4, 5, 6}:
+    if raw.get("schema_version") not in {4, 5, 6, 7}:
         raise SystemExit("State domain: unsupported schema_version")
     identities: dict[str, dict[str, Any]] = {}
     identity_fields = {
@@ -660,7 +661,7 @@ def adapt_state_projection(
     if raw is None:
         return []
     version = raw.get("schema_version")
-    if version not in {1, 4, 5, 6}:
+    if version not in {1, 4, 5, 6, 7}:
         raise SystemExit("State domain: unsupported schema_version")
     if raw.get("environment") not in {"production", "staging"}:
         raise SystemExit("State domain: invalid environment")
@@ -675,17 +676,19 @@ def adapt_state_projection(
         "source_event_count", "source_digest", "results",
     }
     expected_top_fields = common_fields
-    if version in {4, 5, 6}:
+    if version in {4, 5, 6, 7}:
         expected_top_fields |= {
             "result_overlays", "model_identities", "model_aliases",
             "model_identity_history",
         }
-    if version in {5, 6}:
+    if version in {5, 6, 7}:
         expected_top_fields.add("result_amendment_history")
-    if version == 6:
+    if version in {6, 7}:
         expected_top_fields |= {
             "historical_replay_series", "historical_replay_unavailability",
         }
+    if version == 7:
+        expected_top_fields |= {"acceptance_measurements", "metadata_provenance"}
     if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
     identity_index = (
@@ -701,9 +704,9 @@ def adapt_state_projection(
             "record_event_id", "benchmark_commit", "production_metadata", "replay",
             "release", "public_solution",
         }
-        if version in {4, 5, 6}:
+        if version in {4, 5, 6, 7}:
             required |= {"model_id", "resolved_model_id"}
-        if version in {5, 6}:
+        if version in {5, 6, 7}:
             required |= {
                 "effective_problem_id", "effective_statement_revision",
                 "problem_repair", "applied_problem_repair", "retraction",
@@ -726,7 +729,7 @@ def adapt_state_projection(
         state_resolution = identity_index.aliases.get(
             (str(result["submitter"]).lower(), raw_declared)
         )
-        if version in {4, 5, 6}:
+        if version in {4, 5, 6, 7}:
             projected_resolution = (
                 result["model_id"], result["resolved_model_id"]
             )
@@ -766,12 +769,12 @@ def adapt_state_projection(
                 result_id=result["result_id"],
                 problem_id=(
                     result["effective_problem_id"]
-                    if version in {5, 6}
+                    if version in {5, 6, 7}
                     else result["problem_id"]
                 ),
                 statement_revision=(
                     result["effective_statement_revision"]
-                    if version in {5, 6}
+                    if version in {5, 6, 7}
                     else result["statement_revision"]
                 ),
                 declared_model=declared,
@@ -782,7 +785,7 @@ def adapt_state_projection(
                 acceptance_event_id=result["acceptance_event_id"],
                 retracted=(
                     not result["leaderboard_eligible"]
-                    if version in {5, 6}
+                    if version in {5, 6, 7}
                     else False
                 ),
                 metadata=_metadata_fields(
@@ -891,7 +894,7 @@ def apply_state_projection_overlays(
     if raw is None or raw.get("schema_version") == 1:
         return solutions
     version = raw.get("schema_version")
-    if version not in {4, 5, 6}:
+    if version not in {4, 5, 6, 7}:
         raise SystemExit("State domain: unsupported schema_version")
     by_result = {solution.result_id: solution for solution in solutions}
     if len(by_result) != len(solutions):
@@ -899,7 +902,7 @@ def apply_state_projection_overlays(
 
     seen_overlays: set[str] = set()
     expected_overlay_fields = STATE_OVERLAY_FIELDS | (
-        STATE_AMENDMENT_FIELDS if version in {5, 6} else set()
+        STATE_AMENDMENT_FIELDS if version in {5, 6, 7} else set()
     )
     for overlay in raw["result_overlays"]:
         if not isinstance(overlay, dict) or set(overlay) != expected_overlay_fields:
@@ -917,12 +920,12 @@ def apply_state_projection_overlays(
             or not isinstance(overlay["metadata"], dict)
         ):
             raise SystemExit("State projection: result overlay identity mismatch")
-        solution.metadata = dict(overlay["metadata"])
+        solution.metadata = {**solution.metadata, **overlay["metadata"]}
         solution.provenance["state_claim_event_id"] = overlay["claim_event_id"]
         solution.provenance["state_mutation_event_id"] = overlay[
             "mutation_event_id"
         ]
-        if version in {5, 6}:
+        if version in {5, 6, 7}:
             if (
                 not isinstance(overlay["effective_problem_id"], str)
                 or type(overlay["effective_statement_revision"]) is not int
@@ -936,7 +939,7 @@ def apply_state_projection_overlays(
             ]
             solution.retracted = not overlay["leaderboard_eligible"]
 
-    if version != 6:
+    if version not in {6, 7}:
         return solutions
 
     def expected_historical_visibility(result_id_value: str) -> str:
@@ -1125,6 +1128,46 @@ def apply_state_projection_overlays(
         }
         solution.measurements = []
     return solutions
+
+
+def apply_acceptance_measurements(solutions: list[Solution], raw: dict[str, Any] | None) -> None:
+    if raw is None or raw.get("schema_version") != 7:
+        return
+    try:
+        from scripts.validate_lifecycle_site_data import validate_acceptance_measurement, ContractError
+    except ModuleNotFoundError:
+        from validate_lifecycle_site_data import validate_acceptance_measurement, ContractError
+    by_id = {s.result_id: s for s in solutions}
+    seen = set()
+    for measurement in raw["acceptance_measurements"]:
+        solution = by_id.get(measurement.get("result_id")) if isinstance(measurement, dict) and isinstance(measurement.get("result_id"), str) else None
+        try:
+            if solution is None:
+                raise ContractError("result is absent from this snapshot")
+            validate_acceptance_measurement(measurement, solution.result_id, "acceptance measurement")
+            key = (measurement["result_id"], measurement["series"], measurement["workflow_run_id"], measurement["attempt"])
+            if key in seen:
+                raise ContractError("duplicate attempt")
+            if solution.submitter.lower() != measurement["owner_login"] or solution.declared_model != measurement["declared_model"] or solution.provenance["benchmark_commit"] != measurement["benchmark_commit"]:
+                raise ContractError("measurement disagrees with the accepted result")
+            seen.add(key)
+        except (ContractError, TypeError, KeyError) as error:
+            print(f"Skipping acceptance measurement: {error}", file=sys.stderr)
+            continue
+        solution.measurements.append(dict(measurement))
+    # Values come from the current State result, never historical snapshots.
+    for record in raw["metadata_provenance"]:
+        solution = by_id.get(record["result_id"])
+        if solution is None:
+            print("Skipping metadata provenance for a result absent from this snapshot", file=sys.stderr)
+            continue
+        for key, origin in record["fields"].items():
+            if key in solution.metadata:
+                solution.metadata[key] = {
+                    **solution.metadata[key],
+                    "provenance": "declared-at-submission" if origin["initial"] else "backfilled",
+                    "event_id": origin["event_id"], "recorded_at": origin["recorded_at"],
+                }
 
 
 def _scope_problem_ids(
