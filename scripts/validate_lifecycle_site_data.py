@@ -85,6 +85,22 @@ def catalog_date(value: Any, message: str) -> str:
     return value
 
 
+def validate_acceptance_measurement(measurement, result_id, label):
+    # The producer validates its receipt contract; here enforce the site's output
+    # shape and numeric invariants without another copy of its hash validator.
+    schema = json.loads((pathlib.Path(__file__).parents[1] / "schemas/acceptance-measurement-v1.schema.json").read_text())
+    require(isinstance(measurement, dict) and set(measurement) == set(schema["required"]), f"{label}: invalid acceptance fields")
+    require(measurement["kind"] == "acceptance-build" and measurement["result_id"] == result_id, f"{label}: result identity disagrees")
+    require(measurement["status"] in {"available", "failed"}, f"{label}: invalid acceptance status")
+    available = measurement["status"] == "available"
+    for phase in ("build", "checker"):
+        wall, count, reason = (measurement[phase + suffix] for suffix in ("_wall_time_ms", "_retired_instructions", "_retired_instructions_unavailable_reason"))
+        require(all(value is None or type(value) is int and 0 <= value <= 9007199254740991 for value in (wall, count)), f"{label}: invalid acceptance totals")
+        require(available == (wall is not None) and (count is None) != (reason is None), f"{label}: incomplete acceptance phase")
+        require(reason is None or reason in {"counter_not_reported", "counter_not_supported", "counter_permission_denied"}, f"{label}: invalid counter reason")
+        require(available or count is None, f"{label}: failed measurement has partial totals")
+
+
 def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
     measurements = solution.get("measurements")
     require(isinstance(measurements, list), f"{path}: measurements must be an array")
@@ -95,13 +111,7 @@ def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
         label = f"{path}: measurement {index}"
         require(isinstance(measurement, dict), f"{label} must be an object")
         if measurement.get("kind") == "acceptance-build":
-            try:
-                from scripts.acceptance_measurement import validate_measurement
-            except ModuleNotFoundError:
-                from acceptance_measurement import validate_measurement
-            try: validate_measurement(measurement)
-            except ValueError as error: raise SystemExit(f"{label}: {error}") from error
-            require(measurement["result_id"] == solution["result_id"], f"{label}: result identity disagrees")
+            validate_acceptance_measurement(measurement, solution["result_id"], label)
             continue
         fields = set(measurement)
         require(

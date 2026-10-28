@@ -18,14 +18,17 @@ Production time, total/cached input tokens, output tokens and estimated
 API-equivalent cost are per-problem reports including unsuccessful attempts.
 Shared-run totals belong in notes. Billing mode describes how the submitter paid,
 not the meaning of the cost estimate. Values are labeled as self-reported and
-later additions/corrections display their recorded dates. The owner edit link
+each field shows the date it actually changed. Unchanged fields retain their
+original dates; removed and superseded metadata text is not republished. The owner edit link
 carries a public result ID and exact Results commit; GitHub authorization happens
 at the submission service and no private submission ID appears in the public link.
 
 This consumer requests public State projection **v7**. Merge the production State
 producer and staging/production Worker contracts before deploying it. Earlier
 public projection schemas remain vendored and unchanged; the compatibility tests
-continue to exercise them. The generator consumes redacted public State only.
+continue to exercise them. The generator consumes redacted public State only. Optional acceptance receipts
+that are missing from the Results snapshot, malformed, duplicated or mismatched
+are skipped with a diagnostic, so they cannot block accepted-result publication.
 
 Validation covers real-data generation/schema validation, safe DOM rendering,
 comparison ordering and measurement preference, metadata provenance, and schema

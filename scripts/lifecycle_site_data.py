@@ -13,6 +13,7 @@ import hashlib
 import json
 import pathlib
 import re
+import sys
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -687,7 +688,7 @@ def adapt_state_projection(
             "historical_replay_series", "historical_replay_unavailability",
         }
     if version == 7:
-        expected_top_fields |= {"acceptance_measurements", "metadata_updates"}
+        expected_top_fields |= {"acceptance_measurements", "metadata_provenance"}
     if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
     identity_index = (
@@ -1130,31 +1131,43 @@ def apply_state_projection_overlays(
 
 
 def apply_acceptance_measurements(solutions: list[Solution], raw: dict[str, Any] | None) -> None:
-    if raw is None or raw.get("schema_version") != 7: return
+    if raw is None or raw.get("schema_version") != 7:
+        return
     try:
-        from scripts.acceptance_measurement import validate_measurement
+        from scripts.validate_lifecycle_site_data import validate_acceptance_measurement, ContractError
     except ModuleNotFoundError:
-        from acceptance_measurement import validate_measurement
+        from validate_lifecycle_site_data import validate_acceptance_measurement, ContractError
     by_id = {s.result_id: s for s in solutions}
     seen = set()
-    for value in raw["acceptance_measurements"]:
-        try: measurement = validate_measurement(value)
-        except ValueError as error: raise SystemExit(str(error)) from error
-        solution = by_id.get(measurement["result_id"])
-        key = (measurement["result_id"], measurement["series"], measurement["workflow_run_id"], measurement["attempt"])
-        if solution is None or key in seen: raise SystemExit("unknown or duplicate acceptance measurement")
-        seen.add(key)
-        # Repairs may change the effective problem; identity is bound to the original record ID.
-        if solution.submitter.lower() != measurement["owner_login"] or solution.declared_model != measurement["declared_model"] or solution.provenance["benchmark_commit"] != measurement["benchmark_commit"]:
-            raise SystemExit("acceptance measurement disagrees with result")
+    for measurement in raw["acceptance_measurements"]:
+        solution = by_id.get(measurement.get("result_id")) if isinstance(measurement, dict) and isinstance(measurement.get("result_id"), str) else None
+        try:
+            if solution is None:
+                raise ContractError("result is absent from this snapshot")
+            validate_acceptance_measurement(measurement, solution.result_id, "acceptance measurement")
+            key = (measurement["result_id"], measurement["series"], measurement["workflow_run_id"], measurement["attempt"])
+            if key in seen:
+                raise ContractError("duplicate attempt")
+            if solution.submitter.lower() != measurement["owner_login"] or solution.declared_model != measurement["declared_model"] or solution.provenance["benchmark_commit"] != measurement["benchmark_commit"]:
+                raise ContractError("measurement disagrees with the accepted result")
+            seen.add(key)
+        except (ContractError, TypeError, KeyError) as error:
+            print(f"Skipping acceptance measurement: {error}", file=sys.stderr)
+            continue
         solution.measurements.append(dict(measurement))
-    for update in raw["metadata_updates"]:
-        solution = by_id.get(update.get("result_id"))
-        if solution is None or set(update) != {"result_id", "event_id", "recorded_at", "initial", "production_metadata"}: raise SystemExit("invalid metadata update")
-        solution.metadata = {
-            key: {"value": value, "provenance": "declared-at-submission" if update["initial"] else "backfilled", "event_id": update["event_id"], "recorded_at": update["recorded_at"]}
-            for key, value in update["production_metadata"].items()
-        }
+    # Values come from the current State result, never historical snapshots.
+    for record in raw["metadata_provenance"]:
+        solution = by_id.get(record["result_id"])
+        if solution is None:
+            print("Skipping metadata provenance for a result absent from this snapshot", file=sys.stderr)
+            continue
+        for key, origin in record["fields"].items():
+            if key in solution.metadata:
+                solution.metadata[key] = {
+                    **solution.metadata[key],
+                    "provenance": "declared-at-submission" if origin["initial"] else "backfilled",
+                    "event_id": origin["event_id"], "recorded_at": origin["recorded_at"],
+                }
 
 
 def _scope_problem_ids(

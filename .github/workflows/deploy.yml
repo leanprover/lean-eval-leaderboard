@@ -255,7 +255,7 @@ jobs:
           if [ "${{ github.ref }}" = 'refs/heads/main' ]; then
             test -f _site/site-data/public-state.json
             jq --exit-status \
-              '.schema_version == 7 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array") and (.acceptance_measurements | type == "array") and (.metadata_updates | type == "array")' \
+              '.schema_version == 7 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array") and (.acceptance_measurements | type == "array") and (.metadata_provenance | type == "array")' \
               _site/site-data/public-state.json
             if rg -n '"(source_repository|source_commit|source_ref|archive_[^"]*|submission_id|nonce_digest|[^"]*crosswalk[^"]*|plan_sha256|authority_[^"]*|evidence_[^"]*)"[[:space:]]*:' \
                 _site/site-data/public-state.json; then
