@@ -371,35 +371,159 @@
     var labels = {
       human_involvement: "Human involvement",
       production_description: "How it was produced",
-      solution_publication_date: "Planned publication date"
+      solution_publication_date: "Planned publication date",
+      wall_time_seconds: "Time producing this proof (seconds)",
+      cost_usd: "Estimated API-equivalent cost (USD)",
+      input_tokens: "Total input tokens", cached_input_tokens: "Cached input tokens (included in total)", output_tokens: "Output tokens",
+      component_models: "Models and versions", billing_mode: "How the submitter paid"
     };
     return labels[key] || key.replace(/_/g, " ").replace(/^./, function (letter) {
       return letter.toUpperCase();
     });
   }
 
+  var noisyTimeNote = "Very noisy: elapsed time on a shared runner; affected by hardware, load, parallelism, and cache state.";
+  var instructionNote = "Userspace CPU instructions across subprocesses; dependent on architecture, toolchain, and measurement setup.";
+
+  function preferredMeasurement(solution) {
+    var successful = (solution.measurements || []).filter(function (m) {
+      return m.kind === "acceptance-build" ? m.status === "available" : m.replay_status === "accepted" && m.status === "available";
+    });
+    successful.sort(function (a, b) {
+      var priority = Number(b.kind === "acceptance-build") - Number(a.kind === "acceptance-build");
+      return priority || String(b.measured_at || b.updated_at || "").localeCompare(String(a.measured_at || a.updated_at || "")) || (b.workflow_run_id || 0) - (a.workflow_run_id || 0) || b.attempt - a.attempt;
+    });
+    return successful[0] || null;
+  }
+
+  function formattedMetric(value, seconds) {
+    return typeof value === "number" && Number.isFinite(value)
+      ? (seconds ? value / 1000 : value).toLocaleString(undefined, { maximumFractionDigits: 3 }) + (seconds ? " seconds" : "")
+      : "Not reported";
+  }
+
+  function counterUnavailable(reason) {
+    return { counter_permission_denied: "Runner does not allow instruction counters", counter_not_supported: "Runner does not support instruction counters", counter_not_reported: "Instruction counter was not reported" }[reason] || "Instruction counter was not reported";
+  }
+
+  function missingMeasurement(solution) {
+    var status = solution.replay || {};
+    if (status.status === "queued" || status.status === "running") return "Pending";
+    var measurements = solution.measurements || [];
+    var failed = measurements.find(function (m) { return m.kind === "acceptance-build" && m.status === "failed"; });
+    if (failed) return "Measurement failed: " + failed.reason_code.replace(/_/g, " ");
+    if (!status.reason || status.reason === "not-enqueued") return "Not measured yet";
+    return "Unavailable: " + status.reason.replace(/_/g, " ");
+  }
+
+  function measuredSummary(solution) {
+    var m = preferredMeasurement(solution);
+    var fields = m ? [
+      ["Build + export time — very noisy", formattedMetric(m.build_wall_time_ms, true)],
+      ["Build + export instructions", m.build_retired_instructions == null ? counterUnavailable(m.build_retired_instructions_unavailable_reason) : formattedMetric(m.build_retired_instructions)],
+      ["Checker time — very noisy", formattedMetric(m.checker_wall_time_ms, true)],
+      ["Checker instructions", m.checker_retired_instructions == null ? counterUnavailable(m.checker_retired_instructions_unavailable_reason) : formattedMetric(m.checker_retired_instructions)]
+    ] : [["Measurement status", missingMeasurement(solution)]];
+    return node("section", { className: "lifecycle-compute-summary" }, [heading(5, "Measured by LeanEval"), definitionList(fields), node("small", { text: noisyTimeNote + " " + instructionNote })]);
+  }
+
+  function productionValue(metadata, key) {
+    var field = metadata[key];
+    if (!field || field.value === null || field.value === undefined) return null;
+    if (key !== "billing_mode" && (typeof field.value !== "number" || !Number.isFinite(field.value) || field.value < 0)) return null;
+    return field.value;
+  }
+
+  function compareCells(a, b, direction) {
+    var am = a === null || a === undefined, bm = b === null || b === undefined;
+    if (am || bm) return am === bm ? 0 : am ? 1 : -1;
+    return (typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b))) * direction;
+  }
+
+  function comparisonViews(solutions) {
+    var container = node("section", { className: "lifecycle-comparisons" }, [heading(2, "Compare accepted solutions")]);
+    var controls = node("div", { className: "lifecycle-comparison-controls", role: "group", "aria-label": "Comparison view" });
+    var content = node("div", { className: "lifecycle-comparison-scroll" });
+    container.appendChild(controls);
+    container.appendChild(node("p", { text: "Compare the same statement revision. Measurements from different toolchains, runners, or cache setups are only approximately comparable. Production figures are optional, self-reported per-problem totals including unsuccessful attempts; shared-run totals appear only in notes. Leaderboard rankings do not use these figures." }));
+    container.appendChild(content);
+    var view = "build", sort = 0, direction = 1;
+    var buttons = [];
+    [["build", "LeanEval measurements"], ["production", "Production information — self-reported"]].forEach(function (pair) {
+      var button = node("button", { type: "button", text: pair[1] });
+      button.addEventListener("click", function () { view = pair[0]; sort = 0; direction = 1; render(); });
+      controls.appendChild(button); buttons.push([pair[0], button]);
+    });
+    function render() {
+      buttons.forEach(function (pair) { pair[1].setAttribute("aria-pressed", String(view === pair[0])); });
+      var columns = view === "build"
+        ? ["Model", "Submitter", "Statement revision", "Build + export time (very noisy)", "Build + export instructions", "Checker time (very noisy)", "Checker instructions", "Measurement setup / status"]
+        : ["Model", "Submitter", "Statement revision", "Production time (seconds)", "Input tokens", "Cached input tokens", "Output tokens", "Estimated API cost (USD)", "Billing mode"];
+      var rows = solutions.map(function (solution) {
+        var m = preferredMeasurement(solution), metadata = solution.metadata || {};
+        var setup = m ? m.kind === "acceptance-build" ? m.toolchain + " / " + m.runner_class + " / " + m.architecture + " / " + m.cache_state : "Historical replay / profile " + (m.execution_profile_digest || "not recorded").slice(0, 12) : missingMeasurement(solution);
+        var values = [solution.canonical_credit.label, "@" + solution.submitter, solution.statement_revision].concat(view === "build"
+          ? [m ? m.build_wall_time_ms : null, m ? m.build_retired_instructions : null, m ? m.checker_wall_time_ms : null, m ? m.checker_retired_instructions : null, setup]
+          : ["wall_time_seconds", "input_tokens", "cached_input_tokens", "output_tokens", "cost_usd", "billing_mode"].map(function (key) { return productionValue(metadata, key); }));
+        return { solution: solution, values: values };
+      });
+      rows.sort(function (a, b) { return compareCells(a.values[sort], b.values[sort], direction) || a.solution.result_id.localeCompare(b.solution.result_id); });
+      var table = node("table", { className: "lifecycle-comparison-table" });
+      var headers = node("tr");
+      columns.forEach(function (label, index) {
+        var button = node("button", { type: "button", text: label + (sort === index ? direction === 1 ? " ↑" : " ↓" : "") });
+        button.addEventListener("click", function () { direction = sort === index ? -direction : 1; sort = index; render(); });
+        headers.appendChild(node("th", { scope: "col", "aria-sort": sort !== index ? "none" : direction === 1 ? "ascending" : "descending" }, [button]));
+      });
+      table.appendChild(node("thead", {}, [headers]));
+      table.appendChild(node("tbody", {}, rows.map(function (row) {
+        return node("tr", {}, row.values.map(function (value, index) {
+          if (index === 0) return node("td", {}, [node("a", { href: "#solution-" + row.solution.result_id, text: value })]);
+          var seconds = view === "build" && (index === 3 || index === 5);
+          var empty = "Not reported";
+          if (view === "build" && value == null) {
+            var m = preferredMeasurement(row.solution);
+            empty = m && (index === 4 || index === 6) ? counterUnavailable(m[(index === 4 ? "build" : "checker") + "_retired_instructions_unavailable_reason"]) : missingMeasurement(row.solution);
+          }
+          return node("td", { text: typeof value === "number" ? formattedMetric(value, seconds) : value == null ? empty : String(value) });
+        }));
+      })));
+      content.replaceChildren(table);
+    }
+    render(); return container;
+  }
+
   function measurementDetails(measurement) {
     var fields = [];
+    if (measurement.kind === "acceptance-build") {
+      fields.push(["Measurement source", "Acceptance build"], ["Toolchain", measurement.toolchain], ["Runner", measurement.runner_class + " / " + measurement.architecture], ["Cache state", measurement.cache_state], ["Measured", measurement.measured_at], ["Measurement series", measurement.series]);
+      fields.push(["Workflow evidence", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/actions/runs/" + measurement.workflow_run_id + "/attempts/" + measurement.attempt, text: "Acceptance workflow" })]);
+    }
+    if (measurement.execution_profile_digest) {
+      var lane = measurement.source_visibility === "private" ? "private" : "public";
+      fields.push(["Measurement setup", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/blob/main/evidence/" + lane + "-replay/profiles/" + measurement.execution_profile_digest + ".json", text: "Original toolchain, runner, and component profile" })]);
+    }
     if (measurement.checker) fields.push(["Independent checker", measurement.checker]);
     if (measurement.replay_status && measurement.replay_status !== "unavailable") {
-      fields.push(["Replay result", measurement.replay_status === "accepted" ? "Passed" : "Did not pass"]);
+      var replayLabels = { accepted: "Passed", queued: "Pending", running: "In progress", failed: "Measurement failed", crashed: "Runner crashed", timed_out: "Timed out", declined: "Replay declined", rejected: "Proof rejected by replay checker" };
+      fields.push(["Replay result", replayLabels[measurement.replay_status] || measurement.replay_status]);
     }
-    if (measurement.build_wall_time_ms !== null) {
-      fields.push(["Build time", (measurement.build_wall_time_ms / 1000).toLocaleString() + " seconds"]);
+    if (measurement.build_wall_time_ms != null) {
+      fields.push(["Build + export time — very noisy", (measurement.build_wall_time_ms / 1000).toLocaleString() + " seconds"]);
     }
-    if (measurement.checker_wall_time_ms !== null) {
-      fields.push(["Checker time", (measurement.checker_wall_time_ms / 1000).toLocaleString() + " seconds"]);
+    if (measurement.checker_wall_time_ms != null) {
+      fields.push(["Checker time — very noisy", (measurement.checker_wall_time_ms / 1000).toLocaleString() + " seconds"]);
     }
-    if (measurement.build_retired_instructions !== null) {
+    if (measurement.build_retired_instructions != null) {
       fields.push(["CPU instructions used while building", measurement.build_retired_instructions.toLocaleString()]);
     }
-    if (measurement.checker_retired_instructions !== null) {
+    if (measurement.checker_retired_instructions != null) {
       fields.push(["CPU instructions used while checking", measurement.checker_retired_instructions.toLocaleString()]);
     }
-    if (measurement.lines_of_code !== null) fields.push(["Lines of code", measurement.lines_of_code.toLocaleString()]);
-    if (measurement.file_count !== null) fields.push(["Files", measurement.file_count.toLocaleString()]);
+    if (measurement.lines_of_code != null) fields.push(["Lines of code", measurement.lines_of_code.toLocaleString()]);
+    if (measurement.file_count != null) fields.push(["Files", measurement.file_count.toLocaleString()]);
     return node("details", { className: "lifecycle-replay-details" }, [
-      node("summary", { text: "Independent replay details" }),
+      node("summary", { text: measurement.kind === "acceptance-build" ? "Acceptance measurement details" : "Independent replay details" }),
       definitionList(fields)
     ]);
   }
@@ -428,10 +552,11 @@
           ["Submitted via", submittedVia],
           ["Result", solution.first_solve ? "First accepted solution" : "Accepted solution"]
         ].concat(releaseFields(solution.release, metadata, provenance));
-        var card = node("article", { className: "lifecycle-solution-card" }, [
+        var card = node("article", { className: "lifecycle-solution-card", id: "solution-" + solution.result_id }, [
           heading(4, solution.canonical_credit.label),
           definitionList(solutionFields)
         ]);
+        card.appendChild(measuredSummary(solution));
         if (provenance.results_url) {
           card.appendChild(node("p", {}, [node("a", { href: provenance.results_url, rel: "noopener", text: "Result record" })]));
         }
@@ -442,11 +567,20 @@
           return key !== "solution_publication_status";
         });
         if (metadataKeys.length) {
-          card.appendChild(heading(5, "Details supplied by the submitter"));
+          card.appendChild(heading(5, "Production information — self-reported"));
           metadataKeys.sort().forEach(function (key) {
             var field = metadata[key];
-            card.appendChild(definitionList([[readableMetadataLabel(key), field.value]]));
+            card.appendChild(definitionList([[readableMetadataLabel(key), Array.isArray(field.value) ? field.value.join(", ") : field.value]]));
+            if (field.provenance === "backfilled") card.appendChild(node("small", { text: "Added or corrected" + (field.recorded_at ? " on " + formattedDate(field.recorded_at) : " after submission") }));
+            else if (field.recorded_at) card.appendChild(node("small", { text: "Declared on " + formattedDate(field.recorded_at) }));
           });
+        }
+        var resultCommit = provenance.results_url && /\/blob\/([0-9a-f]{40})\//.exec(provenance.results_url);
+        if (resultCommit) {
+          var editUrl = new URL("https://lean-eval-submission-server.lean-eval.workers.dev/metadata/");
+          editUrl.searchParams.set("result_id", solution.result_id);
+          editUrl.searchParams.set("results_commit", resultCommit[1]);
+          card.appendChild(node("p", {}, [node("a", { href: editUrl.toString(), text: "Submitter: add or correct production information" })]));
         }
         if (solution.measurements.length) {
           solution.measurements.forEach(function (measurement) {
@@ -457,7 +591,7 @@
       });
       if (!acceptedSolutions.length) solutions.appendChild(node("p", { text: "No accepted solutions yet." }));
       var children = [
-        heading(2, "Accepted solutions"), solutions
+        comparisonViews(acceptedSolutions), heading(2, "Accepted solutions"), solutions
       ];
       content.replaceChildren.apply(content, children);
     }).catch(function (error) { status.textContent = "Could not load this problem: " + error.message; });

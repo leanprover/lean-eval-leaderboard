@@ -1876,3 +1876,13 @@ input.tactic-toggle,
     justify-content: center;
   }
 }
+
+/* Per-problem compute reporting */
+.lifecycle-compute-summary { border-top: 1px solid var(--border-color, #8886); padding-top: .6rem; }
+.lifecycle-compute-summary small { display: block; line-height: 1.4; }
+.lifecycle-comparison-controls { display: flex; flex-wrap: wrap; gap: .5rem; }
+.lifecycle-comparison-controls button[aria-pressed="true"] { font-weight: bold; outline: 2px solid currentColor; }
+.lifecycle-comparison-scroll { overflow-x: auto; }
+.lifecycle-comparison-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.lifecycle-comparison-table th, .lifecycle-comparison-table td { padding: .5rem; border-bottom: 1px solid #8886; text-align: left; }
+.lifecycle-comparison-table th button { color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }

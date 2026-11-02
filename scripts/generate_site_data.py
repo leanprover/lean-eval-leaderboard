@@ -23,6 +23,7 @@ try:
         attach_original_verification,
         adapt_state_projection,
         apply_state_projection_overlays,
+        apply_acceptance_measurements,
         build_lifecycle_projection,
         build_model_identity_index,
         load_preview_fixture,
@@ -39,6 +40,7 @@ except ModuleNotFoundError:
         attach_original_verification,
         adapt_state_projection,
         apply_state_projection_overlays,
+        apply_acceptance_measurements,
         build_lifecycle_projection,
         build_model_identity_index,
         load_preview_fixture,
@@ -1517,6 +1519,7 @@ def main() -> int:
     )
     solutions = merge_solutions(state_solutions, fallback_solutions)
     apply_state_projection_overlays(solutions, state_projection)
+    apply_acceptance_measurements(solutions, state_projection)
     attach_original_verification(solutions, fallback_solutions, results_repo, git_head(results_repo))
     lifecycle_files = build_lifecycle_projection(
         problems=problems,
