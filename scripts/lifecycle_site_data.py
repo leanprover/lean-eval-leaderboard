@@ -871,13 +871,19 @@ def attach_original_verification(
         if not path.exists():
             continue
         evidence = json.loads(path.read_text(encoding="utf-8"))
+        required_fields = {"schema_version", "result_id", "benchmark_commit", "run_id", "run_attempt"}
         if (
-            set(evidence) != {"schema_version", "result_id", "benchmark_commit", "run_id", "run_attempt"}
+            not isinstance(evidence, dict)
+            or set(evidence) not in (required_fields, required_fields | {"toolchain"})
             or type(evidence["schema_version"]) is not int
             or evidence["schema_version"] != 1
             or evidence["result_id"] != solution.result_id
             or evidence["benchmark_commit"] != base.provenance["benchmark_commit"]
             or any(type(evidence[key]) is not int or evidence[key] <= 0 for key in ("run_id", "run_attempt"))
+            or ("toolchain" in evidence and (
+                not isinstance(evidence["toolchain"], str)
+                or re.fullmatch(r"leanprover/lean4:v[0-9]+\.[0-9]+\.[0-9]+(?:-(?:rc|beta)[0-9]+)?", evidence["toolchain"]) is None
+            ))
         ):
             raise SystemExit(f"{path}: invalid original verification evidence")
         provenance["verification_url"] = (

@@ -192,6 +192,15 @@ class LifecycleProjectionTests(unittest.TestCase):
             self.assertNotIn("submitted_source_url", state_solution.provenance)
             self.assertNotIn("alice/private", json.dumps(state_solution.provenance))
             self.assertEqual(state_solution.canonical_model_id, base.canonical_model_id)
+            # Current submission receipts also record the selected toolchain.
+            for toolchain in ("leanprover/lean4:v4.35.0", "leanprover/lean4:v4.36.0-rc2"):
+                path.write_text(json.dumps({**evidence, "toolchain": toolchain}))
+                attach_original_verification([state_solution], [base], root, "c" * 40)
+                self.assertEqual(state_solution.provenance["verification_url"], "https://github.com/leanprover/lean-eval-submissions/actions/runs/123/attempts/2")
+            for extra in ({"toolchain": None}, {"toolchain": "nightly"}, {"toolchain": True}, {"unrecognized": "field"}):
+                path.write_text(json.dumps({**evidence, **extra}))
+                with self.assertRaises(SystemExit):
+                    attach_original_verification([state_solution], [base], root, "c" * 40)
             for field, invalid in [("benchmark_commit", "d" * 40), ("result_id", "r2_" + "e" * 64), ("run_id", True), ("run_attempt", 0)]:
                 with self.subTest(field=field):
                     bad = {**evidence, field: invalid}
