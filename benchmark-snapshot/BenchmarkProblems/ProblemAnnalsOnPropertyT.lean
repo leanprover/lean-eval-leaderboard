@@ -15,6 +15,8 @@ We formalise the statement of the main result from M. Kaluba, D. Kielak, and P. 
 
 set_option autoImplicit false
 
+open scoped Pointwise
+
 namespace OnPropertyT
 
 /-- For a group `G` with a finite symmetric generating set `S`, the Laplacian element is
@@ -36,6 +38,7 @@ def PropertyT (G : Type*) [Group G] : Prop :=
 end OnPropertyT
 
 open OnPropertyT
+open scoped Pointwise
 
 set_option autoImplicit false
 

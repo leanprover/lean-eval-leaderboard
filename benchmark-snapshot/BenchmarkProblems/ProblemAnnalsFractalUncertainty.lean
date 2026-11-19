@@ -33,7 +33,8 @@ def PorousOnLines (ν α₀ α₁ : ℝ) (X : Set ℝᵈ) : Prop :=
     ∃ x ∈ segment ℝ y₁ y₂, closedBall x (ν * R) ∩ X = ∅
 
 /-- Given `a b : ℝ`, the cube `[a,b]ᵈ` in `ℝᵈ`. -/
-abbrev cube (a b : ℝ) : Set ℝᵈ := EuclideanSpace.equiv (Fin d) ℝ ⁻¹' Set.univ.pi fun _ ↦ Set.Icc a b
+noncomputable abbrev cube (a b : ℝ) : Set ℝᵈ :=
+  EuclideanSpace.equiv (Fin d) ℝ ⁻¹' Set.univ.pi fun _ ↦ Set.Icc a b
 
 
 
@@ -51,7 +52,7 @@ local notation "ℝᵈ" => EuclideanSpace ℝ (Fin d)
 theorem theorem_1_1 (ν : ℝ) (hν₀ : 0 < ν) :
     ∃ (β C : ℝ), β > 0 ∧ C > 0 ∧ ∀ (h : ℝ) (X Y : Set ℝᵈ)
       (hX : MeasurableSet X) (hY : MeasurableSet Y), h ∈ Set.Ioo 0 (1 / 100) →
-        X ⊆ FractalUncertainty.cube (-1) 1 → FractalUncertainty.PorousOnBalls ν h 1 X → Y ⊆ FractalUncertainty.cube (-h⁻¹) h⁻¹ →
+        X ⊆ cube (-1) 1 → FractalUncertainty.PorousOnBalls ν h 1 X → Y ⊆ cube (-h⁻¹) h⁻¹ →
           FractalUncertainty.PorousOnLines ν 1 h⁻¹ Y → ∀ (f : Lp ℂ 2), (𝓕 f : Lp ℂ 2) =ᵐ[volume.restrict Yᶜ] 0 →
             (eLpNorm (X.indicator f) 2).toReal ≤ C * h ^ β * ‖f‖ := by
   sorry

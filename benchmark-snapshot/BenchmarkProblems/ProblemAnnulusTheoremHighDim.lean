@@ -54,7 +54,7 @@ embedding, and nothing of Kirby's torus trick or Quinn's 4-dimensional work.
 abbrev Amb (n : ℕ) : Type := EuclideanSpace ℝ (Fin n)
 
 /-- The unit `(n-1)`-sphere `Sⁿ⁻¹ ⊂ ℝⁿ`. -/
-abbrev Sph (n : ℕ) : Set (Amb n) := sphere (0 : Amb n) 1
+noncomputable abbrev Sph (n : ℕ) : Set (Amb n) := sphere (0 : Amb n) 1
 
 /-- The model hyperplane `{x | x₀ = 0}` in `ℝⁿ`, the local model for a flatly
 embedded sphere. -/
@@ -102,7 +102,7 @@ theorem annulus_theorem_high_dim {n : ℕ} [NeZero n] (hn : 5 ≤ n)
     (f g : LeanEval.Topology.FlatSphere n)
     (hdisj : Disjoint (Set.range f.toFun) (Set.range g.toFun))
     (hnest : Set.range g.toFun ⊆ LeanEval.Topology.inside (Set.range f.toFun)) :
-    Nonempty ((LeanEval.Topology.regionBetween f g) ≃ₜ (LeanEval.Topology.Sph n × I)) := by
+    Nonempty ((LeanEval.Topology.regionBetween f g) ≃ₜ (Sph n × I)) := by
   sorry
 -- ANCHOR_END: annulus_theorem_high_dim__annulus_theorem_high_dim
 
