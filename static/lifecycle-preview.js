@@ -501,9 +501,15 @@
     }
     if (measurement.execution_profile_digest) {
       var fetch = measurement.fetch_method || (measurement.source_visibility === "private" ? "archive" : "git");
-      var lane = fetch === "archive" ? "private" : "public";
+      var lane = fetch === "archive" ? (measurement.source_visibility === "public" ? "archive" : "private") : "public";
       if (measurement.fetch_method) fields.push(["Replay source", fetch === "archive" ? "Archived source" : "Public Git source"], ["Original visibility", measurement.source_visibility]);
-      fields.push(["Measurement setup", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/blob/main/evidence/" + lane + "-replay/profiles/" + measurement.execution_profile_digest + ".json", text: "Original toolchain, runner, and component profile" })]);
+      // V8 private archives can use either profile family; its redacted
+      // fields do not identify which one. Retain the digest without guessing.
+      if (measurement.fetch_method === "archive" && measurement.source_visibility === "private") {
+        fields.push(["Measurement setup digest", measurement.execution_profile_digest]);
+      } else {
+        fields.push(["Measurement setup", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/blob/main/evidence/" + lane + "-replay/profiles/" + measurement.execution_profile_digest + ".json", text: "Original toolchain, runner, and component profile" })]);
+      }
     }
     if (measurement.checker) fields.push(["Independent checker", measurement.checker]);
     if (measurement.replay_status && measurement.replay_status !== "unavailable") {

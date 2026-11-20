@@ -33,6 +33,10 @@ It does not introduce an archive locator or publish a solution. Reviewed
 `archive_permanently_unrecoverable` dispositions require the archive method and
 the exact reviewed rationale; earlier projection formats retain their existing
 field sets and behavior.
+An originally private v8 archive measurement retains its exact profile digest
+without a profile URL: the redacted format cannot distinguish legacy private
+profiles from newer archive profiles. Older projection formats retain their
+existing private profile links.
 
 Before running State's projector, deployment verifies the complete, clean
 production checkout against exactly two code contracts: legacy
