@@ -759,7 +759,7 @@ def adapt_state_projection(
                 "status": release["status"],
                 "release_at": release.get("release_at"),
                 "url": release_url,
-                "reason": release.get("reason_code"),
+                "reason": release.get("reason"),
             }
             if release is not None
             # Modern State records a scheduled choice atomically with its

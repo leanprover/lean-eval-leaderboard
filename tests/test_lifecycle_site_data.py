@@ -171,6 +171,58 @@ def solution(
 
 
 class LifecycleProjectionTests(unittest.TestCase):
+    def test_projected_release_reason_survives_without_publishing_source(self) -> None:
+        for version in (7, 8):
+            for status, reason in (
+                ("failed", "controller_interrupted"),
+                ("cancelled", "submitter_requested"),
+            ):
+                with self.subTest(version=version, status=status):
+                    raw = identity_projection_v4()
+                    raw.update(
+                        schema_version=version,
+                        result_amendment_history=[],
+                        historical_replay_series=[],
+                        historical_replay_unavailability=[],
+                        acceptance_measurements=[],
+                        metadata_provenance=[],
+                    )
+                    raw["results"][0].update(
+                        effective_problem_id="alpha",
+                        effective_statement_revision=1,
+                        problem_repair=None,
+                        applied_problem_repair=None,
+                        retraction=None,
+                        leaderboard_eligible=True,
+                        release={
+                            "status": status,
+                            "release_at": "2026-10-20T00:00:00.000Z",
+                            "reason": reason,
+                        },
+                    )
+                    adapted = adapt_state_projection(raw, {})
+                    expected = {**raw["results"][0]["release"], "url": None}
+                    self.assertEqual(adapted[0].release, expected)
+                    files = build_lifecycle_projection(
+                        problems=[problem("alpha")],
+                        solutions=adapted,
+                        set_definitions=[],
+                        tag_registry={},
+                        fixture={},
+                        generated_at="2026-08-20T12:00:00Z",
+                        benchmark_commit="a" * 40,
+                        state_commit=raw["source_state_commit"],
+                        state_metadata=raw,
+                        site_base_url="https://example.test/eval/",
+                    )
+                    published = files["v2/problems/alpha.json"]["solutions"][0]
+                    self.assertEqual(published["release"], expected)
+                    self.assertEqual(
+                        published["public_solution"],
+                        {"available": False, "url": None},
+                    )
+                    self.assertNotIn("submitted_source_url", published["provenance"])
+
     def test_original_verification_survives_state_merge_without_private_source_link(self) -> None:
         raw = identity_projection_v4()
         state_solution = adapt_state_projection(raw, {})[0]
