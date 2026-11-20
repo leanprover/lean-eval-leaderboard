@@ -500,7 +500,9 @@
       fields.push(["Workflow evidence", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/actions/runs/" + measurement.workflow_run_id + "/attempts/" + measurement.attempt, text: "Acceptance workflow" })]);
     }
     if (measurement.execution_profile_digest) {
-      var lane = measurement.source_visibility === "private" ? "private" : "public";
+      var fetch = measurement.fetch_method || (measurement.source_visibility === "private" ? "archive" : "git");
+      var lane = fetch === "archive" ? "private" : "public";
+      if (measurement.fetch_method) fields.push(["Replay source", fetch === "archive" ? "Archived source" : "Public Git source"], ["Original visibility", measurement.source_visibility]);
       fields.push(["Measurement setup", node("a", { href: "https://github.com/leanprover/lean-eval-submissions/blob/main/evidence/" + lane + "-replay/profiles/" + measurement.execution_profile_digest + ".json", text: "Original toolchain, runner, and component profile" })]);
     }
     if (measurement.checker) fields.push(["Independent checker", measurement.checker]);

@@ -1,0 +1,32 @@
+{
+  "acceptance_measurements": [],
+  "environment": "production",
+  "historical_replay_series": [],
+  "historical_replay_unavailability": [
+    {
+      "declared_model": "Archived Private Model",
+      "disposed_at": "2026-10-21T06:08:40.000Z",
+      "disposition_event_id": "0198abcd-0000-7000-8000-000000000028",
+      "fetch_method": "archive",
+      "historical_accepted_at": "2025-02-03T04:05:06Z",
+      "owner_login": "private-owner",
+      "problem_id": "private_problem",
+      "rationale": "accepted_archive_permanently_unrecoverable_after_review",
+      "reason": "archive_permanently_unrecoverable",
+      "result_id": "r2_308ba12f10a9d964b6fd5515fbdf4c2b39a7e024a8a193a61b7b716b37411dc1",
+      "source_visibility": "public",
+      "statement_revision": 1
+    }
+  ],
+  "metadata_provenance": [],
+  "model_aliases": [],
+  "model_identities": [],
+  "model_identity_history": [],
+  "result_amendment_history": [],
+  "result_overlays": [],
+  "results": [],
+  "schema_version": 8,
+  "source_digest": "16dc7b6026ae2f53226032ed832413a705f46f6af7897cffc0bd300557405c0a",
+  "source_event_count": 2,
+  "source_state_commit": "0000000000000000000000000000000000000000"
+}

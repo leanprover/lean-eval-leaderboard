@@ -6,7 +6,7 @@ files remain available to the preserved `/legacy/` surface and downstream
 consumers.
 
 The production generator reads State's redacted
-`public-state-projection-v6` artifact, never the private append-only events or
+v7 or v8 public projection, never the private append-only events or
 internal `materialized/domain.json`. The public artifact contains recorded
 results, public lifecycle evidence, result amendments, model-identity review
 history, and locator-free historical replay series or reviewed-unavailable
@@ -25,6 +25,23 @@ cross-lane series, and any replay/disposition overlap. It displays the newest
 series status and retains every versioned measurement series with its exact
 measurement-configuration and execution-profile digests. Reviewed
 unavailability supplies a public reason and no fabricated measurement.
+
+Projection v8 distinguishes `fetch_method` (`git` or `archive`) from the original
+`source_visibility`. Recovering an originally public source from its archive
+therefore retains public visibility and uses the archive replay profile link.
+It does not introduce an archive locator or publish a solution. Reviewed
+`archive_permanently_unrecoverable` dispositions require the archive method and
+the exact reviewed rationale; earlier projection formats retain their existing
+field sets and behavior.
+
+Before running State's projector, deployment verifies the complete, clean
+production checkout against exactly two code contracts: legacy
+`e2dd6314f04df175966ff105709b855053949d97` (v7), or archive-capable
+`351b1c409290516bfa379fc857908908e1d08932` (v8). The closed map in
+`scripts/state_contracts.py` binds complete scripts/schema trees and critical
+file modes, blobs and SHA-256s, including the new archive runtime dependency.
+Data-only descendants are allowed; mixed or unknown code is rejected before
+it can execute. No new State credential or publication authority is added.
 
 The split files are:
 

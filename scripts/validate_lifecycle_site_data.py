@@ -116,7 +116,8 @@ def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
         fields = set(measurement)
         require(
             fields == MEASUREMENT_CORE_FIELDS
-            or fields == MEASUREMENT_CORE_FIELDS | MEASUREMENT_SERIES_FIELDS,
+            or fields == MEASUREMENT_CORE_FIELDS | MEASUREMENT_SERIES_FIELDS
+            or fields == MEASUREMENT_CORE_FIELDS | MEASUREMENT_SERIES_FIELDS | {"fetch_method"},
             f"{label} fields are invalid",
         )
         require(measurement["kind"] == "checker-replay", f"{label} kind is invalid")
@@ -169,6 +170,11 @@ def validate_measurements(path: pathlib.Path, solution: dict[str, Any]) -> None:
             measurement["source_visibility"] in {"public", "private"},
             f"{label} source visibility is invalid",
         )
+        if "fetch_method" in measurement:
+            require(isinstance(measurement["fetch_method"], str)
+                    and measurement["fetch_method"] in {"git", "archive"}
+                    and (measurement["source_visibility"] == "public" or measurement["fetch_method"] == "archive"),
+                    f"{label} fetch method is invalid")
         replay_task_id = measurement["replay_task_id"]
         transition_event_id = measurement["transition_event_id"]
         require(

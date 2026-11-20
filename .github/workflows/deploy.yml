@@ -75,6 +75,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: leanprover/lean-eval-state
+          ref: main
+          fetch-depth: 0
           path: lean-eval-state
           ssh-key: ${{ secrets.PRODUCTION_STATE_READ_KEY }}
           persist-credentials: false
@@ -185,11 +187,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          projection_version=$(python3 scripts/verify_state_contract.py --state-root lean-eval-state)
+          case "$projection_version" in 7|8) ;; *) exit 1 ;; esac
           state_commit="$(git -C lean-eval-state rev-parse HEAD)"
           python3 lean-eval-state/scripts/public_projection.py \
             --root lean-eval-state \
             --state-commit "$state_commit" \
-            --schema-version 7 \
+            --schema-version "$projection_version" \
             --output "$RUNNER_TEMP/public-state.json"
           python3 lean-eval-state/scripts/public_projection.py \
             --validate "$RUNNER_TEMP/public-state.json"
@@ -255,7 +259,7 @@ jobs:
           if [ "${{ github.ref }}" = 'refs/heads/main' ]; then
             test -f _site/site-data/public-state.json
             jq --exit-status \
-              '.schema_version == 7 and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array") and (.acceptance_measurements | type == "array") and (.metadata_provenance | type == "array")' \
+              '(.schema_version == 7 or .schema_version == 8) and .environment == "production" and (.source_state_commit | test("^[0-9a-f]{40}$")) and (.model_identities | type == "array") and (.model_aliases | type == "array") and (.model_identity_history | type == "array") and (.historical_replay_series | type == "array") and (.historical_replay_unavailability | type == "array") and (.acceptance_measurements | type == "array") and (.metadata_provenance | type == "array")' \
               _site/site-data/public-state.json
             if rg -n '"(source_repository|source_commit|source_ref|archive_[^"]*|submission_id|nonce_digest|[^"]*crosswalk[^"]*|plan_sha256|authority_[^"]*|evidence_[^"]*)"[[:space:]]*:' \
                 _site/site-data/public-state.json; then

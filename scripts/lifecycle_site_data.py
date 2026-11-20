@@ -283,7 +283,7 @@ def build_model_identity_index(raw: dict[str, Any] | None) -> ModelIdentityIndex
 
     if raw is None or raw.get("schema_version") == 1:
         return EMPTY_MODEL_IDENTITY_INDEX
-    if raw.get("schema_version") not in {4, 5, 6, 7}:
+    if raw.get("schema_version") not in {4, 5, 6, 7, 8}:
         raise SystemExit("State domain: unsupported schema_version")
     identities: dict[str, dict[str, Any]] = {}
     identity_fields = {
@@ -551,10 +551,13 @@ def _replay_projection_view(
     if measurement_identity is not None:
         status = replay["status"]
         reason = replay["reason"]
+        unavailable_reasons = HISTORICAL_UNAVAILABLE_REASONS
+        if measurement_identity.get("fetch_method") == "archive":
+            unavailable_reasons = unavailable_reasons | {"archive_permanently_unrecoverable"}
         expected_reasons = (
             HISTORICAL_FAILURE_REASONS
             if status == "failed"
-            else HISTORICAL_UNAVAILABLE_REASONS
+            else unavailable_reasons
             if status == "unavailable"
             else None
         )
@@ -661,7 +664,7 @@ def adapt_state_projection(
     if raw is None:
         return []
     version = raw.get("schema_version")
-    if version not in {1, 4, 5, 6, 7}:
+    if version not in {1, 4, 5, 6, 7, 8}:
         raise SystemExit("State domain: unsupported schema_version")
     if raw.get("environment") not in {"production", "staging"}:
         raise SystemExit("State domain: invalid environment")
@@ -676,18 +679,18 @@ def adapt_state_projection(
         "source_event_count", "source_digest", "results",
     }
     expected_top_fields = common_fields
-    if version in {4, 5, 6, 7}:
+    if version in {4, 5, 6, 7, 8}:
         expected_top_fields |= {
             "result_overlays", "model_identities", "model_aliases",
             "model_identity_history",
         }
-    if version in {5, 6, 7}:
+    if version in {5, 6, 7, 8}:
         expected_top_fields.add("result_amendment_history")
-    if version in {6, 7}:
+    if version in {6, 7, 8}:
         expected_top_fields |= {
             "historical_replay_series", "historical_replay_unavailability",
         }
-    if version == 7:
+    if version in {7, 8}:
         expected_top_fields |= {"acceptance_measurements", "metadata_provenance"}
     if set(raw) != expected_top_fields:
         raise SystemExit("State projection: invalid top-level fields")
@@ -704,9 +707,9 @@ def adapt_state_projection(
             "record_event_id", "benchmark_commit", "production_metadata", "replay",
             "release", "public_solution",
         }
-        if version in {4, 5, 6, 7}:
+        if version in {4, 5, 6, 7, 8}:
             required |= {"model_id", "resolved_model_id"}
-        if version in {5, 6, 7}:
+        if version in {5, 6, 7, 8}:
             required |= {
                 "effective_problem_id", "effective_statement_revision",
                 "problem_repair", "applied_problem_repair", "retraction",
@@ -729,7 +732,7 @@ def adapt_state_projection(
         state_resolution = identity_index.aliases.get(
             (str(result["submitter"]).lower(), raw_declared)
         )
-        if version in {4, 5, 6, 7}:
+        if version in {4, 5, 6, 7, 8}:
             projected_resolution = (
                 result["model_id"], result["resolved_model_id"]
             )
@@ -769,12 +772,12 @@ def adapt_state_projection(
                 result_id=result["result_id"],
                 problem_id=(
                     result["effective_problem_id"]
-                    if version in {5, 6, 7}
+                    if version in {5, 6, 7, 8}
                     else result["problem_id"]
                 ),
                 statement_revision=(
                     result["effective_statement_revision"]
-                    if version in {5, 6, 7}
+                    if version in {5, 6, 7, 8}
                     else result["statement_revision"]
                 ),
                 declared_model=declared,
@@ -785,7 +788,7 @@ def adapt_state_projection(
                 acceptance_event_id=result["acceptance_event_id"],
                 retracted=(
                     not result["leaderboard_eligible"]
-                    if version in {5, 6, 7}
+                    if version in {5, 6, 7, 8}
                     else False
                 ),
                 metadata=_metadata_fields(
@@ -900,7 +903,7 @@ def apply_state_projection_overlays(
     if raw is None or raw.get("schema_version") == 1:
         return solutions
     version = raw.get("schema_version")
-    if version not in {4, 5, 6, 7}:
+    if version not in {4, 5, 6, 7, 8}:
         raise SystemExit("State domain: unsupported schema_version")
     by_result = {solution.result_id: solution for solution in solutions}
     if len(by_result) != len(solutions):
@@ -908,7 +911,7 @@ def apply_state_projection_overlays(
 
     seen_overlays: set[str] = set()
     expected_overlay_fields = STATE_OVERLAY_FIELDS | (
-        STATE_AMENDMENT_FIELDS if version in {5, 6, 7} else set()
+        STATE_AMENDMENT_FIELDS if version in {5, 6, 7, 8} else set()
     )
     for overlay in raw["result_overlays"]:
         if not isinstance(overlay, dict) or set(overlay) != expected_overlay_fields:
@@ -931,7 +934,7 @@ def apply_state_projection_overlays(
         solution.provenance["state_mutation_event_id"] = overlay[
             "mutation_event_id"
         ]
-        if version in {5, 6, 7}:
+        if version in {5, 6, 7, 8}:
             if (
                 not isinstance(overlay["effective_problem_id"], str)
                 or type(overlay["effective_statement_revision"]) is not int
@@ -945,7 +948,7 @@ def apply_state_projection_overlays(
             ]
             solution.retracted = not overlay["leaderboard_eligible"]
 
-    if version not in {6, 7}:
+    if version not in {6, 7, 8}:
         return solutions
 
     def expected_historical_visibility(result_id_value: str) -> str:
@@ -998,7 +1001,12 @@ def apply_state_projection_overlays(
     transition_event_ids: set[str] = set()
     series_order: list[tuple[str, str, str, str]] = []
     for series in raw["historical_replay_series"]:
-        if not isinstance(series, dict) or set(series) != HISTORICAL_REPLAY_SERIES_FIELDS:
+        if (
+            not isinstance(series, dict)
+            or set(series) != HISTORICAL_REPLAY_SERIES_FIELDS | (
+                {"fetch_method"} if version == 8 else set()
+            )
+        ):
             raise SystemExit("State projection: invalid historical replay series fields")
         result_id_value = series["result_id"]
         replay_task_id = series["replay_task_id"]
@@ -1029,6 +1037,20 @@ def apply_state_projection_overlays(
         ):
             raise SystemExit("State projection: invalid historical replay series")
         validate_historical_identity(series, result_id_value)
+        if version == 8:
+            fetch = series["fetch_method"]
+            reason = (
+                series["replay"].get("reason")
+                if isinstance(series["replay"], dict) else None
+            )
+            if (
+                not isinstance(fetch, str) or fetch not in {"git", "archive"}
+                or (series["source_visibility"] == "private" and fetch != "archive")
+                or (series["source_visibility"] == "public" and fetch == "archive"
+                    and reason == "source_ref_permanently_unavailable")
+                or (fetch != "archive" and reason == "archive_permanently_unrecoverable")
+            ):
+                raise SystemExit("State projection: invalid historical fetch method or reason")
         seen_series.add(identity)
         transition_event_ids.add(series["transition_event_id"])
         series_order.append(
@@ -1048,7 +1070,9 @@ def apply_state_projection_overlays(
     for disposition in raw["historical_replay_unavailability"]:
         if (
             not isinstance(disposition, dict)
-            or set(disposition) != HISTORICAL_REPLAY_UNAVAILABILITY_FIELDS
+            or set(disposition) != HISTORICAL_REPLAY_UNAVAILABILITY_FIELDS | (
+                {"fetch_method"} if version == 8 else set()
+            )
         ):
             raise SystemExit("State projection: invalid historical disposition fields")
         result_id_value = disposition["result_id"]
@@ -1086,6 +1110,17 @@ def apply_state_projection_overlays(
             if disposition["source_visibility"] == "public"
             else ("archive_not_found", None)
         )
+        if version == 8:
+            fetch = disposition["fetch_method"]
+            if disposition["reason"] == "archive_permanently_unrecoverable":
+                expected_disposition = (
+                    "archive_permanently_unrecoverable",
+                    "accepted_archive_permanently_unrecoverable_after_review",
+                )
+                if fetch != "archive":
+                    raise SystemExit("State projection: archive loss has a nonarchive method")
+            elif fetch != ("git" if disposition["source_visibility"] == "public" else "archive"):
+                raise SystemExit("State projection: historical disposition changed fetch method")
         if (disposition["reason"], disposition["rationale"]) != expected_disposition:
             raise SystemExit("State projection: invalid historical disposition")
         disposition_order.append(result_id_value)
@@ -1110,7 +1145,7 @@ def apply_state_projection_overlays(
                         "source_visibility", "replay_task_id",
                         "measurement_config_digest", "execution_profile_digest",
                         "updated_at", "transition_event_id",
-                    )
+                    ) + (("fetch_method",) if version == 8 else ())
                 },
             )
             measurements.append(measurement)
@@ -1137,7 +1172,7 @@ def apply_state_projection_overlays(
 
 
 def apply_acceptance_measurements(solutions: list[Solution], raw: dict[str, Any] | None) -> None:
-    if raw is None or raw.get("schema_version") != 7:
+    if raw is None or raw.get("schema_version") not in {7, 8}:
         return
     try:
         from scripts.validate_lifecycle_site_data import validate_acceptance_measurement, ContractError
