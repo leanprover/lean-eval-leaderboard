@@ -14,11 +14,30 @@ class Element {
 }
 const document = { readyState: 'complete', querySelector: () => null, createElement: tag => new Element(tag), createTextNode: text => new Element('#text', text) };
 const context = vm.createContext({ document, URL, location: { href: 'https://lean-lang.org/eval/problems/example/' } });
-const code = fs.readFileSync('static/lifecycle-preview.js', 'utf8').replace('  function run() {', '  globalThis.compute = { preferredMeasurement, compareCells, measuredSummary, comparisonViews };\n  function run() {');
+const code = fs.readFileSync('static/lifecycle-preview.js', 'utf8').replace('  function run() {', '  globalThis.compute = { preferredMeasurement, compareCells, measuredSummary, comparisonViews, measurementDetails };\n  function run() {');
 vm.runInContext(code, context);
 const compute = context.compute;
 function nodes(root, predicate) { return [root, ...root.children.flatMap(child => nodes(child, predicate))].filter(predicate); }
 function solution(id, metadata = {}) { return { result_id: id, canonical_credit: { label: id }, submitter: 'alice', statement_revision: 1, measurements: [], metadata, replay: { status: 'unavailable', reason: 'not-enqueued' } }; }
+
+test('archive replay profile links follow fetch method while original public visibility is retained', () => {
+  const digest = 'a'.repeat(64);
+  const details = compute.measurementDetails({ kind: 'checker-replay', execution_profile_digest: digest, source_visibility: 'public', fetch_method: 'archive' });
+  const links = nodes(details, e => e.tag === 'a');
+  assert.equal(links.length, 1);
+  assert.equal(links[0].attributes.href, `https://github.com/leanprover/lean-eval-submissions/blob/main/evidence/archive-replay/profiles/${digest}.json`);
+  assert.match(details.textContent, /Archived source/);
+  assert.match(details.textContent, /Original visibilitypublic/);
+  const legacy = compute.measurementDetails({ kind: 'checker-replay', execution_profile_digest: digest, source_visibility: 'public' });
+  assert.match(nodes(legacy, e => e.tag === 'a')[0].attributes.href, /evidence\/public-replay\/profiles\//);
+  assert.doesNotMatch(legacy.textContent, /Original visibility/);
+  const privateV8 = compute.measurementDetails({ kind: 'checker-replay', execution_profile_digest: digest, source_visibility: 'private', fetch_method: 'archive' });
+  assert.equal(nodes(privateV8, e => e.tag === 'a').length, 0);
+  assert.match(privateV8.textContent, /Measurement setup digest/);
+  assert.match(privateV8.textContent, new RegExp(digest));
+  const privateLegacy = compute.measurementDetails({ kind: 'checker-replay', execution_profile_digest: digest, source_visibility: 'private' });
+  assert.match(nodes(privateLegacy, e => e.tag === 'a')[0].attributes.href, /evidence\/private-replay\/profiles\//);
+});
 
 test('prefers the acceptance measurement, then newest successful attempt rather than fastest', () => {
   const s = solution('a');

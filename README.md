@@ -68,18 +68,22 @@ results data repository.
 
 Production deploys additionally check out private production State through the
 read-only `PRODUCTION_STATE_READ_KEY` deploy key. They generate State's strict,
-redacted `public-state-projection-v6` artifact before site generation and
+redacted projection v7 or v8 before site generation and
 publish that exact artifact as `site-data/public-state.json`. Pull-request
 builds receive no State credential and exercise the explicitly labelled
-base-results fallback. Projection version 6 cumulatively carries the public,
+base-results fallback. An exact code-contract guard runs before any checked-out
+State code: it checks the full, clean production checkout and the closed old/new
+tree and component map in `scripts/state_contracts.py`. It requests v7 from the
+legacy contract and v8 from the archive-capable contract. Projection version 6
+and its cumulative successors carry the public,
 owner-scoped model-identity review history, result amendments, and strictly
 redacted historical replay series or reviewed-unavailability dispositions;
 immutable result IDs and declared labels remain unchanged. Neither raw State
 events nor the internal materialized domain enters the Pages artifact. The
-vendored projection schemas through version 6 live in `schemas/`, with
+vendored projection schemas through version 8 live in `schemas/`, with
 State-generated producer/consumer compatibility vectors under `tests/fixtures/`.
-State schema v6 must land before the leaderboard starts requesting it; the
-leaderboard deploy otherwise fails closed rather than publishing a partial
+The exact State contract must be recognized before the leaderboard requests
+its projection; deployment otherwise fails closed rather than publishing a partial
 historical view.
 
 Benchmark catalog metadata is read from the required `group`, `status`,

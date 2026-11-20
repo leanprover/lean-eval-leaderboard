@@ -237,8 +237,13 @@ class PreviewStructureTests(unittest.TestCase):
         self.assertIn("Checkout private production State for its redacted projection", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("--state-projection", workflow)
-        self.assertIn("--schema-version 7", workflow)
-        self.assertIn(".schema_version == 7", workflow)
+        self.assertIn("scripts/verify_state_contract.py --state-root lean-eval-state", workflow)
+        self.assertLess(
+            workflow.index("scripts/verify_state_contract.py --state-root lean-eval-state"),
+            workflow.index("python3 lean-eval-state/scripts/public_projection.py"),
+        )
+        self.assertIn('--schema-version "$projection_version"', workflow)
+        self.assertIn(".schema_version == 7 or .schema_version == 8", workflow)
         self.assertIn(
             "Scheduled release is recommended and selected by default",
             workflow,

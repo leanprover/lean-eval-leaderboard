@@ -265,6 +265,7 @@
         "unavailable_reason": {"$ref": "#/$defs/nullableText"},
         "attempt": {"type": "integer", "minimum": 0},
         "source_visibility": {"enum": ["public", "private"]},
+        "fetch_method": {"enum": ["git", "archive"]},
         "replay_task_id": {"type": "string", "pattern": "^rt1_[0-9a-f]{64}$"},
         "measurement_config_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "execution_profile_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -276,6 +277,7 @@
           "not": {
             "anyOf": [
               {"required": ["source_visibility"]},
+              {"required": ["fetch_method"]},
               {"required": ["replay_task_id"]},
               {"required": ["measurement_config_digest"]},
               {"required": ["execution_profile_digest"]},

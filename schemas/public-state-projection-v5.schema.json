@@ -127,7 +127,7 @@
       ],
       "properties": {
         "result_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/result_id" },
-        "problem_id": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/problem_id" },
+        "problem_id": { "$ref": "#/$defs/problemId" },
         "statement_revision": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/statement_revision" },
         "declared_model": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/declared_model" },
         "submitter": { "$ref": "public-state-projection-v4.schema.json#/$defs/result/properties/submitter" },
