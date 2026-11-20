@@ -514,6 +514,13 @@ def benchmark_snapshot_lakefile(
 ) -> str:
     mathlib_git, mathlib_rev = benchmark_mathlib_require(benchmark_repo)
     subverso_rev = consumer_subverso_rev()
+    benchmark_config = tomllib.loads(
+        (benchmark_repo / "lakefile.toml").read_text(encoding="utf-8")
+    )
+    # Snapshot fragments retain the benchmark's legacy visibility rules.
+    legacy_options = []
+    if benchmark_config.get("allowNonModules") is True:
+        legacy_options.append("allowNonModules = true")
     # Extra requires come before Mathlib: Lake takes shared transitive
     # dependencies (batteries, aesop, ...) from the later require, and those
     # must be Mathlib's, as in the benchmark's own lakefile.
@@ -530,6 +537,7 @@ def benchmark_snapshot_lakefile(
         [
             'name = "benchmark-snapshot"',
             'defaultTargets = ["BenchmarkProblems"]',
+            *legacy_options,
             "",
             *extra_lines,
             "[[require]]",
