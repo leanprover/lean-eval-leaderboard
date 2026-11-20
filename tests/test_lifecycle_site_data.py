@@ -185,9 +185,16 @@ class LifecycleProjectionTests(unittest.TestCase):
                         historical_replay_series=[],
                         historical_replay_unavailability=[],
                         acceptance_measurements=[],
-                        metadata_provenance=[],
+                        model_identities=[],
+                        model_aliases=[],
+                        metadata_provenance=[{
+                            "result_id": raw["results"][0]["result_id"],
+                            "fields": {},
+                        }],
                     )
                     raw["results"][0].update(
+                        model_id=None,
+                        resolved_model_id=None,
                         effective_problem_id="alpha",
                         effective_statement_revision=1,
                         problem_repair=None,
